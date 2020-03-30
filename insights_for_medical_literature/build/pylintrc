@@ -1,0 +1,28 @@
+# lint Python modules using external checkers.
+[MASTER]
+
+disable=
+    bare-except,
+    duplicate-code,
+    missing-module-docstring,
+    missing-docstring,
+    too-many-arguments,
+    too-many-locals,
+    too-many-branches,
+    too-many-statements,
+    too-many-instance-variables,
+    too-many-instance-attributes,
+    too-few-public-methods,
+    too-many-public-methods,
+    protected-access,
+    unnecessary-pass
+
+[TYPECHECK]
+ignored-classes= responses
+
+[FORMAT]
+
+# Maximum number of characters on a single line.
+max-line-length=120
+max-statement-length=100
+max-module-lines=6000

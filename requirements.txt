@@ -1,0 +1,2 @@
+jproperties
+ibm-cloud-sdk-core>=1.7.1
