@@ -14,11 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import configparser
-import watson_health_cognitive_services.insights_for_medical_literature as wh
+import ibm_whcs_sdk.insights_for_medical_literature as wh
 
-# To access a secure environment additional parameters are needed on the constructor which are listed below
 CONFIG = configparser.RawConfigParser()
-CONFIG.read('./tests/config.ini')
+CONFIG.read('./ibm_whcs_sdk/insights_for_medical_literature/tests/config.ini')
 
 BASE_URL = CONFIG.get('settings', 'base_url')
 APIKEY = CONFIG.get('settings', 'key')

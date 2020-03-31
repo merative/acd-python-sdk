@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import watson_health_cognitive_services.insights_for_medical_literature as wh
+import ibm_whcs_sdk.insights_for_medical_literature as wh
 
 def test_sentence_model():
     sm_model = wh.SentenceModel(document_section='test', text='test', begin=0, end=5, timestamp=0)
