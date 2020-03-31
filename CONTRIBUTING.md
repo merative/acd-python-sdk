@@ -46,7 +46,7 @@ You probably want to set up a [virtualenv].
 
 1. Clone this repository:
     ```sh
-    git clone git@github.com/IBM/python-sdk-core.git
+    git clone git@github.com/IBM/whcs-python-sdk.git
     ```
 1. Install the SDK as an editable package using the current source:
     ```sh
@@ -61,10 +61,10 @@ You probably want to set up a [virtualenv].
     Each module in the SDK has a config.ini file in the test folder with
     default values for a provisioned Standard plan instance of the service.
     Populate the missing elements from the settings section so a connection
-    to your service instance can be generated.  From the module directory
-    For your provisioned service run the following command:
+    to your service instance can be generated.  From the root directory
+    Of the cloned repositoyr run the following command:
     ```sh
-    Python -m pytest tests/functional
+    Python -m pytest ibm_whcs_sdk/<service_name>/tests/functional
     ```
     NOTE:  If you have provisioned a Custom plan instance of Insights for Medical Literature
     The Tests will fail until enriched content has been added to the instance.  All default

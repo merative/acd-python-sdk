@@ -16,14 +16,14 @@
 
 
 from __future__ import print_function
-from setuptools import setup
+from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
 import os
 import sys
 import pkg_resources
 
 __version__ = '0.0.1'
-PACKAGE_NAME = 'whcs-python-sdk'
+PACKAGE_NAME = 'ibm-whcs-sdk'
 
 with open('requirements.txt') as f:
     install_requires = [str(req) for req in pkg_resources.parse_requirements(f)]
@@ -80,7 +80,7 @@ setup(name=PACKAGE_NAME,
       long_description=read_md('README.md'),
       long_description_content_type='text/markdown',
       url='https://github.com/IBM/whcs-python-sdk',
-      packages=['insights_for_medical_literature', 'annotator_for_clinical_data'],
+      packages=find_packages(),
       include_package_data=True,
       keywords='',
       classifiers=[
