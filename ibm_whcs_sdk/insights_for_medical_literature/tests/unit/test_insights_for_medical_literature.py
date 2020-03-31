@@ -149,23 +149,6 @@ class TestInsightsMedicalLiterature(unittest.TestCase):
        except wh.IMLException as ex:
            assert ex.code == error_code
 
-   # TEST:  Get semantic types
-   #    - get the semantic types found for a specific corpus
-   #    - Assert if response is None or response status code > 299
-   def test_getSemanticTypes_g(self):
-       resp = IML_TEST.get_semantic_types(CORPUS)
-       assert check_for_null_or_error_resp(resp) == False
-
-   # TEST:  Get semantic types
-   #    - get the semantic types found for a specific corpus
-   #    - Assert exception raised with error code 400
-   def test_getSemanticTypes_e(self):
-       error_code = 404
-       try:
-           resp = IML_TEST.get_semantic_types('med9')
-       except wh.IMLException as ex:
-           assert ex.code == error_code
-
    #TEST:  Get Documents
    # - get document count per provider
    # - Assert if response is None or response status code > 299
