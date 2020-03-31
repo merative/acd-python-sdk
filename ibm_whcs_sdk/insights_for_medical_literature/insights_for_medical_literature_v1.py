@@ -961,30 +961,6 @@ class InsightsForMedicalLiteratureServiceV1(BaseService):
         return response
 
 
-    def get_semantic_types(self, corpus):
-        """
-        Retrieves a list of semantic types used by this corpus.
-
-        The response returns a list of semantic types used by this corpus.
-
-        :param str corpus: Corpus name.
-        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
-        :rtype: DetailedResponse with results 'dict' representing a TypesModel object.
-        """
-
-        if corpus is None:
-            raise ValueError('corpus must be provided')
-
-        params = {
-            'version': self.version
-        }
-
-        url = '/v1/corpora/{0}/types'.format(*self._encode_path_vars(corpus))
-        request = self.prepare_request(method='GET', url=url, params=params)
-        response = self.request_iml(request)
-        return response
-
-
     #########################
     # Status
     #########################

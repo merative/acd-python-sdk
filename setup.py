@@ -68,14 +68,22 @@ class PyTest(TestCommand):
         errcode = pytest.main(self.test_args)
         sys.exit(errcode)
 
+class PyTestUnit(PyTest):
+    def finalize_options(self):
+        self.test_args = ['--strict', '--verbose', '--tb=long', 'test/unit']
+
+class PyTestIntegration(PyTest):
+    def finalize_options(self):
+        self.test_args = ['--strict', '--verbose', '--tb=long', 'test/integration']
+
 setup(name=PACKAGE_NAME,
       version=__version__,
       description='This is the Watson Health Cognitive Services Python SDK containing ACD and IML',
       license='Apache 2.0',
       install_requires=install_requires,
       tests_require=tests_require,
-      cmdclass={'test': PyTest},
-      author='Dan Weber',
+      cmdclass={'test': PyTest, 'test_unit': PyTestUnit, 'test_integration': PyTestIntegration},
+      author='IBM',
       author_email='dcweber@us.ibm.com',
       long_description=read_md('README.md'),
       long_description_content_type='text/markdown',
@@ -94,5 +102,5 @@ setup(name=PACKAGE_NAME,
            'Topic :: Software Development :: Libraries :: Application '
            'Frameworks',
       ],
-zip_safe=True
-)
+      zip_safe=True
+    )

@@ -42,8 +42,7 @@ def test_get_related_attr_filter():
     response = IML_TEST.get_related_concepts(CORPUS, name_or_id='C0243026', relationship='children',
                                              relationship_attributes=rel_attrs)
     related_concepts = wh.RelatedConceptsModel._from_dict(response.get_result())
-    related_concept_list = related_concepts.concepts
-    assert related_concept_list is not None
+    assert related_concepts is not None
 
 def test_get_related_vocab_filter():
     vocabs = []
@@ -51,8 +50,7 @@ def test_get_related_vocab_filter():
     response = IML_TEST.get_related_concepts(CORPUS, name_or_id='C0243026', relationship='children',
                                              sources=vocabs)
     related_concepts = wh.RelatedConceptsModel._from_dict(response.get_result())
-    related_concept_list = related_concepts.concepts
-    assert related_concept_list is not None
+    assert related_concepts is not None
 
 def test_get_related_recursive():
     vocabs = []
@@ -60,8 +58,7 @@ def test_get_related_recursive():
     response = IML_TEST.get_related_concepts(CORPUS, name_or_id='C0243026', relationship='children',
                                              sources=vocabs, recursive=True)
     related_concepts = wh.RelatedConceptsModel._from_dict(response.get_result())
-    related_concept_list = related_concepts.concepts
-    assert related_concept_list is not None
+    assert related_concepts is not None
 
 def test_get_related_no_tree_layout():
     vocabs = []
@@ -69,8 +66,7 @@ def test_get_related_no_tree_layout():
     response = IML_TEST.get_related_concepts(CORPUS, name_or_id='C0243026', relationship='children',
                                              sources=vocabs, tree_layout=True)
     related_concepts = wh.RelatedConceptsModel._from_dict(response.get_result())
-    related_concept_list = related_concepts.concepts
-    assert related_concept_list is not None
+    assert related_concepts is not None
 
 def test_get_related_limited_depth():
     vocabs = []
@@ -78,8 +74,7 @@ def test_get_related_limited_depth():
     response = IML_TEST.get_related_concepts(CORPUS, name_or_id='C0243026', relationship='children',
                                              sources=vocabs, max_depth=2)
     related_concepts = wh.RelatedConceptsModel._from_dict(response.get_result())
-    related_concept_list = related_concepts.concepts
-    assert related_concept_list is not None
+    assert related_concepts is not None
 
 def test_get_related_no_corpus():
     try:
