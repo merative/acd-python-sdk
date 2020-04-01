@@ -15,7 +15,7 @@
 # limitations under the License.
 import configparser
 import ibm_whcs_sdk.annotator_for_clinical_data as wh
-import ibm_whcs_sdk.annotator_for_clinical_data.tests.common.test_unstructured_container as tuc
+import test_unstructured_container as tuc
 
 CONFIG = configparser.RawConfigParser()
 CONFIG.read('./ibm_whcs_sdk/annotator_for_clinical_data/tests/config.ini')

@@ -14,12 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-class TestSuggetion(object):
+class TestSuggestion(object):
 
     @staticmethod
-    def test_spelling_suggestions(suggestion):
-        assert suggestion.text is not None
-        assert suggestion.confidence > 0
-        if suggestion.semtypes is not None:
-            for semtype in suggestion.semtypes:
-                assert semtype is not None
+    def test_spelling_suggestions(suggestion=None):
+        if suggestion is not None:
+            assert suggestion.text is not None
+            assert suggestion.confidence > 0
+            if suggestion.semtypes is not None:
+                for semtype in suggestion.semtypes:
+                    assert semtype is not None

@@ -14,57 +14,58 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import ibm_whcs_sdk.annotator_for_clinical_data.tests.common.test_concept_annotation as tc
-import ibm_whcs_sdk.annotator_for_clinical_data.tests.common.test_disambiguation as td
+import test_concept_annotation as tc
+import test_disambiguation as td
 
 class TestAttributeValueAnnotation(object):
 
     @staticmethod
-    def test_attribute_values(annotation_list):
-        for annotation in annotation_list:
-            if annotation.id is not None:
-                assert len(annotation.id) > 0
-            if annotation.type is not None:
-                assert len(annotation.type) > 0
-            assert annotation.begin is not None
-            assert annotation.end is not None
-            assert annotation.covered_text is not None
-            if annotation.uid is not None:
-                assert annotation.uid > 0
-            if annotation.preferred_name is not None:
-                assert len(annotation.preferred_name) > 0
-            if annotation.source is not None:
-                assert len(annotation.source) > 0
-            if annotation.source_version is not None:
-                assert len(annotation.source_version) > 0
-            if annotation.name is not None:
-                assert len(annotation.name) > 0
-            if annotation.icd9_code is not None:
-                assert len(annotation.icd9_code) > 0
-            if annotation.icd10_code is not None:
-                assert len(annotation.icd10_code) > 0
-            if annotation.nci_code is not None:
-                assert len(annotation.nci_code) > 0
-            if annotation.snomed_concept_id is not None:
-                assert len(annotation.snomed_concept_id) > 0
-            if annotation.mesh_id is not None:
-                assert len(annotation.mesh_id) > 0
-            if annotation.rx_norm_id is not None:
-                assert len(annotation.rx_norm_id) > 0
-            if annotation.loinc_id is not None:
-                assert len(annotation.loinc_id) > 0
-            if annotation.vocabs is not None:
-                assert len(annotation.vocabs) > 0
-            if annotation.section_normalized_name is not None:
-                assert len(annotation.section_normalized_name) > 0
-            if annotation.section_surface_form is not None:
-                assert len(annotation.section_surface_form) > 0
-            if annotation.cpt_code is not None:
-                assert len(annotation.cpt_code) > 0
-            if annotation.values is not None:
-                for value in annotation.values:
-                    assert value is not None
-            if annotation.concept is not None:
-                tc.TestConceptAnnotation.test_concept(annotation.concept)
-            if annotation.disambiguation_data is not None:
-                td.TestDisambiguation.test_disambiguation_data(annotation.disambiguation_data)
+    def test_attribute_values(annotation_list=None):
+        if annotation_list is not None:
+            for annotation in annotation_list:
+                if annotation.id is not None:
+                    assert len(annotation.id) > 0
+                if annotation.type is not None:
+                    assert len(annotation.type) > 0
+                assert annotation.begin is not None
+                assert annotation.end is not None
+                assert annotation.covered_text is not None
+                if annotation.uid is not None:
+                    assert annotation.uid > 0
+                if annotation.preferred_name is not None:
+                    assert len(annotation.preferred_name) > 0
+                if annotation.source is not None:
+                    assert len(annotation.source) > 0
+                if annotation.source_version is not None:
+                    assert len(annotation.source_version) > 0
+                if annotation.name is not None:
+                    assert len(annotation.name) > 0
+                if annotation.icd9_code is not None:
+                    assert len(annotation.icd9_code) > 0
+                if annotation.icd10_code is not None:
+                    assert len(annotation.icd10_code) > 0
+                if annotation.nci_code is not None:
+                    assert len(annotation.nci_code) > 0
+                if annotation.snomed_concept_id is not None:
+                    assert len(annotation.snomed_concept_id) > 0
+                if annotation.mesh_id is not None:
+                    assert len(annotation.mesh_id) > 0
+                if annotation.rx_norm_id is not None:
+                    assert len(annotation.rx_norm_id) > 0
+                if annotation.loinc_id is not None:
+                    assert len(annotation.loinc_id) > 0
+                if annotation.vocabs is not None:
+                    assert len(annotation.vocabs) > 0
+                if annotation.section_normalized_name is not None:
+                    assert len(annotation.section_normalized_name) > 0
+                if annotation.section_surface_form is not None:
+                    assert len(annotation.section_surface_form) > 0
+                if annotation.cpt_code is not None:
+                    assert len(annotation.cpt_code) > 0
+                if annotation.values is not None:
+                    for value in annotation.values:
+                        assert value is not None
+                if annotation.concept is not None:
+                    tc.TestConceptAnnotation.test_concept_annotation(annotation.concept)
+                if annotation.disambiguation_data is not None:
+                    td.TestDisambiguation.test_disambiguation_data(annotation.disambiguation_data)

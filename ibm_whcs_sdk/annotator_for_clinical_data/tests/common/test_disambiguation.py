@@ -17,5 +17,6 @@
 class TestDisambiguation(object):
 
     @staticmethod
-    def test_disambiguation_data(data):
-        assert data is not None
+    def test_disambiguation_data(data=None):
+        if data is not None:
+         assert data is not None

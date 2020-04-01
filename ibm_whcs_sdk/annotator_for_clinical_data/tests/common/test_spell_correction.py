@@ -14,15 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import ibm_whcs_sdk.annotator_for_clinical_data.tests.common.test_suggestion as ts
+import test_suggestion as ts
 
 class TestSpellCorrectionAnnotation(object):
 
     @staticmethod
-    def test_spelling_correction(annotation_list):
-        for annotation in annotation_list:
-            assert annotation.begin > 0
-            assert annotation.end > annotation.begin
-            assert annotation.covered_text is not None
-            for suggestion in annotation.suggestions:
-                ts.TestSuggestion.test_spelling_suggestion(suggestion)
+    def test_spelling_correction(annotation_list=None):
+        if annotation_list is not None:
+            for annotation in annotation_list:
+                assert annotation.begin > 0
+                assert annotation.end > annotation.begin
+                assert annotation.covered_text is not None
+                for suggestion in annotation.suggestions:
+                    ts.TestSuggestion.test_spelling_suggestion(suggestion)

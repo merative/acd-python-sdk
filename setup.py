@@ -23,12 +23,12 @@ import sys
 import pkg_resources
 
 __version__ = '0.0.1'
-PACKAGE_NAME = 'ibm-whcs-sdk'
+PACKAGE_NAME = 'ibm_whcs_sdk'
 
-with open('requirements.txt') as f:
-    install_requires = [str(req) for req in pkg_resources.parse_requirements(f)]
-with open('requirements-dev.txt') as f:
-    tests_require = [str(req) for req in pkg_resources.parse_requirements(f)]
+#with open('requirements.txt') as f:
+#    install_requires = [str(req) for req in pkg_resources.parse_requirements(f)]
+#with open('requirements-dev.txt') as f:
+#    tests_require = [str(req) for req in pkg_resources.parse_requirements(f)]
 
 if sys.argv[-1] == 'publish':
     # test server
@@ -60,7 +60,7 @@ except:
 class PyTest(TestCommand):
     def finalize_options(self):
         TestCommand.finalize_options(self)
-        self.test_args = ['--strict', '--verbose', '--tb=long', 'test']
+        self.test_args = ['--strict', '--verbose', '--tb=long', 'tests/integration']
         self.test_suite = True
 
     def run_tests(self):
@@ -70,18 +70,18 @@ class PyTest(TestCommand):
 
 class PyTestUnit(PyTest):
     def finalize_options(self):
-        self.test_args = ['--strict', '--verbose', '--tb=long', 'test/unit']
+        self.test_args = ['--strict', '--verbose', '--tb=long', 'tests/unit']
 
 class PyTestIntegration(PyTest):
     def finalize_options(self):
-        self.test_args = ['--strict', '--verbose', '--tb=long', 'test/integration']
+        self.test_args = ['--strict', '--verbose', '--tb=long', 'tests/integration']
 
 setup(name=PACKAGE_NAME,
       version=__version__,
       description='This is the Watson Health Cognitive Services Python SDK containing ACD and IML',
       license='Apache 2.0',
-      install_requires=install_requires,
-      tests_require=tests_require,
+      install_requires=['requests>=2.0,<3.0', 'python_dateutil>=2.5.3', 'websocket-client==0.48.0', 'ibm_cloud_sdk_core>=1.7.1'],
+      tests_require=['pytest', 'responses', 'pylint', 'tox', 'coverage', 'codecov', 'pytest-cov', 'bumpversion'],
       cmdclass={'test': PyTest, 'test_unit': PyTestUnit, 'test_integration': PyTestIntegration},
       author='IBM',
       author_email='dcweber@us.ibm.com',
