@@ -1,4 +1,5 @@
 #from unittest import TestCase
+import json
 import unittest
 import configparser
 import responses
@@ -137,8 +138,8 @@ class TestAnnotatorForClinicalDataV1Mock():
    #   - Assert if Responses call count != 1
    @responses.activate
    def test_get_annotator_mock_g(self):
-        endpoint = '/v1/annotators/concept_detection?version=2017-08-04'
-        url = '{0}{1}'.format(base_url, endpoint)
+        endpoint = '/v1/annotators/concept_detection?version=' + VERSION
+        url = '{0}{1}'.format(BASE_URL, endpoint)
         responses.add(responses.GET,
                   url,
                   body="{\"description\": \"MOCK Detect UMLS concepts from medical data.\"}",
@@ -153,8 +154,8 @@ class TestAnnotatorForClinicalDataV1Mock():
    #   - Assert if ACDException is raised and Responses call count != 1 or unexpected ACDException code
    @responses.activate
    def test_get_invalid_annotator_mock_e(self):
-        endpoint = '/v1/annotators/concepts_detection?version=2017-08-04'
-        url = '{0}{1}'.format(base_url, endpoint)
+        endpoint = '/v1/annotators/concepts_detection?version=' + VERSION
+        url = '{0}{1}'.format(BASE_URL, endpoint)
         error_code = 400
         responses.add(responses.GET,
                   url,
@@ -173,8 +174,8 @@ class TestAnnotatorForClinicalDataV1Mock():
    #   - Assert if Responses call count != 1
    @responses.activate
    def test_list_annotators_mock_g(self):
-        endpoint = '/v1/annotators?version=2017-08-04'
-        url = '{0}{1}'.format(base_url, endpoint)
+        endpoint = '/v1/annotators?version=' + VERSION
+        url = '{0}{1}'.format(BASE_URL, endpoint)
         responses.add(responses.GET,
                   url,
                   body="{\"allergy\": {\"description\": \"MOCK Detect allergy information from clinic notes.\"},\"attribute_detection\": {\"description\": \"MOCK **EXPERIMENTAL** Detect clinical attributes from a set of concepts and concept values.\"}}",
@@ -189,8 +190,8 @@ class TestAnnotatorForClinicalDataV1Mock():
    #   - Assert if Responses call count != 1
    @responses.activate
    def test_get_flow_mock_g(self):
-        endpoint = '/v1/flows/unittest_flow?version=2017-08-04'
-        url = '{0}{1}'.format(base_url, endpoint)
+        endpoint = '/v1/flows/unittest_flow?version=' + VERSION
+        url = '{0}{1}'.format(BASE_URL, endpoint)
         error_code = 200
         responses.add(responses.GET,
                   url,
@@ -207,8 +208,8 @@ class TestAnnotatorForClinicalDataV1Mock():
    #   - Assert if ACDException is raised and Responses call count != 1 or unexpected ACDException code
    @responses.activate
    def test_get_invalid_flow_mock_e(self):
-        endpoint = '/v1/flows/unittest_bogus_flow?version=2017-08-04'
-        url = '{0}{1}'.format(base_url, endpoint)
+        endpoint = '/v1/flows/unittest_bogus_flow?version=' + VERSION
+        url = '{0}{1}'.format(BASE_URL, endpoint)
         error_code = 404
         responses.add(responses.GET,
                   url,
@@ -228,8 +229,8 @@ class TestAnnotatorForClinicalDataV1Mock():
    #   - Assert if Responses call count != 1
    @responses.activate
    def test_get_flows_mock_g(self):
-        endpoint = '/v1/flows?version=2017-08-04'
-        url = '{0}{1}'.format(base_url, endpoint)
+        endpoint = '/v1/flows?version=' + VERSION
+        url = '{0}{1}'.format(BASE_URL, endpoint)
         responses.add(responses.GET,
                   url,
                   body="{\"mock_flow1\": {\"description\": \"MOCK Flow1 Unittest\"},\"mock_flow2\": {\"description\": \"MOCK Flow2 Unittest\"}}",
@@ -244,8 +245,8 @@ class TestAnnotatorForClinicalDataV1Mock():
    #   - Assert if Responses call count != 1
    @responses.activate
    def test_get_profile_mock_g(self):
-        endpoint = '/v1/profiles/unittest_profile?version=2017-08-04'
-        url = '{0}{1}'.format(base_url, endpoint)
+        endpoint = '/v1/profiles/unittest_profile?version=' + VERSION
+        url = '{0}{1}'.format(BASE_URL, endpoint)
         error_code = 200
         responses.add(responses.GET,
                   url,
@@ -262,8 +263,8 @@ class TestAnnotatorForClinicalDataV1Mock():
    #   - Assert if ACDException is raised and Responses call count != 1 or unexpected ACDException code
    @responses.activate
    def test_get_invalid_profile_mock_e(self):
-        endpoint = '/v1/profiles/unittest_bogus_profile?version=2017-08-04'
-        url = '{0}{1}'.format(base_url, endpoint)
+        endpoint = '/v1/profiles/unittest_bogus_profile?version=' + VERSION
+        url = '{0}{1}'.format(BASE_URL, endpoint)
         error_code = 404
         responses.add(responses.GET,
                   url,
@@ -283,8 +284,8 @@ class TestAnnotatorForClinicalDataV1Mock():
    #   - Assert if Responses call count != 1
    @responses.activate
    def test_get_profiles_mock_g(self):
-        endpoint = '/v1/profiles?version=2017-08-04'
-        url = '{0}{1}'.format(base_url, endpoint)
+        endpoint = '/v1/profiles?version=' + VERSION
+        url = '{0}{1}'.format(BASE_URL, endpoint)
         responses.add(responses.GET,
                   url,
                   body="{\"mock_profile1\": {\"description\": \"MOCK Profile1 Unittest\"},\"mock_profile2\": {\"description\": \"MOCK Profile2 Unittest\"}}",
@@ -301,8 +302,8 @@ class TestAnnotatorForClinicalDataV1Mock():
    def test_create_flow_mock_g(self):
         # Success = HTTP 201 with no response body.  This conflicts with setting header 'Accept: application/json'
         # With mock responses, will set 'body={}' to prevent JSONDecodeError
-        endpoint = '/v1/flows?version=2017-08-04'
-        url = '{0}{1}'.format(base_url, endpoint)
+        endpoint = '/v1/flows?version=' + VERSION
+        url = '{0}{1}'.format(BASE_URL, endpoint)
         responses.add(responses.POST,
                   url,
                   body="{}",
@@ -325,8 +326,8 @@ class TestAnnotatorForClinicalDataV1Mock():
    #   - Assert if ACDException is raised and Responses call count != 1 or unexpected ACDException code
    @responses.activate
    def test_create_invalid_flow_mock_e(self):
-        endpoint = '/v1/flows?version=2017-08-04'
-        url = '{0}{1}'.format(base_url, endpoint)
+        endpoint = '/v1/flows?version=' + VERSION
+        url = '{0}{1}'.format(BASE_URL, endpoint)
         error_code = 409
         responses.add(responses.POST,
                   url,
@@ -355,8 +356,8 @@ class TestAnnotatorForClinicalDataV1Mock():
    def test_create_profile_mock_g(self):
         # Success = HTTP 201 with no response body.  This conflicts with setting header 'Accept: application/json'
         # With mock responses, will set 'body={}' to prevent JSONDecodeError
-        endpoint = '/v1/profiles?version=2017-08-04'
-        url = '{0}{1}'.format(base_url, endpoint)
+        endpoint = '/v1/profiles?version=' + VERSION
+        url = '{0}{1}'.format(BASE_URL, endpoint)
         responses.add(responses.POST,
                   url,
                   body="{}",
@@ -374,8 +375,8 @@ class TestAnnotatorForClinicalDataV1Mock():
    #   - Assert if ACDException is raised and Responses call count != 1 or unexpected ACDException code
    @responses.activate
    def test_create_invalid_profile_mock_e(self):
-        endpoint = '/v1/profiles?version=2017-08-04'
-        url = '{0}{1}'.format(base_url, endpoint)
+        endpoint = '/v1/profiles?version=' + VERSION
+        url = '{0}{1}'.format(BASE_URL, endpoint)
         error_code = 400
         responses.add(responses.POST,
                   url,
@@ -395,8 +396,8 @@ class TestAnnotatorForClinicalDataV1Mock():
    #   - Assert if Responses call count != 1
    @responses.activate
    def test_delete_profile_mock_g(self):
-        endpoint = '/v1/profiles/unittest_profile?version=2017-08-04'
-        url = '{0}{1}'.format(base_url, endpoint)
+        endpoint = '/v1/profiles/unittest_profile?version=' + VERSION
+        url = '{0}{1}'.format(BASE_URL, endpoint)
         responses.add(responses.DELETE,
                   url,
                   body="{}",
@@ -411,8 +412,8 @@ class TestAnnotatorForClinicalDataV1Mock():
    #   - Assert if ACDException is raised and Responses call count != 1 or unexpected ACDException code
    @responses.activate
    def test_delete_invalid_profile_mock_e(self):
-        endpoint = '/v1/profiles/unittest_bad_profile?version=2017-08-04'
-        url = '{0}{1}'.format(base_url, endpoint)
+        endpoint = '/v1/profiles/unittest_bad_profile?version=' + VERSION
+        url = '{0}{1}'.format(BASE_URL, endpoint)
         error_code = 404
         responses.add(responses.DELETE,
                   url,
@@ -431,8 +432,8 @@ class TestAnnotatorForClinicalDataV1Mock():
    #   - Assert if Responses call count != 1
    @responses.activate
    def test_delete_flow_mock_g(self):
-        endpoint = '/v1/flows/unittest_flow?version=2017-08-04'
-        url = '{0}{1}'.format(base_url, endpoint)
+        endpoint = '/v1/flows/unittest_flow?version=' + VERSION
+        url = '{0}{1}'.format(BASE_URL, endpoint)
         responses.add(responses.DELETE,
                   url,
                   body="{}",
@@ -447,8 +448,8 @@ class TestAnnotatorForClinicalDataV1Mock():
    #   - Assert if ACDException is raised and Responses call count != 1 or unexpected ACDException code
    @responses.activate
    def test_delete_invalid_flow_mock_e(self):
-        endpoint = '/v1/flows/unittest_bad_flow?version=2017-08-04'
-        url = '{0}{1}'.format(base_url, endpoint)
+        endpoint = '/v1/flows/unittest_bad_flow?version=' + VERSION
+        url = '{0}{1}'.format(BASE_URL, endpoint)
         error_code = 404
         responses.add(responses.DELETE,
                   url,
@@ -467,8 +468,8 @@ class TestAnnotatorForClinicalDataV1Mock():
    #   - Assert if Responses call count != 1
    @responses.activate
    def test_update_profile_mock_g(self):
-        endpoint = '/v1/profiles/unittest_new_profile?version=2017-08-04'
-        url = '{0}{1}'.format(base_url, endpoint)
+        endpoint = '/v1/profiles/unittest_new_profile?version=' + VERSION
+        url = '{0}{1}'.format(BASE_URL, endpoint)
         responses.add(responses.PUT,
                   url,
                   body="{}",
@@ -486,8 +487,8 @@ class TestAnnotatorForClinicalDataV1Mock():
    #   - Assert if Responses call count != 1
    @responses.activate
    def test_update_flow_mock_g(self):
-        endpoint = '/v1/flows/unittest_new_flow?version=2017-08-04'
-        url = '{0}{1}'.format(base_url, endpoint)
+        endpoint = '/v1/flows/unittest_new_flow?version=' + VERSION
+        url = '{0}{1}'.format(BASE_URL, endpoint)
         responses.add(responses.PUT,
                   url,
                   body="{}",
@@ -501,7 +502,7 @@ class TestAnnotatorForClinicalDataV1Mock():
         test_annoFlow = wh.AnnotatorFlow(flow = test_flow)
         test_annoFlows = []
         test_annoFlows.append(test_annoFlow)
-        ACD.update_persisted_flow(id = "unittest_new_flow", new_annotator_flows = test_annoFlows)
+        ACD.update_persisted_flow(flow_id = "unittest_new_flow", new_annotator_flows = test_annoFlows)
         assert len(responses.calls) == 1
 
    # TEST:  Update invalid profile definition using mock response
@@ -510,8 +511,8 @@ class TestAnnotatorForClinicalDataV1Mock():
    #   - Assert if ACDException is raised and Responses call count != 1 or unexpected ACDException code
    @responses.activate
    def test_update_invalid_profile_mock_e(self):
-        endpoint = '/v1/profiles/unittest_bad_profile?version=2017-08-04'
-        url = '{0}{1}'.format(base_url, endpoint)
+        endpoint = '/v1/profiles/unittest_bad_profile?version=' + VERSION
+        url = '{0}{1}'.format(BASE_URL, endpoint)
         error_code = 404
         responses.add(responses.PUT,
                   url,
@@ -531,8 +532,8 @@ class TestAnnotatorForClinicalDataV1Mock():
    #   - Assert if ACDException is raised and Responses call count != 1 or unexpected ACDException code
    @responses.activate
    def test_update_invalid_flow_mock_e(self):
-        endpoint = '/v1/flows/unittest_bad_flow?version=2017-08-04'
-        url = '{0}{1}'.format(base_url, endpoint)
+        endpoint = '/v1/flows/unittest_bad_flow?version=' + VERSION
+        url = '{0}{1}'.format(BASE_URL, endpoint)
         error_code = 400
         responses.add(responses.PUT,
                   url,
@@ -541,7 +542,7 @@ class TestAnnotatorForClinicalDataV1Mock():
                   content_type='application/json')
         test_annoFlows = []
         try:
-            ACD.update_persisted_flow(id = "unittest_bad_flow", new_annotator_flows = test_annoFlows)
+            ACD.update_persisted_flow(flow_id = "unittest_bad_flow", new_annotator_flows = test_annoFlows)
         except wh.ACDException as ex:
             assert len(responses.calls) == 1
             assert error_code == ex.code
@@ -553,8 +554,8 @@ class TestAnnotatorForClinicalDataV1Mock():
    @responses.activate
    def test_analyze_with_flow_invalid_flow_mock_e(self):
         error_code = 404
-        endpoint = '/v1/analyze/unittest_bogus_flow?version=2017-08-04'
-        url = '{0}{1}'.format(base_url, endpoint)
+        endpoint = '/v1/analyze/unittest_bogus_flow?version=' + VERSION
+        url = '{0}{1}'.format(BASE_URL, endpoint)
         responses.add(responses.POST,
                   url,
                   body="{\"code\": 404, \"message\": \"Flow ID: unittest_bogus_flow was not found in the list.\", \"level\": \"ERROR\", \"correlationId\": \"12345678\"}",
@@ -572,8 +573,8 @@ class TestAnnotatorForClinicalDataV1Mock():
    @responses.activate
    def test_delete_user_data_mock_e(self):
         error_code = 400
-        endpoint = '/v1/user_data'
-        url = '{0}{1}'.format(base_url, endpoint)
+        endpoint = '/v1/user_data?version=' + VERSION
+        url = '{0}{1}'.format(BASE_URL, endpoint)
         responses.add(responses.DELETE,
                   url,
                   body="{\"code\": 400, \"message\": \"The tenant id could not be determined from the request.\", \"level\": \"ERROR\", \"correlationId\": \"12345678\"}",
@@ -582,7 +583,7 @@ class TestAnnotatorForClinicalDataV1Mock():
         try:
             resp = ACD.delete_user_data()
         except wh.ACDException as ex:
-            print ("Error Occurred:  Code ", ex.code, " Message ", ex.message, " CorrelationId ", ex.correlationId)
+            print ("Error Occurred:  Code ", ex.code, " Message ", ex.message, " CorrelationId ", ex.correlation_id)
             assert ex.code == error_code
 
 

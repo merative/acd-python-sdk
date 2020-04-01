@@ -17,30 +17,31 @@
 class TestProcedureAnnotation(object):
 
     @staticmethod
-    def test_procedure_annotation(annotation_list):
-        for annotation in annotation_list:
-            if annotation.id is not None:
-                assert len(annotation.id) > 0
-            if annotation.type is not None:
-                assert len(annotation.type) > 0
-            assert annotation.begin is not None
-            assert annotation.end is not None
-            assert annotation.covered_text is not None
-            if annotation.uid is not None:
-                assert annotation.uid > 0
-            if annotation.cui is not None:
-                assert len(annotation.cui) > 0
-            if annotation.date_in_milliseconds is not None:
-                assert len(annotation.date_in_milliseconds) > 0
-            if annotation.snomed_concept_id is not None:
-                assert len(annotation.snomed_concept_id) > 0
-            if annotation.procedure_normalized_name is not None:
-                assert len(annotation.procedure_normalized_name) > 0
-            if annotation.procedure_surface_form is not None:
-                assert len(annotation.procedure_surface_form) > 0
-            if annotation.section_normalized_name is not None:
-                assert len(annotation.section_normalized_name) > 0
-            if annotation.section_surface_form is not None:
-                assert len(annotation.section_surface_form) > 0
-            if annotation.disambiguation_data is not None:
-                assert annotation.disambiguation_data.validity is not None
+    def test_procedure_annotation(annotation_list=None):
+        if annotation_list is not None:
+            for annotation in annotation_list:
+                if annotation.id is not None:
+                    assert len(annotation.id) > 0
+                if annotation.type is not None:
+                    assert len(annotation.type) > 0
+                assert annotation.begin is not None
+                assert annotation.end is not None
+                assert annotation.covered_text is not None
+                if annotation.uid is not None:
+                    assert annotation.uid > 0
+                if annotation.cui is not None:
+                    assert len(annotation.cui) > 0
+                if annotation.date_in_milliseconds is not None:
+                    assert len(annotation.date_in_milliseconds) > 0
+                if annotation.snomed_concept_id is not None:
+                    assert len(annotation.snomed_concept_id) > 0
+                if annotation.procedure_normalized_name is not None:
+                    assert len(annotation.procedure_normalized_name) > 0
+                if annotation.procedure_surface_form is not None:
+                    assert len(annotation.procedure_surface_form) > 0
+                if annotation.section_normalized_name is not None:
+                    assert len(annotation.section_normalized_name) > 0
+                if annotation.section_surface_form is not None:
+                    assert len(annotation.section_surface_form) > 0
+                if annotation.disambiguation_data is not None:
+                    assert annotation.disambiguation_data.validity is not None
