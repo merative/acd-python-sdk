@@ -10,11 +10,13 @@ The IBM Watson Health Cognitive Services (WHCS) Python SDK allows developers to 
 | [Annotator for Clinical data](https://cloud.ibm.com/apidocs/wh-acd) | annotator_for_clinical_data |
 | [Insights for Medical Literature](https://cloud.ibm.com/apidocs/wh-iml) | insights_for_medical_literature |
 
+NOTE:  You must be signed in to IBM Cloud to see the docs.
+
 ## Prerequisites
 
 [ibm-cloud-onboarding]: https://cloud.ibm.com/registration?target=%2Fdeveloper%2Fwatson&
 
-An [IBM CLoud](ibm-cloud-onboarding) account.
+An [IBM Cloud](ibm-cloud-onboarding) account.
 An IAM API key to allow the SDK to access your provisioned service instance.
 Python 3.5 or above
 
@@ -23,11 +25,11 @@ Python 3.5 or above
 To install, use `pip`
 
 ```bash
-pip install --upgrade whys-python-sdk
+pip install --upgrade ibm-whcs-sdk
 ```
 
 ## Authentication
-The whcs-python-sdk project supports the following types of authentication:
+The ibm-whcs-sdk project supports the following types of authentication:
 - Identity and Access Management (IAM)
 
 For more information about how to use authentication with your services click [here](Authentication.md)
@@ -43,11 +45,11 @@ For SDK usage examples, please see the service API documentation.  There are cod
 ## Questions
 
 If you are having difficulties using this SDK or have a question about the IBM Cloud services,
-please ask a question at [IBM Watson Health Support](https://ibmwatsonhealth.force.com/mysupport/s/).
+please ask a question at [IBM Watson Health Support](https://ibmwatsonhealth.force.com/mysupport/s/)of [Stack Overflow](http://stackoverflow.com/questions/ask?tags=ibm-cloud).
 
 ## Issues
 If you encounter an issue with the project, you are welcome to submit a
-[bug report](https://github.com/IBM/whcs-python-sdk>/issues).
+[bug report](https://github.com/IBM/whcs-python-sdk/issues).
 Before that, please search for similar issues. It's possible that someone has already reported the problem.
 
 ## Logging
