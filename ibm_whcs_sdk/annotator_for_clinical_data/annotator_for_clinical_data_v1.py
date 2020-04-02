@@ -27,9 +27,11 @@ from ibm_cloud_sdk_core import ApiException
 from ibm_cloud_sdk_core.authenticators import NoAuthAuthenticator
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 from ibm_cloud_sdk_core.authenticators import BasicAuthenticator
+from ibm_whcs_sdk.common import get_sdk_headers
 urllib3.disable_warnings()
 
-LOGGER = logging.getLogger('AnnotatorForClinicalData')
+SERVICE_NAME = 'AnnotatorForClinicalData'
+LOGGER = logging.getLogger(SERVICE_NAME)
 
 ##############################################################################
 # Exception Handling
@@ -157,7 +159,7 @@ class AnnotatorForClinicalDataV1(BaseService):
         return final
 
     # Name modified manually from analyze to analyze_org
-    def analyze_org(self, unstructured=None, annotator_flows=None):
+    def analyze_org(self, unstructured=None, annotator_flows=None, **kwargs):
         """
         Detect entities & relations from unstructured data and return as 'dict'.
 
@@ -221,6 +223,12 @@ class AnnotatorForClinicalDataV1(BaseService):
             annotator_flows = [x._to_dict() if hasattr(x, "_to_dict") else x for x in annotator_flows]
 
         headers = {'content-type': 'application/json'}
+        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='analyze_org')
+        headers.update(sdk_headers)
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
         params = {
             'version': self.version
         }
@@ -236,7 +244,7 @@ class AnnotatorForClinicalDataV1(BaseService):
         return response
 
     # Manually added method.
-    def analyze(self, text, flow):
+    def analyze(self, text, flow, **kwargs):
         """
         Detect entities & relations from unstructured data and return as 'ContainerGroup'.
 
@@ -255,17 +263,17 @@ class AnnotatorForClinicalDataV1(BaseService):
                 unstructured_container = UnstructuredContainer(text=item)
                 list_unstructure_container.append(unstructured_container)
             result = (ContainerGroup._from_dict(self.analyze_org(list_unstructure_container,
-                                                                 list_annotator_flow).get_result()))
+                                                                 list_annotator_flow, **kwargs).get_result()))
         else:
             unstructured_container = UnstructuredContainer(text=text)
             list_unstructure_container = [unstructured_container]
             result = (ContainerGroup._from_dict(self.analyze_org(list_unstructure_container,
-                                                                 list_annotator_flow).get_result()).unstructured[0].data)
+                                                                 list_annotator_flow, **kwargs).get_result()).unstructured[0].data)
 
         return result
 
     # Name modified manually from analyze_with_flow to analyze_with_flow_org
-    def analyze_with_flow_org(self, flow_id, request, content_type='text/plain'):
+    def analyze_with_flow_org(self, flow_id, request, content_type='text/plain', **kwargs):
         """
         Analyze with a persisted flow and return as a 'dict'.
 
@@ -291,6 +299,13 @@ class AnnotatorForClinicalDataV1(BaseService):
         headers = {
             'content-type': content_type
         }
+
+        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='analyze_with_flow_org')
+        headers.update(sdk_headers)
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+        
         params = {
             'version': self.version
         }
@@ -305,7 +320,7 @@ class AnnotatorForClinicalDataV1(BaseService):
         return response
 
     # Manually added method.
-    def analyze_with_flow(self, flow_id, text):
+    def analyze_with_flow(self, flow_id, text, **kwargs):
         """
         Analyze with a persisted flow and return as a 'ContainerGroup'.
 
@@ -318,13 +333,13 @@ class AnnotatorForClinicalDataV1(BaseService):
         if isinstance(text, list):
 
             request_container = RequestContainer(text)
-            result = self.analyze_with_flow_org(flow_id, request_container._to_dict(), 'application/json')
+            result = self.analyze_with_flow_org(flow_id, request_container._to_dict(), 'application/json', **kwargs)
             result = ContainerGroup._from_dict(result.get_result())
         elif isinstance(text, UnstructuredContainer):
 
             list_unstructured_container = [text]
             request_container = RequestContainer(list_unstructured_container)
-            result = self.analyze_with_flow_org(flow_id, request_container._to_dict(), 'application/json')
+            result = self.analyze_with_flow_org(flow_id, request_container._to_dict(), 'application/json', **kwargs)
             result = ContainerGroup._from_dict(result.get_result()).unstructured[0].data
         else:
 
@@ -333,7 +348,7 @@ class AnnotatorForClinicalDataV1(BaseService):
 
         return result
 
-    def get_annotator(self, id):
+    def get_annotator(self, id, **kwargs):
         """
         Get details of a specific annotator.
 
@@ -343,6 +358,13 @@ class AnnotatorForClinicalDataV1(BaseService):
         :return: A `DetailedResponse` containing the result, headers and HTTP status code.
         :rtype: DetailedReponse with 'dict' representing an Annotator object.
         """
+        headers = {}
+        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='get_annotator')
+        headers.update(sdk_headers)
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
         params = {
             'version': self.version
         }
@@ -352,7 +374,7 @@ class AnnotatorForClinicalDataV1(BaseService):
 
         return response
 
-    def list_annotators(self):
+    def list_annotators(self, **kwargs):
         """
         Get list of available annotators.
 
@@ -362,6 +384,13 @@ class AnnotatorForClinicalDataV1(BaseService):
         :return: A `DetailedResponse` containing the result, headers and HTTP status code.
         :rtype: DetailedReponse with 'dict'.
         """
+        headers = {}
+        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='list_annotators')
+        headers.update(sdk_headers)
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+        
         params = {
             'version': self.version
         }
@@ -375,7 +404,7 @@ class AnnotatorForClinicalDataV1(BaseService):
     # Flows
     #########################
 
-    def create_persisted_flow(self, new_id=None, new_name=None, new_description=None, new_annotator_flows=None):
+    def create_persisted_flow(self, new_id=None, new_name=None, new_description=None, new_annotator_flows=None, **kwargs):
         """
         Persist a new flow definition.
 
@@ -417,6 +446,12 @@ class AnnotatorForClinicalDataV1(BaseService):
             new_annotator_flows = [x._to_dict() if hasattr(x, "_to_dict") else x for x in new_annotator_flows]
 
         headers = {'content-type': 'application/json'}
+        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='create_persisted_flow')
+        headers.update(sdk_headers)
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
         params = {
             'version': self.version
         }
@@ -433,7 +468,7 @@ class AnnotatorForClinicalDataV1(BaseService):
 
         return response
 
-    def delete_persisted_flow(self, id):
+    def delete_persisted_flow(self, id, **kwargs):
         """
         Delete a persisted flow.
 
@@ -444,16 +479,23 @@ class AnnotatorForClinicalDataV1(BaseService):
         :rtype: DetaileddReponse with 'dict'.
         """
 
+        headers = {}
+        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='delete_persisted_flow')
+        headers.update(sdk_headers)
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
         params = {
             'version': self.version
         }
         url = 'v1/flows/{0}'.format(id)
-        request = self.prepare_request(method='DELETE', url=url, params=params)
+        request = self.prepare_request(method='DELETE', url=url, params=params, headers=headers)
         response = self.request_acd(request)
 
         return response
 
-    def get_flow(self, id):
+    def get_flow(self, id, **kwargs):
         """
         Get details of a specific flow.
 
@@ -464,17 +506,24 @@ class AnnotatorForClinicalDataV1(BaseService):
         :rtype: DetaileddReponse with 'dict' representing an AcdFlow object.
         """
 
+        headers = {}
+        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='get_flow')
+        headers.update(sdk_headers)
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
         params = {
             'version': self.version
         }
         url = 'v1/flows/{0}'.format(id)
-        request = self.prepare_request(method='GET', url=url, params=params)
+        request = self.prepare_request(method='GET', url=url, params=params, headers=headers)
         response = self.request_acd(request)
 
         return response
 
 
-    def get_flows(self):
+    def get_flows(self, **kwargs):
         """
         Get list of available persisted flows.
 
@@ -483,17 +532,25 @@ class AnnotatorForClinicalDataV1(BaseService):
         :return: A `DetailedResponse` containing the result, headers and HTTP status code.
         :rtype: DetaileddReponse with 'dict'.
         """
+
+        headers = {}
+        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='get_flows')
+        headers.update(sdk_headers)
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
         params = {
             'version': self.version
         }
         url = 'v1/flows'
-        request = self.prepare_request(method='GET', url=url, params=params)
+        request = self.prepare_request(method='GET', url=url, params=params, headers=headers)
         response = self.request_acd(request)
 
         return response
 
 
-    def update_persisted_flow(self, flow_id=None, new_name=None, new_description=None, new_annotator_flows=None):
+    def update_persisted_flow(self, flow_id=None, new_name=None, new_description=None, new_annotator_flows=None, **kwargs):
         """
         Update a persisted flow definition.
 
@@ -512,6 +569,12 @@ class AnnotatorForClinicalDataV1(BaseService):
             new_annotator_flows = [x._to_dict() if hasattr(x, "_to_dict") else x for x in new_annotator_flows]
 
         headers = {'content-type': 'application/json'}
+        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='update_persisted_flow')
+        headers.update(sdk_headers)
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
         params = {
             'version': self.version
         }
@@ -533,7 +596,7 @@ class AnnotatorForClinicalDataV1(BaseService):
     # Profiles
     #########################
 
-    def create_profile(self, new_id=None, new_name=None, new_description=None, new_annotators=None):
+    def create_profile(self, new_id=None, new_name=None, new_description=None, new_annotators=None, **kwargs):
         """
         Persist a new profile.
 
@@ -570,6 +633,11 @@ class AnnotatorForClinicalDataV1(BaseService):
             new_annotators = [x._to_dict() if hasattr(x, "_to_dict") else x for x in new_annotators]
 
         headers = {'content-type': 'application/json'}
+        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='create_profile')
+        headers.update(sdk_headers)
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
         params = {
             'version': self.version
         }
@@ -587,7 +655,7 @@ class AnnotatorForClinicalDataV1(BaseService):
         return response
 
 
-    def delete_profile(self, id):
+    def delete_profile(self, id, **kwargs):
         """
         Delete a persisted profile.
 
@@ -597,17 +665,23 @@ class AnnotatorForClinicalDataV1(BaseService):
         :return: A `DetailedResponse` containing the result, headers and HTTP status code.
         :rtype: DetaileddReponse with 'dict'.
         """
+        headers = {}
+        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='delete_profile')
+        headers.update(sdk_headers)
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
         params = {
             'version': self.version
         }
         url = 'v1/profiles/{0}'.format(id)
-        request = self.prepare_request(method='DELETE', url=url, params=params)
+        request = self.prepare_request(method='DELETE', url=url, params=params, headers=headers)
         response = self.request_acd(request)
 
         return response
 
 
-    def get_profile(self, id):
+    def get_profile(self, id, **kwargs):
         """
         Get details of a specific profile.
 
@@ -617,18 +691,23 @@ class AnnotatorForClinicalDataV1(BaseService):
         :return: A `DetailedResponse` containing the result, headers and HTTP status code.
         :rtype: DetaileddReponse with 'dict' representing an AcdProfile object.
         """
+        headers = {}
+        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='get_profile')
+        headers.update(sdk_headers)
 
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
         params = {
             'version': self.version
         }
         url = 'v1/profiles/{0}'.format(id)
-        request = self.prepare_request(method='GET', url=url, params=params)
+        request = self.prepare_request(method='GET', url=url, params=params, headers=headers)
         response = self.request_acd(request)
 
         return response
 
 
-    def get_profiles(self):
+    def get_profiles(self, **kwargs):
         """
         Get list of available persisted profiles.
 
@@ -637,18 +716,23 @@ class AnnotatorForClinicalDataV1(BaseService):
         :return: A `DetailedResponse` containing the result, headers and HTTP status code.
         :rtype: DetaileddReponse with 'dict'.
         """
+        headers = {}
+        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='get_profiles')
+        headers.update(sdk_headers)
 
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
         params = {
             'version': self.version
         }
         url = 'v1/profiles'
-        request = self.prepare_request(method='GET', url=url, params=params)
+        request = self.prepare_request(method='GET', url=url, params=params, headers=headers)
         response = self.request_acd(request)
 
         return response
 
 
-    def update_profile(self, id=None, new_name=None, new_description=None, new_annotators=None):
+    def update_profile(self, id=None, new_name=None, new_description=None, new_annotators=None, **kwargs):
         """
         Update a persisted profile definition.
 
@@ -667,6 +751,11 @@ class AnnotatorForClinicalDataV1(BaseService):
             new_annotators = [x._to_dict() if hasattr(x, "_to_dict") else x for x in new_annotators]
 
         headers = {'content-type': 'application/json'}
+        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='analyze_org')
+        headers.update(sdk_headers)
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
         params = {
             'version': self.version
         }
@@ -685,7 +774,7 @@ class AnnotatorForClinicalDataV1(BaseService):
         return response
 
 
-    def delete_user_data(self):
+    def delete_user_data(self, **kwargs):
         """
         The ACD service enables you to delete all data that is associated to a specific tenant.
         Every ACD request is, by default, associated with a tenant ID. A default tenant id is assigned
@@ -696,13 +785,18 @@ class AnnotatorForClinicalDataV1(BaseService):
 
         :return nothing is returned if successful
         """
+        headers = {}
+        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='analyze_org')
+        headers.update(sdk_headers)
 
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
         params = {
             'version': self.version
         }
 
         url = 'v1/user_data'
-        request = self.prepare_request(method='DELETE', url=url, params=params)
+        request = self.prepare_request(method='DELETE', url=url, params=params, headers=headers)
         response = self.request_acd(request)
 
         return response
@@ -710,7 +804,7 @@ class AnnotatorForClinicalDataV1(BaseService):
     #########################
     # Status
     #########################
-    def get_health_check_status(self, accept=None, apikey=None, format=None):
+    def get_health_check_status(self, accept=None, apikey=None, format=None, **kwargs):
         """
         Determine if service is running correctly.
         This resource differs from /status in that it will will always return a 500 error
@@ -727,6 +821,11 @@ class AnnotatorForClinicalDataV1(BaseService):
         headers = {
             'Accept': accept
         }
+        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='analyze_org')
+        headers.update(sdk_headers)
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
         params = {
             'version': self.version,
             'apikey': apikey,
