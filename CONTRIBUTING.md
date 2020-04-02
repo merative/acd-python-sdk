@@ -1,7 +1,7 @@
 # Questions
 
 If you are having difficulties using the APIs or have a question about the IBM Cloud and Services,
-please ask a question on [dW Answers][dw] or [Stack Overflow][stackoverflow].
+please ask a question on [IBM Watson Health Support](https://ibmwatsonhealth.force.com/mysupport/s/) or [Stack Overflow](http://stackoverflow.com/questions/ask?tags=ibm-cloud).
 
 # Issues
 
@@ -62,10 +62,14 @@ You probably want to set up a [virtualenv].
     default values for a provisioned Standard plan instance of the service.
     Populate the missing elements from the settings section so a connection
     to your service instance can be generated.  From the root directory
-    Of the cloned repositoyr run the following command:
+    Of the cloned repositoy run the following command:
     ```sh
     Python -m pytest ibm_whcs_sdk/<service_name>/tests/functional
     ```
+    To run a specific test run the following command:
+    ```sh
+    Python -m purest ibm_whcs_sdk/<service_name>/tests/functional/<test_module>
+
     NOTE:  If you have provisioned a Custom plan instance of Insights for Medical Literature
     The Tests will fail until enriched content has been added to the instance.  All default
     Values may need to be updated to reflect your level of enrichment.
