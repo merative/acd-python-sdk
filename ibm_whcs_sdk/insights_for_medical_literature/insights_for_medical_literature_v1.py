@@ -651,7 +651,7 @@ class InsightsForMedicalLiteratureServiceV1(BaseService):
         url = '/v1/corpora/{0}/search'.format(*self._encode_path_vars(corpus))
         request = self.prepare_request(method='POST', url=url, headers=headers,
                                        params=params, data=json_string)
-        response = self.send(request)
+        response = self.request_iml(request)
 
         return response
 
@@ -678,7 +678,7 @@ class InsightsForMedicalLiteratureServiceV1(BaseService):
 
         url = '/v1/corpora/{0}/search/metadata'.format(*self._encode_path_vars(corpus))
         request = self.prepare_request(method='GET', url=url, params=params)
-        response = self.send(request)
+        response = self.request_iml(request)
 
         return response
 
