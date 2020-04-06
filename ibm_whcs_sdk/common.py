@@ -22,7 +22,7 @@ import platform
 from .version import __version__
 
 HEADER_NAME_USER_AGENT = 'User-Agent'
-SDK_NAME = 'ibm-iae-python-sdk'
+SDK_NAME = 'whcs-python-sdk'
 
 def get_system_info():
     """
