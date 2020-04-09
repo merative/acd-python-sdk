@@ -3,7 +3,7 @@
 
 # Watson Health Cognitive Services Python SDK Version 0.0.10
 
-The IBM Watson Health Cognitive Services (WHCS) Python SDK allows developers to programmaticlly interact with the following WHCS services:
+The IBM Watson Health Cognitive Services (WHCS) Python SDK allows developers to programmatically interact with the following WHCS services:
 
 | Service Name | Artifact Id |
 |--------------|-------------|
@@ -14,9 +14,7 @@ NOTE:  You must be signed in to IBM Cloud to see the docs.
 
 ## Prerequisites
 
-[ibm-cloud-onboarding]: https://cloud.ibm.com/registration?target=%2Fdeveloper%2Fwatson&
-
-An [IBM Cloud](ibm-cloud-onboarding) account.
+An [IBM Cloud](https://cloud.ibm.com/registration?target=%2Fdeveloper%2Fwatson&) account.
 An IAM API key to allow the SDK to access your provisioned service instance.
 Python 3.5 or above
 
