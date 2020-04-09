@@ -10,12 +10,12 @@ The apikey for your service can be found by clicking the service instance of the
 import ibm_whcs_sdk.annotator_for_clincial_data as acd
 
 
-Service = acd('my_service_url', 'my_apikey', 'api_version')
+Service = acd.AnnotatorForClinicalDataV1('my_service_url', 'my_apikey', 'api_version')
 ```
 
 ```python
 import ibm_whcs_sdk.insights_for_medical_literature as iml
 
 
-Service = iml.InsightsFOrMedicalLiteratureServiceV1('my_service_url', 'my_apikey', 'api_version')
+Service = iml.InsightsForMedicalLiteratureServiceV1('my_service_url', 'my_apikey', 'api_version')
 ```
