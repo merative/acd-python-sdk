@@ -7,15 +7,15 @@ The apikey for your service can be found by clicking the service instance of the
 
 ## programming examples
 ```python
-import watson_health_cognitive_services as whys
+import ibm_whcs_sdk.annotator_for_clincial_data as acd
 
 
-Service = whcs.AnnotatorForClinicalDataV1('my_service_url', 'my_apikey', 'api_version')
+Service = acd('my_service_url', 'my_apikey', 'api_version')
 ```
 
 ```python
-import watson_health_cognitive_services as whys
+import ibm_whcs_sdk.insights_for_medical_literature as iml
 
 
-Service = whcs.InsightsFOrMedicalLiteratureServiceV1('my_service_url', 'my_apikey', 'api_version')
+Service = iml.InsightsFOrMedicalLiteratureServiceV1('my_service_url', 'my_apikey', 'api_version')
 ```
