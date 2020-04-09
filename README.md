@@ -89,5 +89,5 @@ See [CONTRIBUTING](CONTRIBUTING.md).
 
 ## License
 
-The IBM Cloud MySDK Java SDK is released under the Apache 2.0 license.
-The license's full text can be found in [LICENSE](LICENSE).
+The IBM Watson Health Cognitive Services Python SDK is released under the Apache 2.0 license.
+The license's full text can be found in [LICENSE](LICENSE.md).
