@@ -15,7 +15,9 @@ NOTE:  You must be signed in to IBM Cloud to see the docs.
 ## Prerequisites
 
 An [IBM Cloud](https://cloud.ibm.com/registration?target=%2Fdeveloper%2Fwatson&) account.
+
 An IAM API key to allow the SDK to access your provisioned service instance.
+
 Python 3.5 or above
 
 ## Installation
