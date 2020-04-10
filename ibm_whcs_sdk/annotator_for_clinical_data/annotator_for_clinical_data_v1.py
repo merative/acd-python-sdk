@@ -95,7 +95,7 @@ class AnnotatorForClinicalDataV1(BaseService):
                 all error messages are logged.  Valid values are CRITICAL, ERROR, WARNING,
                 INFO, DEBUG, and NOTSET
         :param bool disable_ssl_verification: (optional) Determines whethher SSL verification
-                should be performed during service calls.  Default is False.  Setting to 
+                should be performed during service calls.  Default is False.  Setting to
                 True is not recommend for production environments.
         """
 
@@ -150,8 +150,12 @@ class AnnotatorForClinicalDataV1(BaseService):
                 error_message = "No error message available"
             if api_except.code is not None:
                 status_code = api_except.code
-            if api_except.global_transaction_id is not None:
-                correlation_id = api_except.global_transaction_id
+            if (
+                api_except.http_response is not None
+                and api_except.http_response.headers is not None
+                and api_except.http_response.headers.get('x-correlation-id') is not None
+                ):
+                correlation_id = api_except.http_response.headers.get('x-correlation-id')
             else:
                 correlation_id = "None"
             raise ACDException(status_code, error_message, correlation_id)
@@ -305,7 +309,7 @@ class AnnotatorForClinicalDataV1(BaseService):
 
         if 'headers' in kwargs:
             headers.update(kwargs.get('headers'))
-        
+
         params = {
             'version': self.version
         }
@@ -390,7 +394,7 @@ class AnnotatorForClinicalDataV1(BaseService):
 
         if 'headers' in kwargs:
             headers.update(kwargs.get('headers'))
-        
+
         params = {
             'version': self.version
         }
