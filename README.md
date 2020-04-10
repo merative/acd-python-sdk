@@ -45,7 +45,7 @@ For SDK usage examples, please see the service API documentation.  There are cod
 ## Questions
 
 If you are having difficulties using this SDK or have a question about the IBM Cloud services,
-please ask a question at [IBM Watson Health Support](https://ibmwatsonhealth.force.com/mysupport/s/)of [Stack Overflow](http://stackoverflow.com/questions/ask?tags=ibm-cloud).
+please ask a question at [IBM Watson Health Support](https://ibmwatsonhealth.force.com/mysupport/s/) or [Stack Overflow](http://stackoverflow.com/questions/ask?tags=ibm-cloud).
 
 ## Issues
 If you encounter an issue with the project, you are welcome to submit a
