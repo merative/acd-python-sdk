@@ -22,7 +22,7 @@ import os
 import sys
 import pkg_resources
 
-__version__ = '0.0.10'
+__version__ = '0.0.11'
 PACKAGE_NAME = 'ibm_whcs_sdk'
 
 #with open('requirements.txt') as f:
