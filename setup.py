@@ -14,8 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-from __future__ import print_function
 from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
 import os
@@ -24,6 +22,7 @@ import pkg_resources
 
 __version__ = '0.0.12'
 PACKAGE_NAME = 'ibm_whcs_sdk'
+PACKAGE_DESC = 'This is the Watson Health Cognitive Services Python SDK containing ACD and IML',
 
 #with open('requirements.txt') as f:
 #    install_requires = [str(req) for req in pkg_resources.parse_requirements(f)]
@@ -41,21 +40,8 @@ if sys.argv[-1] == 'publish':
     sys.exit()
 
 
-# Convert README.md to README.rst for pypi
-try:
-    from pypandoc import convert
-
-    def read_md(f):
-        return convert(f, 'rst')
-
-    # read_md = lambda f: convert(f, 'rst')
-except:
-    print('warning: pypandoc module not found, '
-          'could not convert Markdown to RST')
-
-    def read_md(f):
-        return open(f, 'rb').read().decode(encoding='utf-8')
-    # read_md = lambda f: open(f, 'rb').read().decode(encoding='utf-8')
+with open("README.md", "r") as fh:
+    readme = fh.read()
 
 class PyTest(TestCommand):
     def finalize_options(self):
@@ -76,24 +62,28 @@ class PyTestIntegration(PyTest):
     def finalize_options(self):
         self.test_args = ['--strict', '--verbose', '--tb=long', 'tests/integration']
 
-setup(name=PACKAGE_NAME,
+setup(name=PACKAGE_NAME.replace('_', '-'),
       version=__version__,
-      description='This is the Watson Health Cognitive Services Python SDK containing ACD and IML',
+      description=PACKAGE_DESC,
       license='Apache 2.0',
       install_requires=['requests>=2.0,<3.0', 'python_dateutil>=2.5.3', 'websocket_client>=0.48.0', 'ibm_cloud_sdk_core>=1.7.1'],
       tests_require=['pytest', 'responses', 'pylint', 'tox', 'coverage', 'codecov', 'pytest-cov', 'bumpversion'],
       cmdclass={'test': PyTest, 'test_unit': PyTestUnit, 'test_integration': PyTestIntegration},
       author='IBM',
       author_email='dcweber@us.ibm.com',
-      long_description=read_md('README.md'),
+      long_description=readme,
       long_description_content_type='text/markdown',
       url='https://github.com/IBM/whcs-python-sdk',
       packages=find_packages(),
       include_package_data=True,
-      keywords='',
+      keywords='PACKAGE_NAME',
       classifiers=[
            'Programming Language :: Python',
            'Programming Language :: Python :: 3',
+           'Programming Language :: Python :: 3.5',
+           'Programming Language :: Python :: 3.6',
+           'Programming Language :: Python :: 3.7',
+           'Programming Language :: Python :: 3.8',
            'Development Status :: 4 - Beta',
            'Intended Audience :: Developers',
            'License :: OSI Approved :: Apache Software License',
