@@ -65,7 +65,7 @@ class AnnotatorForClinicalDataV1(BaseService):
     """
 
     default_url = ''
-    latest_version = '2018-05-01'
+    latest_version = '2020-01-01'
 
     def __init__(self,
                  url=default_url,
