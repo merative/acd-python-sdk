@@ -1,1144 +1,2551 @@
-#from unittest import TestCase
+# -*- coding: utf-8 -*-
+# (C) Copyright IBM Corp. 2020.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+from ibm_cloud_sdk_core.authenticators.no_auth_authenticator import NoAuthAuthenticator
+import inspect
+import io
 import json
-import unittest
-import configparser
+import pytest
+import requests
 import responses
-import ibm_whcs_sdk.annotator_for_clinical_data as wh
+import tempfile
+from ibm_whcs_sdk.annotator_for_clinical_data import *
 
-CONFIG = configparser.RawConfigParser()
-CONFIG.read('./ibm_whcs_sdk/annotator_for_clinical_data/tests/config.ini')
+VERSION = 'testString'
 
-BASE_URL = CONFIG.get('settings', 'base_url')
-APIKEY = CONFIG.get('settings', 'key')
-IAMURL = CONFIG.get('settings', 'iam_url')
-VERSION = CONFIG.get('settings', 'version')
-LEVEL = CONFIG.get('settings', 'logging_level')
-DISABLE_SSL = CONFIG.get('settings', 'disable_ssl')
-FLOW = CONFIG.get('settings', 'flow')
+SERVICE = AnnotatorForClinicalDataV1(
+    authenticator=NoAuthAuthenticator(),
+    version=VERSION
+    )
 
-ACD = wh.AnnotatorForClinicalDataV1(BASE_URL, APIKEY, IAMURL, VERSION, LEVEL, DISABLE_SSL)
+BASE_URL = 'https://us-south.wh-acd.cloud.ibm.com/wh-acd/api'
+SERVICE.set_service_url(BASE_URL)
 
-#########################
-# ACD
-#########################
+##############################################################################
+# Start of Service: Profiles
+##############################################################################
+# region
 
+#-----------------------------------------------------------------------------
+# Test Class for get_profiles
+#-----------------------------------------------------------------------------
+class TestGetProfiles():
 
-def check_for_null_or_error_resp(resp):
-     if resp is None:
-         return True
-     else:
-         if type(resp) == 'dict':
-            if 'code' in resp:
-                if resp['code'] > 299:
-                   return True
-     return False
-
-class TestAnnotatorForClinicalDataV1(unittest.TestCase):
-
-   # TEST:  Get an annotator definition
-   #    - Get the definition of the 'concept_detection' annotator
-   #    - Assert if response is None or response status code > 299
-   def test_get_annotator_g(self):
-        resp = ACD.get_annotator('concept_detection')
-        assert check_for_null_or_error_resp(resp) == False
-
-   # TEST:  Get list of annotator definitions
-   #    - Get the list of annotators
-   #    - Assert if response is None or response status code > 299
-   def test_list_annotators_g(self):
-        resp = ACD.list_annotators()
-        assert check_for_null_or_error_resp(resp) == False
-
-   # TEST:  Get list of flow definitions
-   #    - Get the list of flows
-   #    - Assert if response is None or response status code > 299
-   def test_get_flows_g(self):
-        resp = ACD.get_flows()
-        assert check_for_null_or_error_resp(resp) == False
-
-   # TEST:  Get list of profile definitions
-   #    - Get the list of profiles
-   #    - Assert if response is None or response status code > 299
-   def test_get_profiles_g(self):
-        resp = ACD.get_profiles()
-        assert check_for_null_or_error_resp(resp) == False
-
-   # TEST:  Get annotations using 'analyze_with_flow' with persisted flow
-   #    - Get the definition of 'unittest_test_flow' flow
-   #    - Assert if response is None or response status code > 299
-   #    - If 'unittest_test_flow' does not exist, persist a new 'unittest_test_flow' definition
-   #    - Call 'analyze_with_flow' using 'unittest_test_flow'
-   #    - Verify expected annotations returned
-   #    - Delete 'unittest_test_flow' flow
-   #    - Assert if response is None or response status code > 299
-   def test_analyze_with_flow_g(self):
-        flow_id = "unittest_test_flow"
-        try:
-           resp = ACD.get_flow(flow_id)
-           assert check_for_null_or_error_resp(resp) == False
-           flow_exists = True
-        except wh.ACDException as e:
-           flow_exists = False
-        if flow_exists == False:
-           test_elementList = []
-           test_anno = wh.Annotator(name = "concept_detection")
-           test_flowEntry = wh.FlowEntry(annotator=test_anno)
-           test_elementList.append(test_flowEntry)
-           test_anno = wh.Annotator(name = "symptom_disease")
-           test_flowEntry = wh.FlowEntry(annotator=test_anno)
-           test_elementList.append(test_flowEntry)
-           test_flow = wh.Flow(test_elementList, False)
-           test_annoFlow = wh.AnnotatorFlow(flow = test_flow)
-           test_annoFlows = [test_annoFlow]
-           resp = ACD.create_persisted_flow(new_id=flow_id, new_name="unittest test flow", new_description="Unittest Test Flow", new_annotator_flows=test_annoFlows)
-        resp = ACD.analyze_with_flow(flow_id, "Patient has heart disease")
-        assert resp.concepts is not None
-        assert resp.symptom_disease_ind is not None
-        resp = ACD.delete_persisted_flow(flow_id)
-        assert check_for_null_or_error_resp(resp) == False
-
-   # TEST:  Get annotations using 'analyze' with flow definition
-   #    - Build a new Flow with the 'concept_detection' and 'symptom_disease' annotators
-   #    - Call 'analyze' with some text and the new Flow
-   #    - Assert if no concepts or symptom_disease_ind annotations returned
-   def test_analyze(self):
-        test_elementList = []
-        test_anno = wh.Annotator(name = "concept_detection")
-        test_flowEntry = wh.FlowEntry(annotator=test_anno)
-        test_elementList.append(test_flowEntry)
-        test_anno = wh.Annotator(name = "symptom_disease")
-        test_flowEntry = wh.FlowEntry(annotator=test_anno)
-        test_elementList.append(test_flowEntry)
-        test_flow = wh.Flow(test_elementList, False)
-        resp = ACD.analyze("Patient has diabetes", test_flow)
-        assert resp.concepts is not None
-        assert resp.symptom_disease_ind is not None
-
-   # TEST:  Get annotations using 'analyze' with invalid flow definition
-   #    - Build a new Flow with the 'concepts_detection' annotator
-   #    - Call 'analyze' with some text and the new Flow
-   #    - Assert if ACDException raised and unexpected error code
-   def test_analyze_invalid_annotator_e(self):
-        error_code = 400
-        test_elementList = []
-        test_anno = wh.Annotator(name = "concepts_detection")
-        test_flowEntry = wh.FlowEntry(annotator=test_anno)
-        test_elementList.append(test_flowEntry)
-        test_flow = wh.Flow(test_elementList, False)
-        try:
-           resp = ACD.analyze("Patient has diabetes", test_flow)
-        except wh.ACDException as ex:
-           assert ex.code == error_code
-
-class TestAnnotatorForClinicalDataV1Mock():
-
-   # TEST: Get an annotator definition using mock response
-   #   - Build a mock GET /annotators/{id} response with HTTP 200
-   #   - Get the mock 'concept detection' annotator definition
-   #   - Assert if Responses call count != 1
-   @responses.activate
-   def test_get_annotator_mock_g(self):
-        endpoint = '/v1/annotators/concept_detection?version=' + VERSION
-        url = '{0}{1}'.format(BASE_URL, endpoint)
+    #--------------------------------------------------------
+    # get_profiles()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_get_profiles_all_params(self):
+        # Set up mock
+        url = BASE_URL + '/v1/profiles'
+        mock_response = '{"data": ["data"]}'
         responses.add(responses.GET,
-                  url,
-                  body="{\"description\": \"MOCK Detect UMLS concepts from medical data.\"}",
-                  status=200,
-                  content_type='application/json')
-        ACD.get_annotator('concept_detection')
+                      url,
+                      body=mock_response,
+                      content_type='application/json',
+                      status=200)
+
+        # Invoke method
+        response = SERVICE.get_profiles()
+
+
+        # Check for correct operation
         assert len(responses.calls) == 1
+        assert response.status_code == 200
 
-   # TEST: Get an invalid annotator definition using mock response
-   #   - Build a mock GET /annotators/{id} response with HTTP 400
-   #   - Get the mock 'concepts detection' annotator definition
-   #   - Assert if ACDException is raised and Responses call count != 1 or unexpected ACDException code
-   @responses.activate
-   def test_get_invalid_annotator_mock_e(self):
-        endpoint = '/v1/annotators/concepts_detection?version=' + VERSION
-        url = '{0}{1}'.format(BASE_URL, endpoint)
-        error_code = 400
+
+    #--------------------------------------------------------
+    # test_get_profiles_value_error()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_get_profiles_value_error(self):
+        # Set up mock
+        url = BASE_URL + '/v1/profiles'
+        mock_response = '{"data": ["data"]}'
         responses.add(responses.GET,
-                  url,
-                  body="{}",
-                  status=error_code,
-                  content_type='application/json')
-        try:
-            ACD.get_annotator('concepts_detection')
-        except wh.ACDException as ex:
-            assert len(responses.calls) == 1
-            assert ex.code == error_code
+                      url,
+                      body=mock_response,
+                      content_type='application/json',
+                      status=200)
 
-   # TEST:  Get list of annotator definitions using mock response
-   #   - Build a mock GET /annotators response with HTTP 200
-   #   - Get the mock list of annotator definitions
-   #   - Assert if Responses call count != 1
-   @responses.activate
-   def test_list_annotators_mock_g(self):
-        endpoint = '/v1/annotators?version=' + VERSION
-        url = '{0}{1}'.format(BASE_URL, endpoint)
-        responses.add(responses.GET,
-                  url,
-                  body="{\"allergy\": {\"description\": \"MOCK Detect allergy information from clinic notes.\"},\"attribute_detection\": {\"description\": \"MOCK **EXPERIMENTAL** Detect clinical attributes from a set of concepts and concept values.\"}}",
-                  status=200,
-                  content_type='application/json')
-        ACD.list_annotators()
-        assert len(responses.calls) == 1
+        # Pass in all but one required param and check for a ValueError
+        req_param_dict = {
+        }
+        for param in req_param_dict.keys():
+            req_copy = {key:val if key is not param else None for (key,val) in req_param_dict.items()}
+            with pytest.raises(ValueError):
+                SERVICE.get_profiles(**req_copy)
 
-   # TEST:  Get flow definition using mock response
-   #   - Build a mock GET /flows/{id} response with HTTP 200
-   #   - Get the 'unittest_flow' flow definition
-   #   - Assert if Responses call count != 1
-   @responses.activate
-   def test_get_flow_mock_g(self):
-        endpoint = '/v1/flows/unittest_flow?version=' + VERSION
-        url = '{0}{1}'.format(BASE_URL, endpoint)
-        error_code = 200
-        responses.add(responses.GET,
-                  url,
-                  body="{\"id\": \"unittest_flow\", \"description\": \"Unittest Flow\", \"AnnotatorFlows\": [{\"flow\": {\"elements\": [{\"annotator\": {\"name\": \"concept_value\"}}], \"async\": false}}]}",
-                  status=error_code,
-                  content_type='application/json')
-        ACD.get_flow('unittest_flow')
-        assert len(responses.calls) == 1
 
-   # TEST:  Get invalid flow definition using mock response
-   #   - Build a mock GET /flows/{id} response with HTTP 404
-   #   - Get the 'unittest_bogus_flow' flow definition
-   #   - Assert if no ACDException is raised and expected text is not in mock response
-   #   - Assert if ACDException is raised and Responses call count != 1 or unexpected ACDException code
-   @responses.activate
-   def test_get_invalid_flow_mock_e(self):
-        endpoint = '/v1/flows/unittest_bogus_flow?version=' + VERSION
-        url = '{0}{1}'.format(BASE_URL, endpoint)
-        error_code = 404
-        responses.add(responses.GET,
-                  url,
-                  body="{\"code\": 404, \"message\": \"Flow ID: unittest_bogus_flow was not found in the list.\", \"correlationId\": \"MOCK\"}",
-                  status=error_code,
-                  content_type='application/json')
-        try:
-            ACD.get_flow('unittest_bogus_flow')
-            assert 'Flow ID: unittest_bogus_flow was not found in the list.' in responses.calls[0].response.text
-        except wh.ACDException as ex:
-            assert len(responses.calls) == 1
-            assert ex.code == error_code
 
-   # TEST:  Get list of flow definitions using mock response
-   #   - Build a mock GET /flows response with HTTP 200
-   #   - Get the mock list of flow definitions
-   #   - Assert if Responses call count != 1
-   @responses.activate
-   def test_get_flows_mock_g(self):
-        endpoint = '/v1/flows?version=' + VERSION
-        url = '{0}{1}'.format(BASE_URL, endpoint)
-        responses.add(responses.GET,
-                  url,
-                  body="{\"mock_flow1\": {\"description\": \"MOCK Flow1 Unittest\"},\"mock_flow2\": {\"description\": \"MOCK Flow2 Unittest\"}}",
-                  status=200,
-                  content_type='application/json')
-        ACD.get_flows()
-        assert len(responses.calls) == 1
+#-----------------------------------------------------------------------------
+# Test Class for create_profile
+#-----------------------------------------------------------------------------
+class TestCreateProfile():
 
-   # TEST:  Get profile definition using mock response
-   #   - Build a mock GET /profile/{id} response with HTTP 200
-   #   - Get the 'unittest_profile' profile definition
-   #   - Assert if Responses call count != 1
-   @responses.activate
-   def test_get_profile_mock_g(self):
-        endpoint = '/v1/profiles/unittest_profile?version=' + VERSION
-        url = '{0}{1}'.format(BASE_URL, endpoint)
-        error_code = 200
-        responses.add(responses.GET,
-                  url,
-                  body="{\"id\": \"unittest_profile\", \"name\": \"Unittest Profile\", \"description\": \"Unittest Profile Description\", \"annotators\": [{\"name\": \"concept_detection\", \"parameters\": {\"libraries\": [\"umls.latest\"]}}]}",
-                  status=error_code,
-                  content_type='application/json')
-        ACD.get_profile('unittest_profile')
-        assert len(responses.calls) == 1
-
-   # TEST:  Get invalid profile definition using mock response
-   #   - Build a mock GET /profiles/{id} response with HTTP 404
-   #   - Get the 'unittest_bogus_profile' profile definition
-   #   - Assert if no ACDException is raised and expected text not in mock response
-   #   - Assert if ACDException is raised and Responses call count != 1 or unexpected ACDException code
-   @responses.activate
-   def test_get_invalid_profile_mock_e(self):
-        endpoint = '/v1/profiles/unittest_bogus_profile?version=' + VERSION
-        url = '{0}{1}'.format(BASE_URL, endpoint)
-        error_code = 404
-        responses.add(responses.GET,
-                  url,
-                  body="{\"code\": 404, \"message\": \"Profile ID: unittest_bogus_profile was not found in the list.\", \"correlationId\": \"MOCK\"}",
-                  status=error_code,
-                  content_type='application/json')
-        try:
-            ACD.get_profile('unittest_bogus_profile')
-            assert 'Profile ID: unittest_bogus_profile was not found in the list.' in responses.calls[0].response.text
-        except wh.ACDException as ex:
-            assert len(responses.calls) == 1
-            assert ex.code == error_code
-
-   # TEST:  Get list of profile definitions using mock response
-   #   - Build a mock GET /profiles response with HTTP 200
-   #   - Get the mock list of profile definitions
-   #   - Assert if Responses call count != 1
-   @responses.activate
-   def test_get_profiles_mock_g(self):
-        endpoint = '/v1/profiles?version=' + VERSION
-        url = '{0}{1}'.format(BASE_URL, endpoint)
-        responses.add(responses.GET,
-                  url,
-                  body="{\"mock_profile1\": {\"description\": \"MOCK Profile1 Unittest\"},\"mock_profile2\": {\"description\": \"MOCK Profile2 Unittest\"}}",
-                  status=200,
-                  content_type='application/json')
-        ACD.get_profiles()
-        assert len(responses.calls) == 1
-
-   # TEST:  Persist new flow definition using mock response
-   #   - Build a mock POST /flows response with HTTP 201
-   #   - Persist the new flow definition
-   #   - Assert if Responses call count != 1
-   @responses.activate
-   def test_create_flow_mock_g(self):
-        # Success = HTTP 201 with no response body.  This conflicts with setting header 'Accept: application/json'
-        # With mock responses, will set 'body={}' to prevent JSONDecodeError
-        endpoint = '/v1/flows?version=' + VERSION
-        url = '{0}{1}'.format(BASE_URL, endpoint)
+    #--------------------------------------------------------
+    # create_profile()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_create_profile_all_params(self):
+        # Set up mock
+        url = BASE_URL + '/v1/profiles'
         responses.add(responses.POST,
-                  url,
-                  body="{}",
-                  status=201,
-                  content_type='application/json')
-        test_elementList = []
-        test_anno = wh.Annotator(name = "concept_detection")
-        test_flowEntry = wh.FlowEntry(annotator=test_anno)
-        test_elementList.append(test_flowEntry)
-        test_flow = wh.Flow(test_elementList, False)
-        test_annoFlow = wh.AnnotatorFlow(flow = test_flow)
-        test_annoFlows = []
-        test_annoFlows.append(test_annoFlow)
-        ACD.create_persisted_flow(new_id = "unittest_new_flow", new_annotator_flows = test_annoFlows)
-        assert len(responses.calls) == 1
+                      url,
+                      status=201)
 
-   # TEST:  Persist new invalid flow definition using mock response
-   #   - Build a mock POST /flows response with HTTP 409
-   #   - Persist the new invalid flow definition
-   #   - Assert if ACDException is raised and Responses call count != 1 or unexpected ACDException code
-   @responses.activate
-   def test_create_invalid_flow_mock_e(self):
-        endpoint = '/v1/flows?version=' + VERSION
-        url = '{0}{1}'.format(BASE_URL, endpoint)
-        error_code = 409
+        # Construct a dict representation of a ConfigurationEntity model
+        configuration_entity_model = {}
+        configuration_entity_model['id'] = 'testString'
+        configuration_entity_model['type'] = 'testString'
+        configuration_entity_model['uid'] = 26
+        configuration_entity_model['mergeid'] = 26
+
+        # Construct a dict representation of a Annotator model
+        annotator_model = {}
+        annotator_model['name'] = 'testString'
+        annotator_model['parameters'] = {}
+        annotator_model['configurations'] = [configuration_entity_model]
+
+        # Set up parameter values
+        new_id = 'testString'
+        new_name = 'testString'
+        new_description = 'testString'
+        new_published_date = 'testString'
+        new_publish = True
+        new_version = 'testString'
+        new_cartridge_id = 'testString'
+        new_annotators = [annotator_model]
+
+        # Invoke method
+        response = SERVICE.create_profile(
+            new_id=new_id,
+            new_name=new_name,
+            new_description=new_description,
+            new_published_date=new_published_date,
+            new_publish=new_publish,
+            new_version=new_version,
+            new_cartridge_id=new_cartridge_id,
+            new_annotators=new_annotators,
+            headers={}
+        )
+
+        # Check for correct operation
+        assert len(responses.calls) == 1
+        assert response.status_code == 201
+        # Validate body params
+        req_body = json.loads(str(responses.calls[0].request.body, 'utf-8'))
+        assert req_body['id'] == 'testString'
+        assert req_body['name'] == 'testString'
+        assert req_body['description'] == 'testString'
+        assert req_body['publishedDate'] == 'testString'
+        assert req_body['publish'] == True
+        assert req_body['version'] == 'testString'
+        assert req_body['cartridgeId'] == 'testString'
+        assert req_body['annotators'] == [annotator_model]
+
+
+    #--------------------------------------------------------
+    # test_create_profile_value_error()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_create_profile_value_error(self):
+        # Set up mock
+        url = BASE_URL + '/v1/profiles'
         responses.add(responses.POST,
-                  url,
-                  body="{\"code\": 409, \"message\": \"Conflict\", \"level\": \"ERROR\", \"description\": \"Flow ID unittest_new_flow already exists\", \"correlationId\": \"123456789\"}",
-                  status=409,
-                  content_type='application/json')
-        test_elementList = []
-        test_anno = wh.Annotator(name = "concept_detection")
-        test_flowEntry = wh.FlowEntry(annotator=test_anno)
-        test_elementList.append(test_flowEntry)
-        test_flow = wh.Flow(test_elementList, False)
-        test_annoFlow = wh.AnnotatorFlow(flow = test_flow)
-        test_annoFlows = []
-        test_annoFlows.append(test_annoFlow)
-        try:
-            ACD.create_persisted_flow(new_id = "unittest_new_flow", new_annotator_flows = test_annoFlows)
-        except wh.ACDException as ex:
-            assert len(responses.calls) == 1
-            assert error_code == ex.code
+                      url,
+                      status=201)
 
-   # TEST:  Persist new profile definition using mock response
-   #   - Build a mock POST /profiles response with HTTP 201
-   #   - Persist the new profile definition
-   #   - Assert if Responses call count != 1
-   @responses.activate
-   def test_create_profile_mock_g(self):
-        # Success = HTTP 201 with no response body.  This conflicts with setting header 'Accept: application/json'
-        # With mock responses, will set 'body={}' to prevent JSONDecodeError
-        endpoint = '/v1/profiles?version=' + VERSION
-        url = '{0}{1}'.format(BASE_URL, endpoint)
-        responses.add(responses.POST,
-                  url,
-                  body="{}",
-                  status=201,
-                  content_type='application/json')
-        test_annoList = []
-        test_anno = wh.Annotator(name = "concept_detection", parameters = "{\"libraries\": [\"umls.latest\"]}")
-        test_annoList.append(test_anno)
-        ACD.create_profile(new_id = "unittest_new_profile", new_annotators = test_annoList)
+        # Construct a dict representation of a ConfigurationEntity model
+        configuration_entity_model = {}
+        configuration_entity_model['id'] = 'testString'
+        configuration_entity_model['type'] = 'testString'
+        configuration_entity_model['uid'] = 26
+        configuration_entity_model['mergeid'] = 26
+
+        # Construct a dict representation of a Annotator model
+        annotator_model = {}
+        annotator_model['name'] = 'testString'
+        annotator_model['parameters'] = {}
+        annotator_model['configurations'] = [configuration_entity_model]
+
+        # Set up parameter values
+        new_id = 'testString'
+        new_name = 'testString'
+        new_description = 'testString'
+        new_published_date = 'testString'
+        new_publish = True
+        new_version = 'testString'
+        new_cartridge_id = 'testString'
+        new_annotators = [annotator_model]
+
+        # Pass in all but one required param and check for a ValueError
+        req_param_dict = {
+        }
+        for param in req_param_dict.keys():
+            req_copy = {key:val if key is not param else None for (key,val) in req_param_dict.items()}
+            with pytest.raises(ValueError):
+                SERVICE.create_profile(**req_copy)
+
+
+
+#-----------------------------------------------------------------------------
+# Test Class for get_profile
+#-----------------------------------------------------------------------------
+class TestGetProfile():
+
+    #--------------------------------------------------------
+    # get_profile()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_get_profile_all_params(self):
+        # Set up mock
+        url = BASE_URL + '/v1/profiles/testString'
+        mock_response = '{"id": "id", "name": "name", "description": "description", "publishedDate": "published_date", "publish": false, "version": "version", "cartridgeId": "cartridge_id", "annotators": [{"name": "name", "parameters": {"mapKey": ["inner"]}, "configurations": [{"id": "id", "type": "type", "uid": 3, "mergeid": 7}]}]}'
+        responses.add(responses.GET,
+                      url,
+                      body=mock_response,
+                      content_type='application/json',
+                      status=200)
+
+        # Set up parameter values
+        id = 'testString'
+
+        # Invoke method
+        response = SERVICE.get_profile(
+            id,
+            headers={}
+        )
+
+        # Check for correct operation
         assert len(responses.calls) == 1
+        assert response.status_code == 200
 
-   # TEST:  Persist new invalid profile definition using mock response
-   #   - Build a mock POST /flows response with HTTP 400
-   #   - Persist the new invalid profile definition
-   #   - Assert if ACDException is raised and Responses call count != 1 or unexpected ACDException code
-   @responses.activate
-   def test_create_invalid_profile_mock_e(self):
-        endpoint = '/v1/profiles?version=' + VERSION
-        url = '{0}{1}'.format(BASE_URL, endpoint)
-        error_code = 400
-        responses.add(responses.POST,
-                  url,
-                  body="{\"code\":400, \"message\": \"Bad Request\", \"level\": \"ERROR\", \"correlationId\": \"MOCK\"}",
-                  status=error_code,
-                  content_type='application/json')
-        test_annoList = []
-        try:
-            ACD.create_profile(new_id = "unittest_bad_profile", new_annotators = test_annoList)
-        except wh.ACDException as ex:
-            assert len(responses.calls) == 1
-            assert error_code == ex.code
 
-   # TEST:  Delete profile definition using mock response
-   #   - Build a mock DELETE /profiles/{id} response with HTTP 200
-   #   - Delete the 'unittest_profile' profile definition
-   #   - Assert if Responses call count != 1
-   @responses.activate
-   def test_delete_profile_mock_g(self):
-        endpoint = '/v1/profiles/unittest_profile?version=' + VERSION
-        url = '{0}{1}'.format(BASE_URL, endpoint)
-        responses.add(responses.DELETE,
-                  url,
-                  body="{}",
-                  status=200,
-                  content_type='application/json')
-        ACD.delete_profile('unittest_profile')
-        assert len(responses.calls) == 1
+    #--------------------------------------------------------
+    # test_get_profile_value_error()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_get_profile_value_error(self):
+        # Set up mock
+        url = BASE_URL + '/v1/profiles/testString'
+        mock_response = '{"id": "id", "name": "name", "description": "description", "publishedDate": "published_date", "publish": false, "version": "version", "cartridgeId": "cartridge_id", "annotators": [{"name": "name", "parameters": {"mapKey": ["inner"]}, "configurations": [{"id": "id", "type": "type", "uid": 3, "mergeid": 7}]}]}'
+        responses.add(responses.GET,
+                      url,
+                      body=mock_response,
+                      content_type='application/json',
+                      status=200)
 
-   # TEST:  Delete invalid profile definition using mock response
-   #   - Build a mock DELETE /profiles/{id} response with HTTP 404
-   #   - Persist the new invalid profile definition
-   #   - Assert if ACDException is raised and Responses call count != 1 or unexpected ACDException code
-   @responses.activate
-   def test_delete_invalid_profile_mock_e(self):
-        endpoint = '/v1/profiles/unittest_bad_profile?version=' + VERSION
-        url = '{0}{1}'.format(BASE_URL, endpoint)
-        error_code = 404
-        responses.add(responses.DELETE,
-                  url,
-                  body="{\"code\":404, \"message\": \"Profile ID: unittest_bad_profile was not found in the list.\", \"level\": \"ERROR\", \"correlationId\": \"12345678\"}",
-                  status=error_code,
-                  content_type='application/json')
-        try:
-            ACD.delete_profile("unittest_bad_profile")
-        except wh.ACDException as ex:
-            assert len(responses.calls) == 1
-            assert error_code == ex.code
+        # Set up parameter values
+        id = 'testString'
 
-   # TEST:  Delete flow definition using mock response
-   #   - Build a mock DELETE /flows/{id} response with HTTP 200
-   #   - Delete the 'unittest_flow' flow definition
-   #   - Assert if Responses call count != 1
-   @responses.activate
-   def test_delete_flow_mock_g(self):
-        endpoint = '/v1/flows/unittest_flow?version=' + VERSION
-        url = '{0}{1}'.format(BASE_URL, endpoint)
-        responses.add(responses.DELETE,
-                  url,
-                  body="{}",
-                  status=200,
-                  content_type='application/json')
-        ACD.delete_persisted_flow('unittest_flow')
-        assert len(responses.calls) == 1
+        # Pass in all but one required param and check for a ValueError
+        req_param_dict = {
+            "id": id,
+        }
+        for param in req_param_dict.keys():
+            req_copy = {key:val if key is not param else None for (key,val) in req_param_dict.items()}
+            with pytest.raises(ValueError):
+                SERVICE.get_profile(**req_copy)
 
-   # TEST:  Delete invalid flow definition using mock response
-   #   - Build a mock DELETE /flows/{id} response with HTTP 404
-   #   - Persist the new invalid flows definition
-   #   - Assert if ACDException is raised and Responses call count != 1 or unexpected ACDException code
-   @responses.activate
-   def test_delete_invalid_flow_mock_e(self):
-        endpoint = '/v1/flows/unittest_bad_flow?version=' + VERSION
-        url = '{0}{1}'.format(BASE_URL, endpoint)
-        error_code = 404
-        responses.add(responses.DELETE,
-                  url,
-                  body="{\"code\":404, \"message\": \"Flow ID: unittest_bad_flow was not found in the list.\", \"level\": \"ERROR\", \"correlationId\": \"12345678\"}",
-                  status=error_code,
-                  content_type='application/json')
-        try:
-            ACD.delete_persisted_flow("unittest_bad_flow")
-        except wh.ACDException as ex:
-            assert len(responses.calls) == 1
-            assert error_code == ex.code
 
-   # TEST:  Update profile definition using mock response
-   #   - Build a mock PUT /profiles/{id} response with HTTP 200
-   #   - Update with the new profile definition
-   #   - Assert if Responses call count != 1
-   @responses.activate
-   def test_update_profile_mock_g(self):
-        endpoint = '/v1/profiles/unittest_new_profile?version=' + VERSION
-        url = '{0}{1}'.format(BASE_URL, endpoint)
+
+#-----------------------------------------------------------------------------
+# Test Class for update_profile
+#-----------------------------------------------------------------------------
+class TestUpdateProfile():
+
+    #--------------------------------------------------------
+    # update_profile()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_update_profile_all_params(self):
+        # Set up mock
+        url = BASE_URL + '/v1/profiles/testString'
         responses.add(responses.PUT,
-                  url,
-                  body="{}",
-                  status=200,
-                  content_type='application/json')
-        test_annoList = []
-        test_anno = wh.Annotator(name = "concept_detection", parameters = "{\"libraries\": [\"umls.latest\"]}")
-        test_annoList.append(test_anno)
-        ACD.update_profile(id = "unittest_new_profile", new_annotators = test_annoList)
+                      url,
+                      status=200)
+
+        # Construct a dict representation of a ConfigurationEntity model
+        configuration_entity_model = {}
+        configuration_entity_model['id'] = 'testString'
+        configuration_entity_model['type'] = 'testString'
+        configuration_entity_model['uid'] = 26
+        configuration_entity_model['mergeid'] = 26
+
+        # Construct a dict representation of a Annotator model
+        annotator_model = {}
+        annotator_model['name'] = 'testString'
+        annotator_model['parameters'] = {}
+        annotator_model['configurations'] = [configuration_entity_model]
+
+        # Set up parameter values
+        id = 'testString'
+        new_id = 'testString'
+        new_name = 'testString'
+        new_description = 'testString'
+        new_published_date = 'testString'
+        new_publish = True
+        new_version = 'testString'
+        new_cartridge_id = 'testString'
+        new_annotators = [annotator_model]
+
+        # Invoke method
+        response = SERVICE.update_profile(
+            id,
+            new_id=new_id,
+            new_name=new_name,
+            new_description=new_description,
+            new_published_date=new_published_date,
+            new_publish=new_publish,
+            new_version=new_version,
+            new_cartridge_id=new_cartridge_id,
+            new_annotators=new_annotators,
+            headers={}
+        )
+
+        # Check for correct operation
         assert len(responses.calls) == 1
+        assert response.status_code == 200
+        # Validate body params
+        req_body = json.loads(str(responses.calls[0].request.body, 'utf-8'))
+        assert req_body['id'] == 'testString'
+        assert req_body['name'] == 'testString'
+        assert req_body['description'] == 'testString'
+        assert req_body['publishedDate'] == 'testString'
+        assert req_body['publish'] == True
+        assert req_body['version'] == 'testString'
+        assert req_body['cartridgeId'] == 'testString'
+        assert req_body['annotators'] == [annotator_model]
 
-   # TEST:  Update flow definition using mock response
-   #   - Build a mock PUT /flows/{id} response with HTTP 200
-   #   - Update with the new flow definition
-   #   - Assert if Responses call count != 1
-   @responses.activate
-   def test_update_flow_mock_g(self):
-        endpoint = '/v1/flows/unittest_new_flow?version=' + VERSION
-        url = '{0}{1}'.format(BASE_URL, endpoint)
+
+    #--------------------------------------------------------
+    # test_update_profile_value_error()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_update_profile_value_error(self):
+        # Set up mock
+        url = BASE_URL + '/v1/profiles/testString'
         responses.add(responses.PUT,
-                  url,
-                  body="{}",
-                  status=200,
-                  content_type='application/json')
-        test_elementList = []
-        test_anno = wh.Annotator(name = "concept_detection")
-        test_flowEntry = wh.FlowEntry(annotator=test_anno)
-        test_elementList.append(test_flowEntry)
-        test_flow = wh.Flow(test_elementList, False)
-        test_annoFlow = wh.AnnotatorFlow(flow = test_flow)
-        test_annoFlows = []
-        test_annoFlows.append(test_annoFlow)
-        ACD.update_persisted_flow(flow_id = "unittest_new_flow", new_annotator_flows = test_annoFlows)
-        assert len(responses.calls) == 1
+                      url,
+                      status=200)
 
-   # TEST:  Update invalid profile definition using mock response
-   #   - Build a mock PUT /profiles/{id} response with HTTP 404
-   #   - Update with the invalid profile definition
-   #   - Assert if ACDException is raised and Responses call count != 1 or unexpected ACDException code
-   @responses.activate
-   def test_update_invalid_profile_mock_e(self):
-        endpoint = '/v1/profiles/unittest_bad_profile?version=' + VERSION
-        url = '{0}{1}'.format(BASE_URL, endpoint)
-        error_code = 404
-        responses.add(responses.PUT,
-                  url,
-                  body="{\"code\": 404, \"message\": \"Profile ID: unittest_bad_profile was not found in the list.\", \"level\": \"ERROR\", \"correlationId\": \"12345678\"}",
-                  status = error_code,
-                  content_type='application/json')
-        test_annoList = []
-        try:
-            ACD.update_profile(id = "unittest_bad_profile", new_annotators = test_annoList)
-        except wh.ACDException as ex:
-            assert len(responses.calls) == 1
-            assert error_code == ex.code
+        # Construct a dict representation of a ConfigurationEntity model
+        configuration_entity_model = {}
+        configuration_entity_model['id'] = 'testString'
+        configuration_entity_model['type'] = 'testString'
+        configuration_entity_model['uid'] = 26
+        configuration_entity_model['mergeid'] = 26
 
-   # TEST:  Update invalid flow definition using mock response
-   #   - Build a mock PUT /flows/{id} response with HTTP 400
-   #   - Update with the invalid flow definition
-   #   - Assert if ACDException is raised and Responses call count != 1 or unexpected ACDException code
-   @responses.activate
-   def test_update_invalid_flow_mock_e(self):
-        endpoint = '/v1/flows/unittest_bad_flow?version=' + VERSION
-        url = '{0}{1}'.format(BASE_URL, endpoint)
-        error_code = 400
-        responses.add(responses.PUT,
-                  url,
-                  body="{\"code\": 400, \"message\": \"Bad Request\", \"level\": \"ERROR\", \"correlationId\": \"MOCK\"}",
-                  status=error_code,
-                  content_type='application/json')
-        test_annoFlows = []
-        try:
-            ACD.update_persisted_flow(flow_id = "unittest_bad_flow", new_annotator_flows = test_annoFlows)
-        except wh.ACDException as ex:
-            assert len(responses.calls) == 1
-            assert error_code == ex.code
+        # Construct a dict representation of a Annotator model
+        annotator_model = {}
+        annotator_model['name'] = 'testString'
+        annotator_model['parameters'] = {}
+        annotator_model['configurations'] = [configuration_entity_model]
 
-   # TEST:  Get annotations using 'analyze_with_flow' with invalid flow using mock response
-   #    - Build a mock POST /analyze/{id} response with HTTP 404
-   #    - Call 'analyze/{id}'
-   #    - Assert if Responses call count != 1
-   @responses.activate
-   def test_analyze_with_flow_invalid_flow_mock_e(self):
-        error_code = 404
-        endpoint = '/v1/analyze/unittest_bogus_flow?version=' + VERSION
-        url = '{0}{1}'.format(BASE_URL, endpoint)
-        responses.add(responses.POST,
-                  url,
-                  body="{\"code\": 404, \"message\": \"Flow ID: unittest_bogus_flow was not found in the list.\", \"level\": \"ERROR\", \"correlationId\": \"12345678\"}",
-                  status = 404,
-                  content_type='application/json')
-        try:
-           resp = ACD.analyze_with_flow("unittest_bogus_flow", "Patient has heart disease")
-        except wh.ACDException as ex:
-           assert ex.code == error_code
+        # Set up parameter values
+        id = 'testString'
+        new_id = 'testString'
+        new_name = 'testString'
+        new_description = 'testString'
+        new_published_date = 'testString'
+        new_publish = True
+        new_version = 'testString'
+        new_cartridge_id = 'testString'
+        new_annotators = [annotator_model]
 
-   # TEST:  Delete user_data using 'delete' invalid tenant_id using mock response
-   #    - Build a mock DELETE /user_data response with HTTP 400
-   #    - Call 'delete'
-   #    - Assert if Responses call count != 1
-   @responses.activate
-   def test_delete_user_data_mock_e(self):
-        error_code = 400
-        endpoint = '/v1/user_data?version=' + VERSION
-        url = '{0}{1}'.format(BASE_URL, endpoint)
+        # Pass in all but one required param and check for a ValueError
+        req_param_dict = {
+            "id": id,
+        }
+        for param in req_param_dict.keys():
+            req_copy = {key:val if key is not param else None for (key,val) in req_param_dict.items()}
+            with pytest.raises(ValueError):
+                SERVICE.update_profile(**req_copy)
+
+
+
+#-----------------------------------------------------------------------------
+# Test Class for delete_profile
+#-----------------------------------------------------------------------------
+class TestDeleteProfile():
+
+    #--------------------------------------------------------
+    # delete_profile()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_delete_profile_all_params(self):
+        # Set up mock
+        url = BASE_URL + '/v1/profiles/testString'
         responses.add(responses.DELETE,
-                  url,
-                  body="{\"code\": 400, \"message\": \"The tenant id could not be determined from the request.\", \"level\": \"ERROR\", \"correlationId\": \"12345678\"}",
-                  status = 400,
-                  content_type='application/json')
-        try:
-            resp = ACD.delete_user_data()
-        except wh.ACDException as ex:
-            print ("Error Occurred:  Code ", ex.code, " Message ", ex.message, " CorrelationId ", ex.correlation_id)
-            assert ex.code == error_code
+                      url,
+                      status=200)
+
+        # Set up parameter values
+        id = 'testString'
+
+        # Invoke method
+        response = SERVICE.delete_profile(
+            id,
+            headers={}
+        )
+
+        # Check for correct operation
+        assert len(responses.calls) == 1
+        assert response.status_code == 200
 
 
-#########################
-# ACD - data model
-#########################
+    #--------------------------------------------------------
+    # test_delete_profile_value_error()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_delete_profile_value_error(self):
+        # Set up mock
+        url = BASE_URL + '/v1/profiles/testString'
+        responses.add(responses.DELETE,
+                      url,
+                      status=200)
 
-def test_concept_model():
-    dict_concept = {
-      u'id': '0',
-      u'uid': 0,
-      u'begin': 733,
-      u'coveredText': u'inpatient',
-      u'cui': u'C0021562',
-      u'disambiguationData': {u'validity': u'VALID'},
-      u'end': 742,
-      u'hypothetical': False,
-      u'loincId': u'LP32937-2,LA6511-5',
-      u'meshId': u'M0011377',
-      u'nciCode': u'C25182',
-      u'negated': False,
-      u'preferredName': u'inpatient',
-      u'semanticType': u'podg',
-      u'snomedConceptId': u'416800000',
-      u'source': u'umls',
-      u'sourceVersion': u'2018AA',
-      u'type': u'umls.PatientOrDisabledGroup',
-      u'vocabs': u'MTH,LNC,NCI',
-      u'icd9Code': u'MOCK9',
-      u'icd10Code': u'MOCK10',
-      u'snomedConceptId': u'MOCK-snomed',
-      u'rxNormId': u'MOCK-rx',
-      u'sectionNormalizedName': u'MOCK-sectionName',
-      u'sectionSurfaceForm': u'MOCK-sectionSurfaceForm',
-      u'cptCode': u'44950,44955,1014622,1007583',
-      u'unknownField': u'MOCK-unknown',
-    }
+        # Set up parameter values
+        id = 'testString'
 
-    concept = wh.Concept._from_dict(dict_concept)
-    assert concept.id == '0'
-    assert concept.type == 'umls.PatientOrDisabledGroup'
-    assert concept.uid == 0
-    assert concept.begin == 733
-    assert concept.end == 742
-    assert concept.covered_text == 'inpatient'
-    assert concept.negated == False
-    assert concept.hypothetical == False
-    assert concept.cui == 'C0021562'
-    assert concept.preferred_name == 'inpatient'
-    assert concept.semantic_type == 'podg'
-    assert concept.source == 'umls'
-    assert concept.source_version == '2018AA'
-    assert isinstance(concept.disambiguation_data, wh.Disambiguation)
-    assert concept.disambiguation_data.validity == 'VALID'
-    assert concept.icd9_code == 'MOCK9'
-    assert concept.icd10_code == 'MOCK10'
-    assert concept.nci_code == 'C25182'
-    assert concept.snomed_concept_id == 'MOCK-snomed'
-    assert concept.mesh_id == 'M0011377'
-    assert concept.rx_norm_id == 'MOCK-rx'
-    assert concept.loinc_id == 'LP32937-2,LA6511-5'
-    assert concept.vocabs == 'MTH,LNC,NCI'
-    assert concept.section_normalized_name == 'MOCK-sectionName'
-    assert concept.section_surface_form == 'MOCK-sectionSurfaceForm'
-    assert concept.cpt_code == '44950,44955,1014622,1007583'
-    # make sure all fields were known and got parsed explicitly
-    assert concept._additionalProperties == set(['unknownField'])
-    assert concept.unknownField == 'MOCK-unknown'
-    # make sure that _to_dict doesn't blow up
-    _ = concept._to_dict()
+        # Pass in all but one required param and check for a ValueError
+        req_param_dict = {
+            "id": id,
+        }
+        for param in req_param_dict.keys():
+            req_copy = {key:val if key is not param else None for (key,val) in req_param_dict.items()}
+            with pytest.raises(ValueError):
+                SERVICE.delete_profile(**req_copy)
 
-    # make sure we're robust to alternative rxNormID capitalization
-    dict_concept = {
-      u'rxNormID': u'MOCK-rx',
-    }
-    concept = wh.Concept._from_dict(dict_concept)
-    assert concept.rx_norm_id == 'MOCK-rx'
-    assert concept._additionalProperties == set([])
 
-def test_concept_value_model():
-    dict_concept_value = {
-      u'id': '0',
-      u'type': 'umls.PatientOrDisabledGroup',
-      u'uid': 0,
-      u'begin': 733,
-      u'coveredText': u'inpatient',
-      u'cui': u'C0021562',
-      u'end': 742,
-      u'hypothetical': False,
-      u'negated': False,
-      u'preferredName': u'inpatient',
-      u'source': u'umls',
-      u'trigger': u'MOCK-trigger',
-      u'value': u'MOCK-value',
-      u'sectionNormalizedName': u'MOCK-sectionName',
-      u'sectionSurfaceForm': u'MOCK-sectionSurfaceForm',
-      u'unknownField': u'MOCK-unknown',
-    }
 
-    concept_value = wh.ConceptValue._from_dict(dict_concept_value)
-    assert concept_value.id == '0'
-    assert concept_value.type == 'umls.PatientOrDisabledGroup'
-    assert concept_value.uid == 0
-    assert concept_value.begin == 733
-    assert concept_value.end == 742
-    assert concept_value.covered_text == 'inpatient'
-    assert concept_value.negated == False
-    assert concept_value.hypothetical == False
-    assert concept_value.cui == 'C0021562'
-    assert concept_value.preferred_name == 'inpatient'
-    assert concept_value.trigger == 'MOCK-trigger'
-    assert concept_value.source == 'umls'
-    assert concept_value.value == 'MOCK-value'
-    assert concept_value.section_normalized_name == 'MOCK-sectionName'
-    assert concept_value.section_surface_form == 'MOCK-sectionSurfaceForm'
-    # make sure all fields were known and got parsed explicitly
-    assert concept_value._additionalProperties == set(['unknownField'])
-    assert concept_value.unknownField == 'MOCK-unknown'
-    # make sure that _to_dict doesn't blow up
-    _ = concept_value._to_dict()
+# endregion
+##############################################################################
+# End of Service: Profiles
+##############################################################################
 
-def test_attribute_model():
-    dict_attr = {
-      u'id': '0',
-      u'uid': 0,
-      u'begin': 733,
-      u'coveredText': u'inpatient',
-      u'concept': {u'cui': u'C0021562'},
-      u'end': 742,
-      u'hypothetical': False,
-      u'loincId': u'LP32937-2,LA6511-5',
-      u'meshId': u'M0011377',
-      u'nciCode': u'C25182',
-      u'negated': False,
-      u'preferredName': u'inpatient',
-      u'snomedConceptId': u'416800000',
-      u'source': u'umls',
-      u'sourceVersion': u'2018AA',
-      u'type': u'umls.PatientOrDisabledGroup',
-      u'vocabs': u'MTH,LNC,NCI',
-      u'icd9Code': u'MOCK9',
-      u'icd10Code': u'MOCK10',
-      u'snomedConceptId': u'MOCK-snomed',
-      u'rxNormId': u'MOCK-rx',
-      u'values': [{
-          'value':'MOCK-attr-value',
-          'frequency':'MOCK-attr-frequency',
-          'duration':'MOCK-attr-duration',
-          'unit':'MOCK-attr-unit',
-          'dimension':'MOCK-attr-dimension'
-      }],
-      u'name': u'MOCK-name',
-      u'sectionNormalizedName': u'MOCK-sectionName',
-      u'sectionSurfaceForm': u'MOCK-sectionSurfaceForm',
-      u'cptCode': u'44950,44955,1014622,1007583',
-      u'disambiguationData': {u'validity': u'VALID'},
-      u'unknownField': u'MOCK-unknown',
-    }
+##############################################################################
+# Start of Service: Flows
+##############################################################################
+# region
 
-    attr = wh.AttributeValueAnnotation._from_dict(dict_attr)
-    assert attr.id == '0'
-    assert attr.type == 'umls.PatientOrDisabledGroup'
-    assert attr.uid == 0
-    assert attr.begin == 733
-    assert attr.end == 742
-    assert attr.covered_text == 'inpatient'
-    assert attr.negated == False
-    assert attr.hypothetical == False
-    assert attr.preferred_name == 'inpatient'
-    assert len(attr.values) == 1
-    assert isinstance(attr.values[0], wh.AttributeValueEntry)
-    # make sure we can access values as class fields
-    assert attr.values[0].value == 'MOCK-attr-value'
-    assert attr.values[0].frequency == 'MOCK-attr-frequency'
-    assert attr.values[0].duration == 'MOCK-attr-duration'
-    assert attr.values[0].unit == 'MOCK-attr-unit'
-    assert attr.values[0].dimension == 'MOCK-attr-dimension'
-    # make sure we can access values as dict entries (for backwards compatibility)
-    assert attr.values[0]['value'] == 'MOCK-attr-value'
-    assert attr.values[0]['frequency'] == 'MOCK-attr-frequency'
-    assert attr.values[0]['duration'] == 'MOCK-attr-duration'
-    assert attr.values[0]['unit'] == 'MOCK-attr-unit'
-    assert attr.values[0]['dimension'] == 'MOCK-attr-dimension'
-    assert attr.source == 'umls'
-    assert attr.source_version == '2018AA'
-    assert isinstance(attr.concept, wh.Concept)
-    assert attr.concept.cui == 'C0021562'
-    assert attr.name == 'MOCK-name'
-    assert attr.icd9_code == 'MOCK9'
-    assert attr.icd10_code == 'MOCK10'
-    assert attr.nci_code == 'C25182'
-    assert attr.snomed_concept_id == 'MOCK-snomed'
-    assert attr.mesh_id == 'M0011377'
-    assert attr.rx_norm_id == 'MOCK-rx'
-    assert attr.loinc_id == 'LP32937-2,LA6511-5'
-    assert attr.vocabs == 'MTH,LNC,NCI'
-    assert attr.section_normalized_name == 'MOCK-sectionName'
-    assert attr.section_surface_form == 'MOCK-sectionSurfaceForm'
-    assert attr.cpt_code == '44950,44955,1014622,1007583'
-    assert isinstance(attr.disambiguation_data, wh.Disambiguation)
-    assert attr.disambiguation_data.validity == 'VALID'
-    # make sure all fields were known and got parsed explicitly
-    assert attr._additionalProperties == set(['unknownField'])
-    assert attr.unknownField == 'MOCK-unknown'
-    # make sure that _to_dict doesn't blow up
-    _ = attr._to_dict()
+#-----------------------------------------------------------------------------
+# Test Class for get_flows
+#-----------------------------------------------------------------------------
+class TestGetFlows():
 
-    # make sure we're robust to alternative rxNormID capitalization
-    dict_attr = {
-      u'rxNormID': u'MOCK-rx',
-    }
-    attr = wh.AttributeValueAnnotation._from_dict(dict_attr)
-    assert attr.rx_norm_id == 'MOCK-rx'
-    assert attr._additionalProperties == set([])
+    #--------------------------------------------------------
+    # get_flows()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_get_flows_all_params(self):
+        # Set up mock
+        url = BASE_URL + '/v1/flows'
+        mock_response = '{"data": ["data"]}'
+        responses.add(responses.GET,
+                      url,
+                      body=mock_response,
+                      content_type='application/json',
+                      status=200)
 
-def test_section_model():
-    dict_section = {
-      u'begin': 0,
-      u'coveredText': u'FAMILY HISTORY etc...',
-      u'end': 756,
-      u'trigger': {
-        u'begin': 0,
-        u'coveredText': u'FAMILY HISTORY',
-        u'end': 14,
-        u'sectionNormalizedName': u'family history',
-        u'source': u'internal',
-        u'type': u'aci.SectionTrigger'},
-      u'type': u'aci.Section',
-      u'sectionType': u'MOCK-sectiontype',
-      u'unknownField': u'MOCK-unknown',
-    }
+        # Invoke method
+        response = SERVICE.get_flows()
 
-    section = wh.Section._from_dict(dict_section)
-    assert section.begin == 0
-    assert section.covered_text == 'FAMILY HISTORY etc...'
-    assert section.end == 756
-    assert section.type == 'aci.Section'
-    assert section.section_type == 'MOCK-sectiontype'
-    assert isinstance(section.trigger, wh.SectionTrigger)
-    assert section.trigger.begin == 0
-    assert section.trigger.covered_text == 'FAMILY HISTORY'
-    assert section.trigger.end == 14
-    assert section.trigger.section_normalized_name == 'family history'
-    assert section.trigger.source == 'internal'
-    assert section.trigger.type == 'aci.SectionTrigger'
-    # make sure all fields were known and got parsed explicitly
-    assert section._additionalProperties == set(['unknownField'])
-    assert section.unknownField == 'MOCK-unknown'
-    # make sure that _to_dict doesn't blow up
-    _ = section._to_dict()
 
-def test_annotation_model():
-    dict_annotation = {
-      u'begin': 0,
-      u'coveredText': u'FAMILY HISTORY etc...',
-      u'end': 756,
-      u'type': u'aci.MOCK-annotation',
-      u'negated': True,
-      u'hypothetical': False,
-      u'sectionNormalizedName': u'MOCK-sectionName',
-      u'sectionSurfaceForm': u'MOCK-sectionSurfaceForm',
-      u'unknownField': u'MOCK-unknown',
-    }
+        # Check for correct operation
+        assert len(responses.calls) == 1
+        assert response.status_code == 200
 
-    annotation = wh.Annotation._from_dict(dict_annotation)
-    assert annotation.begin == 0
-    assert annotation.covered_text == 'FAMILY HISTORY etc...'
-    assert annotation.end == 756
-    assert annotation.type == 'aci.MOCK-annotation'
-    assert annotation.negated == True
-    assert annotation.hypothetical == False
-    assert annotation.section_normalized_name == 'MOCK-sectionName'
-    assert annotation.section_surface_form == 'MOCK-sectionSurfaceForm'
-    # make sure all fields were known and got parsed explicitly
-    assert annotation._additionalProperties == set(['unknownField'])
-    assert annotation.unknownField == 'MOCK-unknown'
-    # make sure that _to_dict doesn't blow up
-    _ = annotation._to_dict()
 
-def test_assistance_model():
-    dict_assistance = {
-      u'begin': 0,
-      u'coveredText': u'FAMILY HISTORY etc...',
-      u'end': 756,
-      u'type': u'aci.MOCK-assistance',
-      u'negated': True,
-      u'hypothetical': False,
-      u'sectionNormalizedName': u'MOCK-sectionName',
-      u'sectionSurfaceForm': u'MOCK-sectionSurfaceForm',
-      u'primaryActionNormalizedName': u'MOCK-primaryActionNormalizedName',
-      u'modality': u'MOCK-modality',
-      u'primaryActionSurfaceForm': u'MOCK-primaryActionSurfaceForm',
-      u'unknownField': u'MOCK-unknown',
-    }
+    #--------------------------------------------------------
+    # test_get_flows_value_error()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_get_flows_value_error(self):
+        # Set up mock
+        url = BASE_URL + '/v1/flows'
+        mock_response = '{"data": ["data"]}'
+        responses.add(responses.GET,
+                      url,
+                      body=mock_response,
+                      content_type='application/json',
+                      status=200)
 
-    assistance = wh.AssistanceAnnotation._from_dict(dict_assistance)
-    assert assistance.begin == 0
-    assert assistance.covered_text == 'FAMILY HISTORY etc...'
-    assert assistance.end == 756
-    assert assistance.type == 'aci.MOCK-assistance'
-    assert assistance.negated == True
-    assert assistance.hypothetical == False
-    assert assistance.section_normalized_name == 'MOCK-sectionName'
-    assert assistance.section_surface_form == 'MOCK-sectionSurfaceForm'
-    assert assistance.primary_action_normalized_name == 'MOCK-primaryActionNormalizedName'
-    assert assistance.modality == 'MOCK-modality'
-    assert assistance.primary_action_surface_form == 'MOCK-primaryActionSurfaceForm'
-    # make sure all fields were known and got parsed explicitly
-    assert assistance._additionalProperties == set(['unknownField'])
-    assert assistance.unknownField == 'MOCK-unknown'
-    # make sure that _to_dict doesn't blow up
-    _ = assistance._to_dict()
+        # Pass in all but one required param and check for a ValueError
+        req_param_dict = {
+        }
+        for param in req_param_dict.keys():
+            req_copy = {key:val if key is not param else None for (key,val) in req_param_dict.items()}
+            with pytest.raises(ValueError):
+                SERVICE.get_flows(**req_copy)
 
-def test_allergymed_model():
-    dict_allergymed = {
-      u'begin': 0,
-      u'coveredText': u'FAMILY HISTORY etc...',
-      u'end': 756,
-      u'type': u'aci.MOCK-allergymed',
-      u'negated': True,
-      u'hypothetical': False,
-      u'sectionNormalizedName': u'MOCK-sectionName',
-      u'sectionSurfaceForm': u'MOCK-sectionSurfaceForm',
-      u'medication': [{
-        u'begin': 97,
-        u'coveredText': u'penicillin',
-        u'cui': u'C0220892',
-        u'drug': [{u'begin': 97,
-          u'complex': u'false',
-          u'coveredText': u'penicillin',
-          u'cui': u'C0220892',
-          u'end': 107,
-          u'name1': [{u'begin': 97,
-            u'coveredText': u'penicillin',
-            u'cui': u'C0220892',
-            u'drugNormalizedName': u'penicillin',
-            u'drugSurfaceForm': u'penicillin',
-            u'end': 107,
-            u'rxNormID': u'70618',
-            u'type': u'aci.DrugName'}],
-          u'type': u'aci.Ind_Drug'}],
-        u'end': 107,
-        u'type': u'aci.MedicationInd'
-      }],
-      u'unknownField': u'MOCK-unknown',
-    }
 
-    allergymed = wh.AllergyMedication._from_dict(dict_allergymed)
-    assert allergymed.begin == 0
-    assert allergymed.covered_text == 'FAMILY HISTORY etc...'
-    assert allergymed.end == 756
-    assert allergymed.type == 'aci.MOCK-allergymed'
-    assert allergymed.negated == True
-    assert allergymed.hypothetical == False
-    assert allergymed.section_normalized_name == 'MOCK-sectionName'
-    assert allergymed.section_surface_form == 'MOCK-sectionSurfaceForm'
-    assert isinstance(allergymed.medication, list)
-    assert len(allergymed.medication) == 1
-    assert isinstance(allergymed.medication[0], wh.MedicationAnnotation)
-    assert allergymed.medication[0].begin == 97
-    assert allergymed.medication[0].end == 107
-    assert allergymed.medication[0].cui == 'C0220892'
-    assert allergymed.medication[0].covered_text == 'penicillin'
-    assert allergymed.medication[0].type == 'aci.MedicationInd'
-    assert isinstance(allergymed.medication[0].drug, list)
-    assert len(allergymed.medication[0].drug)==1
-    # Note: in the future we may want to change drug from a dict into a proper class; then this will need to change
-    assert isinstance(allergymed.medication[0].drug[0], dict)
-    # make sure all fields were known and got parsed explicitly
-    assert allergymed._additionalProperties == set(['unknownField'])
-    assert allergymed.unknownField == 'MOCK-unknown'
-    # make sure that _to_dict doesn't blow up
-    _ = allergymed._to_dict()
 
-def test_nlu_entities_model():
-    dict_nlu_entities = {
-      u'begin': 0,
-      u'coveredText': u'amoxicillin',
-      u'end': 11,
-      u'type': u'Drug',
-      u'source': u'IBM Default NLU Model',
-      u'relevance': 0.223901,
-      u'unknownField': u'MOCK-unknown',
-    }
+#-----------------------------------------------------------------------------
+# Test Class for create_flows
+#-----------------------------------------------------------------------------
+class TestCreateFlows():
 
-    nlu_entities = wh.NluEntities._from_dict(dict_nlu_entities)
-    assert nlu_entities.begin == 0
-    assert nlu_entities.covered_text == 'amoxicillin'
-    assert nlu_entities.end == 11
-    assert nlu_entities.type == 'Drug'
-    assert nlu_entities.source == 'IBM Default NLU Model'
-    assert nlu_entities.relevance == 0.223901
-    # make sure all fields were known and got parsed explicitly
-    assert nlu_entities._additionalProperties == set(['unknownField'])
-    assert nlu_entities.unknownField == 'MOCK-unknown'
-    # make sure that _to_dict doesn't blow up
-    _ = nlu_entities._to_dict()
+    #--------------------------------------------------------
+    # create_flows()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_create_flows_all_params(self):
+        # Set up mock
+        url = BASE_URL + '/v1/flows'
+        responses.add(responses.POST,
+                      url,
+                      status=201)
 
-def test_relations_model():
-    dict_relations = {
-      u'source': u'IBM Default NLU Model',
-      u'score': 0.932613,
-      u'nodes': [{
-        u'entity': {
-          u'uid': 1}}],
-      u'type': u'hasAttribute',
-      u'unknownField': u'MOCK-unknown',
-    }
+        # Construct a dict representation of a FlowEntry model
+        flow_entry_model = {}
 
-    relations = wh.Relations._from_dict(dict_relations)
-    assert relations.source == 'IBM Default NLU Model'
-    assert relations.score == 0.932613
-    assert isinstance(relations.nodes[0], wh.Node)
-    assert len(relations.nodes[0].entity) == 1
-    assert isinstance(relations.nodes[0].entity, dict)
-    assert relations.type == 'hasAttribute'
-    # make sure all fields were known and got parsed explicitly
-    assert relations._additionalProperties == set(['unknownField'])
-    assert relations.unknownField == 'MOCK-unknown'
-    # make sure that _to_dict doesn't blow up
-    _ = relations._to_dict()
+        # Construct a dict representation of a ConfigurationEntity model
+        configuration_entity_model = {}
+        configuration_entity_model['id'] = 'testString'
+        configuration_entity_model['type'] = 'testString'
+        configuration_entity_model['uid'] = 26
+        configuration_entity_model['mergeid'] = 26
 
-def test_spelling_corrections_model():
-    dict_spelling_corrections = {
-        u'begin' : 0,
-        u'end' : 9,
-        u'coveredText' : u'Patientts',
-        u'suggestions' : [{
-                           u'applied' : True,
-                           u'confidence' : 0.96,
-                           u'semtypes' : [ "umls.patientOrDisabledGroup"],
-                           u'text' : "Patients"
-                           },
-                           {
-                           u'applied' : False,
-                           u'confidence' : 0.85,
-                           u'semtypes' : [ "umls.patientOrDisabledGroup"],
-                           u'text' : "Patient"
-                           }
-                          ]
-    }
+        # Construct a dict representation of a Flow model
+        flow_model = {}
+        flow_model['elements'] = [flow_entry_model]
+        flow_model['async'] = True
 
-    correction = wh.SpellingCorrection._from_dict(dict_spelling_corrections)
-    assert correction.begin == 0
-    assert correction.end == 9
-    assert correction.covered_text == u'Patientts'
-    assert len(correction.suggestions) == 2
-    suggestion = correction.suggestions[0]
-    assert suggestion.applied == True
-    assert suggestion.confidence == 0.96
-    assert len(suggestion.semtypes) == 1
-    assert suggestion.semtypes[0] == "umls.patientOrDisabledGroup"
-    assert suggestion.text == "Patients"
-    suggestion = correction.suggestions[1]
-    assert suggestion.applied == False
-    assert suggestion.confidence == 0.85
-    assert len(suggestion.semtypes) == 1
-    assert suggestion.semtypes[0] == "umls.patientOrDisabledGroup"
-    assert suggestion.text == "Patient"
+        # Construct a dict representation of a AnnotatorFlow model
+        annotator_flow_model = {}
+        annotator_flow_model['profile'] = 'testString'
+        annotator_flow_model['flow'] = flow_model
+        annotator_flow_model['id'] = 'testString'
+        annotator_flow_model['type'] = 'testString'
+        annotator_flow_model['data'] = {}
+        annotator_flow_model['metadata'] = {}
+        annotator_flow_model['globalConfigurations'] = [configuration_entity_model]
+        annotator_flow_model['uid'] = 26
 
-    # make the deserialized dict equals the original dict
-    assert correction._to_dict() == dict_spelling_corrections
+        # Set up parameter values
+        new_id = 'testString'
+        new_name = 'testString'
+        new_description = 'testString'
+        new_published_date = 'testString'
+        new_publish = True
+        new_version = 'testString'
+        new_cartridge_id = 'testString'
+        new_annotator_flows = [annotator_flow_model]
 
-def test_spell_corrected_text_model():
-    dict_spell_corrected_text = {
-        u'correctedText' : u'Patients with stage II breast cancer',
-        u'debugText' : ">>>Patientts->Patients(0.96) <<< with stage II >>>breast cancre->breast cancer(0.97)<<<"
-    }
-    spell_corrected_text = wh.SpellCorrectedText._from_dict(dict_spell_corrected_text)
-    assert spell_corrected_text.corrected_text == "Patients with stage II breast cancer"
-    assert spell_corrected_text.debug_text == ">>>Patientts->Patients(0.96) <<< with stage II >>>breast cancre->breast cancer(0.97)<<<"
+        # Invoke method
+        response = SERVICE.create_flows(
+            new_id=new_id,
+            new_name=new_name,
+            new_description=new_description,
+            new_published_date=new_published_date,
+            new_publish=new_publish,
+            new_version=new_version,
+            new_cartridge_id=new_cartridge_id,
+            new_annotator_flows=new_annotator_flows,
+            headers={}
+        )
 
-     # make the deserialized dict equals the original dict
-    assert spell_corrected_text._to_dict() == dict_spell_corrected_text
+        # Check for correct operation
+        assert len(responses.calls) == 1
+        assert response.status_code == 201
+        # Validate body params
+        req_body = json.loads(str(responses.calls[0].request.body, 'utf-8'))
+        assert req_body['id'] == 'testString'
+        assert req_body['name'] == 'testString'
+        assert req_body['description'] == 'testString'
+        assert req_body['publishedDate'] == 'testString'
+        assert req_body['publish'] == True
+        assert req_body['version'] == 'testString'
+        assert req_body['cartridgeId'] == 'testString'
+        assert req_body['annotatorFlows'] == [annotator_flow_model]
 
-def test_spelling_corrections_at_container_level():
-    container_json = '''
-    {
-        "unstructured": [
-          {
-            "text": "Patientts with stage II breast cancre",
-            "data": {
-              "spellCorrectedText": [
-                {
-                  "correctedText": "Patients with stage II breast cancer",
-                  "debugText": ">>>Patientts->Patients(0.96) <<< with stage II >>>breast cancre->breast cancer(0.97)<<<"
-                }
-              ],
-              "spellingCorrections": [
-                {
-                  "begin": 0,
-                  "end": 9,
-                  "coveredText": "Patientts",
-                  "suggestions": [
-                    {
-                      "applied": true,
-                      "confidence": 0.96,
-                      "semtypes": [
-                        "umls.PatientOrDisabledGroup"
-                      ],
-                      "text": "Patients"
-                    },
-                    {
-                      "applied": false,
-                      "confidence": 0.85,
-                      "semtypes": [
-                        "umls.PatientOrDisabledGroup"
-                      ],
-                      "text": "Patient"
-                    },
-                    {
-                      "applied": false,
-                      "confidence": 0.85,
-                      "semtypes": [
-                        "umls.IntellectualProduct"
-                      ],
-                      "text": "Patents"
-                    },
-                    {
-                      "applied": false,
-                      "confidence": 0.7,
-                      "text": "Patiently"
-                    }
-                  ]
-                },
-                {
-                  "begin": 24,
-                  "end": 37,
-                  "coveredText": "breast cancre",
-                  "suggestions": [
-                    {
-                      "applied": true,
-                      "confidence": 0.97,
-                      "semtypes": [
-                        "umls.NeoplasticProcess"
-                      ],
-                      "text": "breast cancer"
-                    }
-                  ]
-                }
-              ]
-            }
-          }
-        ]
-        }'''
-    #Convert the json string to native dict
-    container_dict = json.loads(container_json)
-    # load the first container
-    container_obj = wh.ContainerAnnotation._from_dict(container_dict['unstructured'][0]['data'])
-    #do some basic checks of the container to ensure the basic structure of the objects was loaded
-    assert container_obj.spelling_corrections[0].covered_text == "Patientts"
-    assert container_obj.spelling_corrections[1].covered_text == "breast cancre"
-    #check that the suggestions are there
-    assert container_obj.spelling_corrections[0].suggestions[0].text == "Patients"
-    assert container_obj.spelling_corrections[1].suggestions[0].text == "breast cancer"
 
-    #Check the _to_dict() against the original container dictionary
-    assert container_obj._to_dict() == container_dict["unstructured"][0]["data"]
+    #--------------------------------------------------------
+    # test_create_flows_value_error()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_create_flows_value_error(self):
+        # Set up mock
+        url = BASE_URL + '/v1/flows'
+        responses.add(responses.POST,
+                      url,
+                      status=201)
+
+        # Construct a dict representation of a FlowEntry model
+        flow_entry_model = {}
+
+        # Construct a dict representation of a ConfigurationEntity model
+        configuration_entity_model = {}
+        configuration_entity_model['id'] = 'testString'
+        configuration_entity_model['type'] = 'testString'
+        configuration_entity_model['uid'] = 26
+        configuration_entity_model['mergeid'] = 26
+
+        # Construct a dict representation of a Flow model
+        flow_model = {}
+        flow_model['elements'] = [flow_entry_model]
+        flow_model['async'] = True
+
+        # Construct a dict representation of a AnnotatorFlow model
+        annotator_flow_model = {}
+        annotator_flow_model['profile'] = 'testString'
+        annotator_flow_model['flow'] = flow_model
+        annotator_flow_model['id'] = 'testString'
+        annotator_flow_model['type'] = 'testString'
+        annotator_flow_model['data'] = {}
+        annotator_flow_model['metadata'] = {}
+        annotator_flow_model['globalConfigurations'] = [configuration_entity_model]
+        annotator_flow_model['uid'] = 26
+
+        # Set up parameter values
+        new_id = 'testString'
+        new_name = 'testString'
+        new_description = 'testString'
+        new_published_date = 'testString'
+        new_publish = True
+        new_version = 'testString'
+        new_cartridge_id = 'testString'
+        new_annotator_flows = [annotator_flow_model]
+
+        # Pass in all but one required param and check for a ValueError
+        req_param_dict = {
+        }
+        for param in req_param_dict.keys():
+            req_copy = {key:val if key is not param else None for (key,val) in req_param_dict.items()}
+            with pytest.raises(ValueError):
+                SERVICE.create_flows(**req_copy)
+
+
+
+#-----------------------------------------------------------------------------
+# Test Class for get_flows_by_id
+#-----------------------------------------------------------------------------
+class TestGetFlowsById():
+
+    #--------------------------------------------------------
+    # get_flows_by_id()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_get_flows_by_id_all_params(self):
+        # Set up mock
+        url = BASE_URL + '/v1/flows/testString'
+        mock_response = '{"id": "id", "name": "name", "description": "description", "publishedDate": "published_date", "publish": false, "version": "version", "cartridgeId": "cartridge_id", "annotatorFlows": [{"profile": "profile", "flow": {"elements": [{}], "async": true}, "id": "id", "type": "type", "data": {"mapKey": [{"id": "id", "type": "type", "uid": 3, "mergeid": 7}]}, "metadata": {"mapKey": {"anyKey": "anyValue"}}, "globalConfigurations": [{"id": "id", "type": "type", "uid": 3, "mergeid": 7}], "uid": 3}]}'
+        responses.add(responses.GET,
+                      url,
+                      body=mock_response,
+                      content_type='application/json',
+                      status=200)
+
+        # Set up parameter values
+        id = 'testString'
+
+        # Invoke method
+        response = SERVICE.get_flows_by_id(
+            id,
+            headers={}
+        )
+
+        # Check for correct operation
+        assert len(responses.calls) == 1
+        assert response.status_code == 200
+
+
+    #--------------------------------------------------------
+    # test_get_flows_by_id_value_error()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_get_flows_by_id_value_error(self):
+        # Set up mock
+        url = BASE_URL + '/v1/flows/testString'
+        mock_response = '{"id": "id", "name": "name", "description": "description", "publishedDate": "published_date", "publish": false, "version": "version", "cartridgeId": "cartridge_id", "annotatorFlows": [{"profile": "profile", "flow": {"elements": [{}], "async": true}, "id": "id", "type": "type", "data": {"mapKey": [{"id": "id", "type": "type", "uid": 3, "mergeid": 7}]}, "metadata": {"mapKey": {"anyKey": "anyValue"}}, "globalConfigurations": [{"id": "id", "type": "type", "uid": 3, "mergeid": 7}], "uid": 3}]}'
+        responses.add(responses.GET,
+                      url,
+                      body=mock_response,
+                      content_type='application/json',
+                      status=200)
+
+        # Set up parameter values
+        id = 'testString'
+
+        # Pass in all but one required param and check for a ValueError
+        req_param_dict = {
+            "id": id,
+        }
+        for param in req_param_dict.keys():
+            req_copy = {key:val if key is not param else None for (key,val) in req_param_dict.items()}
+            with pytest.raises(ValueError):
+                SERVICE.get_flows_by_id(**req_copy)
+
+
+
+#-----------------------------------------------------------------------------
+# Test Class for update_flows
+#-----------------------------------------------------------------------------
+class TestUpdateFlows():
+
+    #--------------------------------------------------------
+    # update_flows()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_update_flows_all_params(self):
+        # Set up mock
+        url = BASE_URL + '/v1/flows/testString'
+        responses.add(responses.PUT,
+                      url,
+                      status=200)
+
+        # Construct a dict representation of a FlowEntry model
+        flow_entry_model = {}
+
+        # Construct a dict representation of a ConfigurationEntity model
+        configuration_entity_model = {}
+        configuration_entity_model['id'] = 'testString'
+        configuration_entity_model['type'] = 'testString'
+        configuration_entity_model['uid'] = 26
+        configuration_entity_model['mergeid'] = 26
+
+        # Construct a dict representation of a Flow model
+        flow_model = {}
+        flow_model['elements'] = [flow_entry_model]
+        flow_model['async'] = True
+
+        # Construct a dict representation of a AnnotatorFlow model
+        annotator_flow_model = {}
+        annotator_flow_model['profile'] = 'testString'
+        annotator_flow_model['flow'] = flow_model
+        annotator_flow_model['id'] = 'testString'
+        annotator_flow_model['type'] = 'testString'
+        annotator_flow_model['data'] = {}
+        annotator_flow_model['metadata'] = {}
+        annotator_flow_model['globalConfigurations'] = [configuration_entity_model]
+        annotator_flow_model['uid'] = 26
+
+        # Set up parameter values
+        id = 'testString'
+        new_id = 'testString'
+        new_name = 'testString'
+        new_description = 'testString'
+        new_published_date = 'testString'
+        new_publish = True
+        new_version = 'testString'
+        new_cartridge_id = 'testString'
+        new_annotator_flows = [annotator_flow_model]
+
+        # Invoke method
+        response = SERVICE.update_flows(
+            id,
+            new_id=new_id,
+            new_name=new_name,
+            new_description=new_description,
+            new_published_date=new_published_date,
+            new_publish=new_publish,
+            new_version=new_version,
+            new_cartridge_id=new_cartridge_id,
+            new_annotator_flows=new_annotator_flows,
+            headers={}
+        )
+
+        # Check for correct operation
+        assert len(responses.calls) == 1
+        assert response.status_code == 200
+        # Validate body params
+        req_body = json.loads(str(responses.calls[0].request.body, 'utf-8'))
+        assert req_body['id'] == 'testString'
+        assert req_body['name'] == 'testString'
+        assert req_body['description'] == 'testString'
+        assert req_body['publishedDate'] == 'testString'
+        assert req_body['publish'] == True
+        assert req_body['version'] == 'testString'
+        assert req_body['cartridgeId'] == 'testString'
+        assert req_body['annotatorFlows'] == [annotator_flow_model]
+
+
+    #--------------------------------------------------------
+    # test_update_flows_value_error()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_update_flows_value_error(self):
+        # Set up mock
+        url = BASE_URL + '/v1/flows/testString'
+        responses.add(responses.PUT,
+                      url,
+                      status=200)
+
+        # Construct a dict representation of a FlowEntry model
+        flow_entry_model = {}
+
+        # Construct a dict representation of a ConfigurationEntity model
+        configuration_entity_model = {}
+        configuration_entity_model['id'] = 'testString'
+        configuration_entity_model['type'] = 'testString'
+        configuration_entity_model['uid'] = 26
+        configuration_entity_model['mergeid'] = 26
+
+        # Construct a dict representation of a Flow model
+        flow_model = {}
+        flow_model['elements'] = [flow_entry_model]
+        flow_model['async'] = True
+
+        # Construct a dict representation of a AnnotatorFlow model
+        annotator_flow_model = {}
+        annotator_flow_model['profile'] = 'testString'
+        annotator_flow_model['flow'] = flow_model
+        annotator_flow_model['id'] = 'testString'
+        annotator_flow_model['type'] = 'testString'
+        annotator_flow_model['data'] = {}
+        annotator_flow_model['metadata'] = {}
+        annotator_flow_model['globalConfigurations'] = [configuration_entity_model]
+        annotator_flow_model['uid'] = 26
+
+        # Set up parameter values
+        id = 'testString'
+        new_id = 'testString'
+        new_name = 'testString'
+        new_description = 'testString'
+        new_published_date = 'testString'
+        new_publish = True
+        new_version = 'testString'
+        new_cartridge_id = 'testString'
+        new_annotator_flows = [annotator_flow_model]
+
+        # Pass in all but one required param and check for a ValueError
+        req_param_dict = {
+            "id": id,
+        }
+        for param in req_param_dict.keys():
+            req_copy = {key:val if key is not param else None for (key,val) in req_param_dict.items()}
+            with pytest.raises(ValueError):
+                SERVICE.update_flows(**req_copy)
+
+
+
+#-----------------------------------------------------------------------------
+# Test Class for delete_flows
+#-----------------------------------------------------------------------------
+class TestDeleteFlows():
+
+    #--------------------------------------------------------
+    # delete_flows()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_delete_flows_all_params(self):
+        # Set up mock
+        url = BASE_URL + '/v1/flows/testString'
+        responses.add(responses.DELETE,
+                      url,
+                      status=200)
+
+        # Set up parameter values
+        id = 'testString'
+
+        # Invoke method
+        response = SERVICE.delete_flows(
+            id,
+            headers={}
+        )
+
+        # Check for correct operation
+        assert len(responses.calls) == 1
+        assert response.status_code == 200
+
+
+    #--------------------------------------------------------
+    # test_delete_flows_value_error()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_delete_flows_value_error(self):
+        # Set up mock
+        url = BASE_URL + '/v1/flows/testString'
+        responses.add(responses.DELETE,
+                      url,
+                      status=200)
+
+        # Set up parameter values
+        id = 'testString'
+
+        # Pass in all but one required param and check for a ValueError
+        req_param_dict = {
+            "id": id,
+        }
+        for param in req_param_dict.keys():
+            req_copy = {key:val if key is not param else None for (key,val) in req_param_dict.items()}
+            with pytest.raises(ValueError):
+                SERVICE.delete_flows(**req_copy)
+
+
+
+# endregion
+##############################################################################
+# End of Service: Flows
+##############################################################################
+
+##############################################################################
+# Start of Service: ACD
+##############################################################################
+# region
+
+#-----------------------------------------------------------------------------
+# Test Class for run_pipeline
+#-----------------------------------------------------------------------------
+class TestRunPipeline():
+
+    #--------------------------------------------------------
+    # run_pipeline()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_run_pipeline_all_params(self):
+        # Set up mock
+        url = BASE_URL + '/v1/analyze'
+        responses.add(responses.POST,
+                      url,
+                      status=200)
+
+        # Construct a dict representation of a UnstructuredContainer model
+        unstructured_container_model = {}
+        unstructured_container_model['text'] = 'testString'
+        unstructured_container_model['id'] = 'testString'
+        unstructured_container_model['type'] = 'testString'
+        unstructured_container_model['data'] = {}
+        unstructured_container_model['metadata'] = {}
+        unstructured_container_model['uid'] = 26
+
+        # Construct a dict representation of a FlowEntry model
+        flow_entry_model = {}
+
+        # Construct a dict representation of a ConfigurationEntity model
+        configuration_entity_model = {}
+        configuration_entity_model['id'] = 'testString'
+        configuration_entity_model['type'] = 'testString'
+        configuration_entity_model['uid'] = 26
+        configuration_entity_model['mergeid'] = 26
+
+        # Construct a dict representation of a Flow model
+        flow_model = {}
+        flow_model['elements'] = [flow_entry_model]
+        flow_model['async'] = True
+
+        # Construct a dict representation of a AnnotatorFlow model
+        annotator_flow_model = {}
+        annotator_flow_model['profile'] = 'testString'
+        annotator_flow_model['flow'] = flow_model
+        annotator_flow_model['id'] = 'testString'
+        annotator_flow_model['type'] = 'testString'
+        annotator_flow_model['data'] = {}
+        annotator_flow_model['metadata'] = {}
+        annotator_flow_model['globalConfigurations'] = [configuration_entity_model]
+        annotator_flow_model['uid'] = 26
+
+        # Set up parameter values
+        unstructured = [unstructured_container_model]
+        annotator_flows = [annotator_flow_model]
+        debug_text_restore = True
+        return_analyzed_text = True
+
+        # Invoke method
+        response = SERVICE.run_pipeline(
+            unstructured=unstructured,
+            annotator_flows=annotator_flows,
+            debug_text_restore=debug_text_restore,
+            return_analyzed_text=return_analyzed_text,
+            headers={}
+        )
+
+        # Check for correct operation
+        assert len(responses.calls) == 1
+        assert response.status_code == 200
+        # Validate query params
+        query_string = responses.calls[0].request.url.split('?',1)[1]
+        query_string = requests.utils.unquote(query_string)
+        assert 'debug_text_restore={}'.format('true' if debug_text_restore else 'false') in query_string
+        assert 'return_analyzed_text={}'.format('true' if return_analyzed_text else 'false') in query_string
+        # Validate body params
+        req_body = json.loads(str(responses.calls[0].request.body, 'utf-8'))
+        assert req_body['unstructured'] == [unstructured_container_model]
+        assert req_body['annotatorFlows'] == [annotator_flow_model]
+
+
+    #--------------------------------------------------------
+    # test_run_pipeline_required_params()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_run_pipeline_required_params(self):
+        # Set up mock
+        url = BASE_URL + '/v1/analyze'
+        responses.add(responses.POST,
+                      url,
+                      status=200)
+
+        # Construct a dict representation of a UnstructuredContainer model
+        unstructured_container_model = {}
+        unstructured_container_model['text'] = 'testString'
+        unstructured_container_model['id'] = 'testString'
+        unstructured_container_model['type'] = 'testString'
+        unstructured_container_model['data'] = {}
+        unstructured_container_model['metadata'] = {}
+        unstructured_container_model['uid'] = 26
+
+        # Construct a dict representation of a FlowEntry model
+        flow_entry_model = {}
+
+        # Construct a dict representation of a ConfigurationEntity model
+        configuration_entity_model = {}
+        configuration_entity_model['id'] = 'testString'
+        configuration_entity_model['type'] = 'testString'
+        configuration_entity_model['uid'] = 26
+        configuration_entity_model['mergeid'] = 26
+
+        # Construct a dict representation of a Flow model
+        flow_model = {}
+        flow_model['elements'] = [flow_entry_model]
+        flow_model['async'] = True
+
+        # Construct a dict representation of a AnnotatorFlow model
+        annotator_flow_model = {}
+        annotator_flow_model['profile'] = 'testString'
+        annotator_flow_model['flow'] = flow_model
+        annotator_flow_model['id'] = 'testString'
+        annotator_flow_model['type'] = 'testString'
+        annotator_flow_model['data'] = {}
+        annotator_flow_model['metadata'] = {}
+        annotator_flow_model['globalConfigurations'] = [configuration_entity_model]
+        annotator_flow_model['uid'] = 26
+
+        # Set up parameter values
+        unstructured = [unstructured_container_model]
+        annotator_flows = [annotator_flow_model]
+
+        # Invoke method
+        response = SERVICE.run_pipeline(
+            unstructured=unstructured,
+            annotator_flows=annotator_flows,
+            headers={}
+        )
+
+        # Check for correct operation
+        assert len(responses.calls) == 1
+        assert response.status_code == 200
+        # Validate body params
+        req_body = json.loads(str(responses.calls[0].request.body, 'utf-8'))
+        assert req_body['unstructured'] == [unstructured_container_model]
+        assert req_body['annotatorFlows'] == [annotator_flow_model]
+
+
+    #--------------------------------------------------------
+    # test_run_pipeline_value_error()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_run_pipeline_value_error(self):
+        # Set up mock
+        url = BASE_URL + '/v1/analyze'
+        responses.add(responses.POST,
+                      url,
+                      status=200)
+
+        # Construct a dict representation of a UnstructuredContainer model
+        unstructured_container_model = {}
+        unstructured_container_model['text'] = 'testString'
+        unstructured_container_model['id'] = 'testString'
+        unstructured_container_model['type'] = 'testString'
+        unstructured_container_model['data'] = {}
+        unstructured_container_model['metadata'] = {}
+        unstructured_container_model['uid'] = 26
+
+        # Construct a dict representation of a FlowEntry model
+        flow_entry_model = {}
+
+        # Construct a dict representation of a ConfigurationEntity model
+        configuration_entity_model = {}
+        configuration_entity_model['id'] = 'testString'
+        configuration_entity_model['type'] = 'testString'
+        configuration_entity_model['uid'] = 26
+        configuration_entity_model['mergeid'] = 26
+
+        # Construct a dict representation of a Flow model
+        flow_model = {}
+        flow_model['elements'] = [flow_entry_model]
+        flow_model['async'] = True
+
+        # Construct a dict representation of a AnnotatorFlow model
+        annotator_flow_model = {}
+        annotator_flow_model['profile'] = 'testString'
+        annotator_flow_model['flow'] = flow_model
+        annotator_flow_model['id'] = 'testString'
+        annotator_flow_model['type'] = 'testString'
+        annotator_flow_model['data'] = {}
+        annotator_flow_model['metadata'] = {}
+        annotator_flow_model['globalConfigurations'] = [configuration_entity_model]
+        annotator_flow_model['uid'] = 26
+
+        # Set up parameter values
+        unstructured = [unstructured_container_model]
+        annotator_flows = [annotator_flow_model]
+
+        # Pass in all but one required param and check for a ValueError
+        req_param_dict = {
+        }
+        for param in req_param_dict.keys():
+            req_copy = {key:val if key is not param else None for (key,val) in req_param_dict.items()}
+            with pytest.raises(ValueError):
+                SERVICE.run_pipeline(**req_copy)
+
+
+
+#-----------------------------------------------------------------------------
+# Test Class for run_pipeline_with_flow
+#-----------------------------------------------------------------------------
+class TestRunPipelineWithFlow():
+
+    #--------------------------------------------------------
+    # run_pipeline_with_flow()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_run_pipeline_with_flow_all_params(self):
+        # Set up mock
+        url = BASE_URL + '/v1/analyze/testString'
+        responses.add(responses.POST,
+                      url,
+                      status=200)
+
+        # Construct a dict representation of a FlowEntry model
+        flow_entry_model = {}
+
+        # Construct a dict representation of a ConfigurationEntity model
+        configuration_entity_model = {}
+        configuration_entity_model['id'] = 'testString'
+        configuration_entity_model['type'] = 'testString'
+        configuration_entity_model['uid'] = 26
+        configuration_entity_model['mergeid'] = 26
+
+        # Construct a dict representation of a Flow model
+        flow_model = {}
+        flow_model['elements'] = [flow_entry_model]
+        flow_model['async'] = True
+
+        # Construct a dict representation of a AnnotatorFlow model
+        annotator_flow_model = {}
+        annotator_flow_model['profile'] = 'testString'
+        annotator_flow_model['flow'] = flow_model
+        annotator_flow_model['id'] = 'testString'
+        annotator_flow_model['type'] = 'testString'
+        annotator_flow_model['data'] = {}
+        annotator_flow_model['metadata'] = {}
+        annotator_flow_model['globalConfigurations'] = [configuration_entity_model]
+        annotator_flow_model['uid'] = 26
+
+        # Construct a dict representation of a UnstructuredContainer model
+        unstructured_container_model = {}
+        unstructured_container_model['text'] = 'testString'
+        unstructured_container_model['id'] = 'testString'
+        unstructured_container_model['type'] = 'testString'
+        unstructured_container_model['data'] = {}
+        unstructured_container_model['metadata'] = {}
+        unstructured_container_model['uid'] = 26
+
+        # Construct a dict representation of a AnalyticFlowBeanInput model
+        analytic_flow_bean_input_model = {}
+        analytic_flow_bean_input_model['unstructured'] = [unstructured_container_model]
+        analytic_flow_bean_input_model['annotatorFlows'] = [annotator_flow_model]
+
+        # Set up parameter values
+        flow_id = 'testString'
+        return_analyzed_text = True
+        analytic_flow_bean_input = analytic_flow_bean_input_model
+        content_type = 'application/json'
+        debug_text_restore = True
+
+        # Invoke method
+        response = SERVICE.run_pipeline_with_flow(
+            flow_id,
+            return_analyzed_text,
+            analytic_flow_bean_input,
+            content_type=content_type,
+            debug_text_restore=debug_text_restore,
+            headers={}
+        )
+
+        # Check for correct operation
+        assert len(responses.calls) == 1
+        assert response.status_code == 200
+        # Validate query params
+        query_string = responses.calls[0].request.url.split('?',1)[1]
+        query_string = requests.utils.unquote(query_string)
+        assert 'return_analyzed_text={}'.format('true' if return_analyzed_text else 'false') in query_string
+        assert 'debug_text_restore={}'.format('true' if debug_text_restore else 'false') in query_string
+        # Validate body params
+
+
+    #--------------------------------------------------------
+    # test_run_pipeline_with_flow_required_params()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_run_pipeline_with_flow_required_params(self):
+        # Set up mock
+        url = BASE_URL + '/v1/analyze/testString'
+        responses.add(responses.POST,
+                      url,
+                      status=200)
+
+        # Construct a dict representation of a FlowEntry model
+        flow_entry_model = {}
+
+        # Construct a dict representation of a ConfigurationEntity model
+        configuration_entity_model = {}
+        configuration_entity_model['id'] = 'testString'
+        configuration_entity_model['type'] = 'testString'
+        configuration_entity_model['uid'] = 26
+        configuration_entity_model['mergeid'] = 26
+
+        # Construct a dict representation of a Flow model
+        flow_model = {}
+        flow_model['elements'] = [flow_entry_model]
+        flow_model['async'] = True
+
+        # Construct a dict representation of a AnnotatorFlow model
+        annotator_flow_model = {}
+        annotator_flow_model['profile'] = 'testString'
+        annotator_flow_model['flow'] = flow_model
+        annotator_flow_model['id'] = 'testString'
+        annotator_flow_model['type'] = 'testString'
+        annotator_flow_model['data'] = {}
+        annotator_flow_model['metadata'] = {}
+        annotator_flow_model['globalConfigurations'] = [configuration_entity_model]
+        annotator_flow_model['uid'] = 26
+
+        # Construct a dict representation of a UnstructuredContainer model
+        unstructured_container_model = {}
+        unstructured_container_model['text'] = 'testString'
+        unstructured_container_model['id'] = 'testString'
+        unstructured_container_model['type'] = 'testString'
+        unstructured_container_model['data'] = {}
+        unstructured_container_model['metadata'] = {}
+        unstructured_container_model['uid'] = 26
+
+        # Construct a dict representation of a AnalyticFlowBeanInput model
+        analytic_flow_bean_input_model = {}
+        analytic_flow_bean_input_model['unstructured'] = [unstructured_container_model]
+        analytic_flow_bean_input_model['annotatorFlows'] = [annotator_flow_model]
+
+        # Set up parameter values
+        flow_id = 'testString'
+        return_analyzed_text = True
+        analytic_flow_bean_input = analytic_flow_bean_input_model
+
+        # Invoke method
+        response = SERVICE.run_pipeline_with_flow(
+            flow_id,
+            return_analyzed_text,
+            analytic_flow_bean_input,
+            headers={}
+        )
+
+        # Check for correct operation
+        assert len(responses.calls) == 1
+        assert response.status_code == 200
+        # Validate query params
+        query_string = responses.calls[0].request.url.split('?',1)[1]
+        query_string = requests.utils.unquote(query_string)
+        assert 'return_analyzed_text={}'.format('true' if return_analyzed_text else 'false') in query_string
+        # Validate body params
+
+
+    #--------------------------------------------------------
+    # test_run_pipeline_with_flow_value_error()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_run_pipeline_with_flow_value_error(self):
+        # Set up mock
+        url = BASE_URL + '/v1/analyze/testString'
+        responses.add(responses.POST,
+                      url,
+                      status=200)
+
+        # Construct a dict representation of a FlowEntry model
+        flow_entry_model = {}
+
+        # Construct a dict representation of a ConfigurationEntity model
+        configuration_entity_model = {}
+        configuration_entity_model['id'] = 'testString'
+        configuration_entity_model['type'] = 'testString'
+        configuration_entity_model['uid'] = 26
+        configuration_entity_model['mergeid'] = 26
+
+        # Construct a dict representation of a Flow model
+        flow_model = {}
+        flow_model['elements'] = [flow_entry_model]
+        flow_model['async'] = True
+
+        # Construct a dict representation of a AnnotatorFlow model
+        annotator_flow_model = {}
+        annotator_flow_model['profile'] = 'testString'
+        annotator_flow_model['flow'] = flow_model
+        annotator_flow_model['id'] = 'testString'
+        annotator_flow_model['type'] = 'testString'
+        annotator_flow_model['data'] = {}
+        annotator_flow_model['metadata'] = {}
+        annotator_flow_model['globalConfigurations'] = [configuration_entity_model]
+        annotator_flow_model['uid'] = 26
+
+        # Construct a dict representation of a UnstructuredContainer model
+        unstructured_container_model = {}
+        unstructured_container_model['text'] = 'testString'
+        unstructured_container_model['id'] = 'testString'
+        unstructured_container_model['type'] = 'testString'
+        unstructured_container_model['data'] = {}
+        unstructured_container_model['metadata'] = {}
+        unstructured_container_model['uid'] = 26
+
+        # Construct a dict representation of a AnalyticFlowBeanInput model
+        analytic_flow_bean_input_model = {}
+        analytic_flow_bean_input_model['unstructured'] = [unstructured_container_model]
+        analytic_flow_bean_input_model['annotatorFlows'] = [annotator_flow_model]
+
+        # Set up parameter values
+        flow_id = 'testString'
+        return_analyzed_text = True
+        analytic_flow_bean_input = analytic_flow_bean_input_model
+
+        # Pass in all but one required param and check for a ValueError
+        req_param_dict = {
+            "flow_id": flow_id,
+            "return_analyzed_text": return_analyzed_text,
+            "analytic_flow_bean_input": analytic_flow_bean_input,
+        }
+        for param in req_param_dict.keys():
+            req_copy = {key:val if key is not param else None for (key,val) in req_param_dict.items()}
+            with pytest.raises(ValueError):
+                SERVICE.run_pipeline_with_flow(**req_copy)
+
+
+
+#-----------------------------------------------------------------------------
+# Test Class for get_annotators
+#-----------------------------------------------------------------------------
+class TestGetAnnotators():
+
+    #--------------------------------------------------------
+    # get_annotators()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_get_annotators_all_params(self):
+        # Set up mock
+        url = BASE_URL + '/v1/annotators'
+        responses.add(responses.GET,
+                      url,
+                      status=200)
+
+        # Invoke method
+        response = SERVICE.get_annotators()
+
+
+        # Check for correct operation
+        assert len(responses.calls) == 1
+        assert response.status_code == 200
+
+
+    #--------------------------------------------------------
+    # test_get_annotators_value_error()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_get_annotators_value_error(self):
+        # Set up mock
+        url = BASE_URL + '/v1/annotators'
+        responses.add(responses.GET,
+                      url,
+                      status=200)
+
+        # Pass in all but one required param and check for a ValueError
+        req_param_dict = {
+        }
+        for param in req_param_dict.keys():
+            req_copy = {key:val if key is not param else None for (key,val) in req_param_dict.items()}
+            with pytest.raises(ValueError):
+                SERVICE.get_annotators(**req_copy)
+
+
+
+#-----------------------------------------------------------------------------
+# Test Class for get_annotators_by_id
+#-----------------------------------------------------------------------------
+class TestGetAnnotatorsById():
+
+    #--------------------------------------------------------
+    # get_annotators_by_id()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_get_annotators_by_id_all_params(self):
+        # Set up mock
+        url = BASE_URL + '/v1/annotators/testString'
+        responses.add(responses.GET,
+                      url,
+                      status=200)
+
+        # Set up parameter values
+        id = 'testString'
+
+        # Invoke method
+        response = SERVICE.get_annotators_by_id(
+            id,
+            headers={}
+        )
+
+        # Check for correct operation
+        assert len(responses.calls) == 1
+        assert response.status_code == 200
+
+
+    #--------------------------------------------------------
+    # test_get_annotators_by_id_value_error()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_get_annotators_by_id_value_error(self):
+        # Set up mock
+        url = BASE_URL + '/v1/annotators/testString'
+        responses.add(responses.GET,
+                      url,
+                      status=200)
+
+        # Set up parameter values
+        id = 'testString'
+
+        # Pass in all but one required param and check for a ValueError
+        req_param_dict = {
+            "id": id,
+        }
+        for param in req_param_dict.keys():
+            req_copy = {key:val if key is not param else None for (key,val) in req_param_dict.items()}
+            with pytest.raises(ValueError):
+                SERVICE.get_annotators_by_id(**req_copy)
+
+
+
+#-----------------------------------------------------------------------------
+# Test Class for delete_user_specific_artifacts
+#-----------------------------------------------------------------------------
+class TestDeleteUserSpecificArtifacts():
+
+    #--------------------------------------------------------
+    # delete_user_specific_artifacts()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_delete_user_specific_artifacts_all_params(self):
+        # Set up mock
+        url = BASE_URL + '/v1/user_data'
+        responses.add(responses.DELETE,
+                      url,
+                      status=204)
+
+        # Invoke method
+        response = SERVICE.delete_user_specific_artifacts()
+
+
+        # Check for correct operation
+        assert len(responses.calls) == 1
+        assert response.status_code == 204
+
+
+    #--------------------------------------------------------
+    # test_delete_user_specific_artifacts_value_error()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_delete_user_specific_artifacts_value_error(self):
+        # Set up mock
+        url = BASE_URL + '/v1/user_data'
+        responses.add(responses.DELETE,
+                      url,
+                      status=204)
+
+        # Pass in all but one required param and check for a ValueError
+        req_param_dict = {
+        }
+        for param in req_param_dict.keys():
+            req_copy = {key:val if key is not param else None for (key,val) in req_param_dict.items()}
+            with pytest.raises(ValueError):
+                SERVICE.delete_user_specific_artifacts(**req_copy)
+
+
+
+# endregion
+##############################################################################
+# End of Service: ACD
+##############################################################################
+
+##############################################################################
+# Start of Service: Cartridges
+##############################################################################
+# region
+
+#-----------------------------------------------------------------------------
+# Test Class for cartridges_get
+#-----------------------------------------------------------------------------
+class TestCartridgesGet():
+
+    #--------------------------------------------------------
+    # cartridges_get()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_cartridges_get_all_params(self):
+        # Set up mock
+        url = BASE_URL + '/v1/cartridges'
+        mock_response = '{"data": ["data"]}'
+        responses.add(responses.GET,
+                      url,
+                      body=mock_response,
+                      content_type='application/json',
+                      status=200)
+
+        # Invoke method
+        response = SERVICE.cartridges_get()
+
+
+        # Check for correct operation
+        assert len(responses.calls) == 1
+        assert response.status_code == 200
+
+
+    #--------------------------------------------------------
+    # test_cartridges_get_value_error()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_cartridges_get_value_error(self):
+        # Set up mock
+        url = BASE_URL + '/v1/cartridges'
+        mock_response = '{"data": ["data"]}'
+        responses.add(responses.GET,
+                      url,
+                      body=mock_response,
+                      content_type='application/json',
+                      status=200)
+
+        # Pass in all but one required param and check for a ValueError
+        req_param_dict = {
+        }
+        for param in req_param_dict.keys():
+            req_copy = {key:val if key is not param else None for (key,val) in req_param_dict.items()}
+            with pytest.raises(ValueError):
+                SERVICE.cartridges_get(**req_copy)
+
+
+
+#-----------------------------------------------------------------------------
+# Test Class for cartridges_post_multipart
+#-----------------------------------------------------------------------------
+class TestCartridgesPostMultipart():
+
+    #--------------------------------------------------------
+    # cartridges_post_multipart()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_cartridges_post_multipart_all_params(self):
+        # Set up mock
+        url = BASE_URL + '/v1/cartridges'
+        mock_response = '{"code": 4, "artifactResponse": [{"code": 4, "message": "message", "level": "ERROR", "description": "description", "moreInfo": "more_info", "correlationId": "correlation_id", "artifact": "artifact", "href": "href"}]}'
+        responses.add(responses.POST,
+                      url,
+                      body=mock_response,
+                      content_type='application/json',
+                      status=200)
+
+        # Set up parameter values
+        archive_file = io.BytesIO(b'This is a mock file.').getvalue()
+        archive_file_content_type = 'testString'
+
+        # Invoke method
+        response = SERVICE.cartridges_post_multipart(
+            archive_file=archive_file,
+            archive_file_content_type=archive_file_content_type,
+            headers={}
+        )
+
+        # Check for correct operation
+        assert len(responses.calls) == 1
+        assert response.status_code == 200
+
+
+    #--------------------------------------------------------
+    # test_cartridges_post_multipart_required_params()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_cartridges_post_multipart_required_params(self):
+        # Set up mock
+        url = BASE_URL + '/v1/cartridges'
+        mock_response = '{"code": 4, "artifactResponse": [{"code": 4, "message": "message", "level": "ERROR", "description": "description", "moreInfo": "more_info", "correlationId": "correlation_id", "artifact": "artifact", "href": "href"}]}'
+        responses.add(responses.POST,
+                      url,
+                      body=mock_response,
+                      content_type='application/json',
+                      status=200)
+
+        # Invoke method
+        response = SERVICE.cartridges_post_multipart()
+
+
+        # Check for correct operation
+        assert len(responses.calls) == 1
+        assert response.status_code == 200
+
+
+    #--------------------------------------------------------
+    # test_cartridges_post_multipart_value_error()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_cartridges_post_multipart_value_error(self):
+        # Set up mock
+        url = BASE_URL + '/v1/cartridges'
+        mock_response = '{"code": 4, "artifactResponse": [{"code": 4, "message": "message", "level": "ERROR", "description": "description", "moreInfo": "more_info", "correlationId": "correlation_id", "artifact": "artifact", "href": "href"}]}'
+        responses.add(responses.POST,
+                      url,
+                      body=mock_response,
+                      content_type='application/json',
+                      status=200)
+
+        # Pass in all but one required param and check for a ValueError
+        req_param_dict = {
+        }
+        for param in req_param_dict.keys():
+            req_copy = {key:val if key is not param else None for (key,val) in req_param_dict.items()}
+            with pytest.raises(ValueError):
+                SERVICE.cartridges_post_multipart(**req_copy)
+
+
+
+#-----------------------------------------------------------------------------
+# Test Class for cartridges_put_multipart
+#-----------------------------------------------------------------------------
+class TestCartridgesPutMultipart():
+
+    #--------------------------------------------------------
+    # cartridges_put_multipart()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_cartridges_put_multipart_all_params(self):
+        # Set up mock
+        url = BASE_URL + '/v1/cartridges'
+        mock_response = '{"code": 4, "artifactResponse": [{"code": 4, "message": "message", "level": "ERROR", "description": "description", "moreInfo": "more_info", "correlationId": "correlation_id", "artifact": "artifact", "href": "href"}]}'
+        responses.add(responses.PUT,
+                      url,
+                      body=mock_response,
+                      content_type='application/json',
+                      status=200)
+
+        # Set up parameter values
+        archive_file = io.BytesIO(b'This is a mock file.').getvalue()
+        archive_file_content_type = 'testString'
+
+        # Invoke method
+        response = SERVICE.cartridges_put_multipart(
+            archive_file=archive_file,
+            archive_file_content_type=archive_file_content_type,
+            headers={}
+        )
+
+        # Check for correct operation
+        assert len(responses.calls) == 1
+        assert response.status_code == 200
+
+
+    #--------------------------------------------------------
+    # test_cartridges_put_multipart_required_params()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_cartridges_put_multipart_required_params(self):
+        # Set up mock
+        url = BASE_URL + '/v1/cartridges'
+        mock_response = '{"code": 4, "artifactResponse": [{"code": 4, "message": "message", "level": "ERROR", "description": "description", "moreInfo": "more_info", "correlationId": "correlation_id", "artifact": "artifact", "href": "href"}]}'
+        responses.add(responses.PUT,
+                      url,
+                      body=mock_response,
+                      content_type='application/json',
+                      status=200)
+
+        # Invoke method
+        response = SERVICE.cartridges_put_multipart()
+
+
+        # Check for correct operation
+        assert len(responses.calls) == 1
+        assert response.status_code == 200
+
+
+    #--------------------------------------------------------
+    # test_cartridges_put_multipart_value_error()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_cartridges_put_multipart_value_error(self):
+        # Set up mock
+        url = BASE_URL + '/v1/cartridges'
+        mock_response = '{"code": 4, "artifactResponse": [{"code": 4, "message": "message", "level": "ERROR", "description": "description", "moreInfo": "more_info", "correlationId": "correlation_id", "artifact": "artifact", "href": "href"}]}'
+        responses.add(responses.PUT,
+                      url,
+                      body=mock_response,
+                      content_type='application/json',
+                      status=200)
+
+        # Pass in all but one required param and check for a ValueError
+        req_param_dict = {
+        }
+        for param in req_param_dict.keys():
+            req_copy = {key:val if key is not param else None for (key,val) in req_param_dict.items()}
+            with pytest.raises(ValueError):
+                SERVICE.cartridges_put_multipart(**req_copy)
+
+
+
+#-----------------------------------------------------------------------------
+# Test Class for cartridges_get_id
+#-----------------------------------------------------------------------------
+class TestCartridgesGetId():
+
+    #--------------------------------------------------------
+    # cartridges_get_id()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_cartridges_get_id_all_params(self):
+        # Set up mock
+        url = BASE_URL + '/v1/cartridges/testString'
+        mock_response = '{"id": "id", "name": "name", "status": "status", "statusCode": 11, "statusLocation": "status_location", "startTime": "start_time", "endTime": "end_time", "duration": "duration", "correlationId": "correlation_id", "artifactResponseCode": 22, "artifactResponse": [{"code": 4, "message": "message", "level": "ERROR", "description": "description", "moreInfo": "more_info", "correlationId": "correlation_id", "artifact": "artifact", "href": "href"}]}'
+        responses.add(responses.GET,
+                      url,
+                      body=mock_response,
+                      content_type='application/json',
+                      status=200)
+
+        # Set up parameter values
+        id = 'testString'
+
+        # Invoke method
+        response = SERVICE.cartridges_get_id(
+            id,
+            headers={}
+        )
+
+        # Check for correct operation
+        assert len(responses.calls) == 1
+        assert response.status_code == 200
+
+
+    #--------------------------------------------------------
+    # test_cartridges_get_id_value_error()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_cartridges_get_id_value_error(self):
+        # Set up mock
+        url = BASE_URL + '/v1/cartridges/testString'
+        mock_response = '{"id": "id", "name": "name", "status": "status", "statusCode": 11, "statusLocation": "status_location", "startTime": "start_time", "endTime": "end_time", "duration": "duration", "correlationId": "correlation_id", "artifactResponseCode": 22, "artifactResponse": [{"code": 4, "message": "message", "level": "ERROR", "description": "description", "moreInfo": "more_info", "correlationId": "correlation_id", "artifact": "artifact", "href": "href"}]}'
+        responses.add(responses.GET,
+                      url,
+                      body=mock_response,
+                      content_type='application/json',
+                      status=200)
+
+        # Set up parameter values
+        id = 'testString'
+
+        # Pass in all but one required param and check for a ValueError
+        req_param_dict = {
+            "id": id,
+        }
+        for param in req_param_dict.keys():
+            req_copy = {key:val if key is not param else None for (key,val) in req_param_dict.items()}
+            with pytest.raises(ValueError):
+                SERVICE.cartridges_get_id(**req_copy)
+
+
+
+#-----------------------------------------------------------------------------
+# Test Class for deploy_cartridge
+#-----------------------------------------------------------------------------
+class TestDeployCartridge():
+
+    #--------------------------------------------------------
+    # deploy_cartridge()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_deploy_cartridge_all_params(self):
+        # Set up mock
+        url = BASE_URL + '/v1/deploy'
+        mock_response = '{"code": 4, "artifactResponse": [{"code": 4, "message": "message", "level": "ERROR", "description": "description", "moreInfo": "more_info", "correlationId": "correlation_id", "artifact": "artifact", "href": "href"}]}'
+        responses.add(responses.POST,
+                      url,
+                      body=mock_response,
+                      content_type='application/json',
+                      status=200)
+
+        # Set up parameter values
+        archive_file = io.BytesIO(b'This is a mock file.').getvalue()
+        archive_file_content_type = 'testString'
+        update = True
+
+        # Invoke method
+        response = SERVICE.deploy_cartridge(
+            archive_file=archive_file,
+            archive_file_content_type=archive_file_content_type,
+            update=update,
+            headers={}
+        )
+
+        # Check for correct operation
+        assert len(responses.calls) == 1
+        assert response.status_code == 200
+        # Validate query params
+        query_string = responses.calls[0].request.url.split('?',1)[1]
+        query_string = requests.utils.unquote(query_string)
+        assert 'update={}'.format('true' if update else 'false') in query_string
+
+
+    #--------------------------------------------------------
+    # test_deploy_cartridge_required_params()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_deploy_cartridge_required_params(self):
+        # Set up mock
+        url = BASE_URL + '/v1/deploy'
+        mock_response = '{"code": 4, "artifactResponse": [{"code": 4, "message": "message", "level": "ERROR", "description": "description", "moreInfo": "more_info", "correlationId": "correlation_id", "artifact": "artifact", "href": "href"}]}'
+        responses.add(responses.POST,
+                      url,
+                      body=mock_response,
+                      content_type='application/json',
+                      status=200)
+
+        # Invoke method
+        response = SERVICE.deploy_cartridge()
+
+
+        # Check for correct operation
+        assert len(responses.calls) == 1
+        assert response.status_code == 200
+
+
+    #--------------------------------------------------------
+    # test_deploy_cartridge_value_error()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_deploy_cartridge_value_error(self):
+        # Set up mock
+        url = BASE_URL + '/v1/deploy'
+        mock_response = '{"code": 4, "artifactResponse": [{"code": 4, "message": "message", "level": "ERROR", "description": "description", "moreInfo": "more_info", "correlationId": "correlation_id", "artifact": "artifact", "href": "href"}]}'
+        responses.add(responses.POST,
+                      url,
+                      body=mock_response,
+                      content_type='application/json',
+                      status=200)
+
+        # Pass in all but one required param and check for a ValueError
+        req_param_dict = {
+        }
+        for param in req_param_dict.keys():
+            req_copy = {key:val if key is not param else None for (key,val) in req_param_dict.items()}
+            with pytest.raises(ValueError):
+                SERVICE.deploy_cartridge(**req_copy)
+
+
+
+# endregion
+##############################################################################
+# End of Service: Cartridges
+##############################################################################
+
+##############################################################################
+# Start of Service: Status
+##############################################################################
+# region
+
+
+#-----------------------------------------------------------------------------
+# Test Class for get_health_check_status
+#-----------------------------------------------------------------------------
+class TestGetHealthCheckStatus():
+
+    #--------------------------------------------------------
+    # get_health_check_status()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_get_health_check_status_all_params(self):
+        # Set up mock
+        url = BASE_URL + '/v1/status/health_check'
+        mock_response = '{"version": "version", "upTime": "up_time", "serviceState": "OK", "stateDetails": "state_details", "hostName": "host_name", "requestCount": 13, "maxMemoryMb": 13, "commitedMemoryMb": 18, "inUseMemoryMb": 16, "availableProcessors": 20, "concurrentRequests": 19, "maxConcurrentRequests": 23, "totalRejectedRequests": 23, "totalBlockedRequests": 22}'
+        responses.add(responses.GET,
+                      url,
+                      body=mock_response,
+                      content_type='application/json',
+                      status=200)
+
+        # Set up parameter values
+        accept = 'application/json'
+        format = 'json'
+
+        # Invoke method
+        response = SERVICE.get_health_check_status(
+            accept=accept,
+            format=format,
+            headers={}
+        )
+
+        # Check for correct operation
+        assert len(responses.calls) == 1
+        assert response.status_code == 200
+        # Validate query params
+        query_string = responses.calls[0].request.url.split('?',1)[1]
+        query_string = requests.utils.unquote(query_string)
+        assert 'format={}'.format(format) in query_string
+
+
+    #--------------------------------------------------------
+    # test_get_health_check_status_required_params()
+    #--------------------------------------------------------
+    @responses.activate
+    def test_get_health_check_status_required_params(self):
+        # Set up mock
+        url = BASE_URL + '/v1/status/health_check'
+        mock_response = '{"version": "version", "upTime": "up_time", "serviceState": "OK", "stateDetails": "state_details", "hostName": "host_name", "requestCount": 13, "maxMemoryMb": 13, "commitedMemoryMb": 18, "inUseMemoryMb": 16, "availableProcessors": 20, "concurrentRequests": 19, "maxConcurrentRequests": 23, "totalRejectedRequests": 23, "totalBlockedRequests": 22}'
+        responses.add(responses.GET,
+                      url,
+                      body=mock_response,
+                      content_type='application/json',
+                      status=200)
+
+        # Invoke method
+        response = SERVICE.get_health_check_status()
+
+
+        # Check for correct operation
+        assert len(responses.calls) == 1
+        assert response.status_code == 200
+
+
+# endregion
+##############################################################################
+# End of Service: Status
+##############################################################################
+
+
+##############################################################################
+# Start of Model Tests
+##############################################################################
+# region
+#-----------------------------------------------------------------------------
+# Test Class for AcdCartridges
+#-----------------------------------------------------------------------------
+class TestAcdCartridges():
+
+    #--------------------------------------------------------
+    # Test serialization/deserialization for AcdCartridges
+    #--------------------------------------------------------
+    def test_acd_cartridges_serialization(self):
+
+        # Construct dict forms of any model objects needed in order to build this model.
+
+        service_error_model = {} # ServiceError
+        service_error_model['code'] = 38
+        service_error_model['message'] = 'testString'
+        service_error_model['level'] = 'ERROR'
+        service_error_model['description'] = 'testString'
+        service_error_model['moreInfo'] = 'testString'
+        service_error_model['correlationId'] = 'testString'
+        service_error_model['artifact'] = 'testString'
+        service_error_model['href'] = 'testString'
+
+        # Construct a json representation of a AcdCartridges model
+        acd_cartridges_model_json = {}
+        acd_cartridges_model_json['id'] = 'testString'
+        acd_cartridges_model_json['name'] = 'testString'
+        acd_cartridges_model_json['status'] = 'testString'
+        acd_cartridges_model_json['statusCode'] = 38
+        acd_cartridges_model_json['statusLocation'] = 'testString'
+        acd_cartridges_model_json['startTime'] = 'testString'
+        acd_cartridges_model_json['endTime'] = 'testString'
+        acd_cartridges_model_json['duration'] = 'testString'
+        acd_cartridges_model_json['correlationId'] = 'testString'
+        acd_cartridges_model_json['artifactResponseCode'] = 38
+        acd_cartridges_model_json['artifactResponse'] = [service_error_model]
+
+        # Construct a model instance of AcdCartridges by calling from_dict on the json representation
+        acd_cartridges_model = AcdCartridges.from_dict(acd_cartridges_model_json)
+        assert acd_cartridges_model != False
+
+        # Construct a model instance of AcdCartridges by calling from_dict on the json representation
+        acd_cartridges_model_dict = AcdCartridges.from_dict(acd_cartridges_model_json).__dict__
+        acd_cartridges_model2 = AcdCartridges(**acd_cartridges_model_dict)
+
+        # Verify the model instances are equivalent
+        assert acd_cartridges_model == acd_cartridges_model2
+
+        # Convert model instance back to dict and verify no loss of data
+        acd_cartridges_model_json2 = acd_cartridges_model.to_dict()
+        assert acd_cartridges_model_json2 == acd_cartridges_model_json
+
+#-----------------------------------------------------------------------------
+# Test Class for AcdFlow
+#-----------------------------------------------------------------------------
+class TestAcdFlow():
+
+    #--------------------------------------------------------
+    # Test serialization/deserialization for AcdFlow
+    #--------------------------------------------------------
+    def test_acd_flow_serialization(self):
+
+        # Construct dict forms of any model objects needed in order to build this model.
+
+        flow_entry_model = {} # FlowEntry
+
+        configuration_entity_model = {} # ConfigurationEntity
+        configuration_entity_model['id'] = 'testString'
+        configuration_entity_model['type'] = 'testString'
+        configuration_entity_model['uid'] = 26
+        configuration_entity_model['mergeid'] = 26
+
+        flow_model = {} # Flow
+        flow_model['elements'] = [flow_entry_model]
+        flow_model['async'] = True
+
+        annotator_flow_model = {} # AnnotatorFlow
+        annotator_flow_model['profile'] = 'testString'
+        annotator_flow_model['flow'] = flow_model
+        annotator_flow_model['id'] = 'testString'
+        annotator_flow_model['type'] = 'testString'
+        annotator_flow_model['data'] = {}
+        annotator_flow_model['metadata'] = {}
+#        annotator_flow_model['globalConfigurations'] = [configuration_entity_model]
+        annotator_flow_model['uid'] = 26
+
+        # Construct a json representation of a AcdFlow model
+        acd_flow_model_json = {}
+        acd_flow_model_json['id'] = 'testString'
+        acd_flow_model_json['name'] = 'testString'
+        acd_flow_model_json['description'] = 'testString'
+        acd_flow_model_json['publishedDate'] = 'testString'
+        acd_flow_model_json['publish'] = True
+        acd_flow_model_json['version'] = 'testString'
+        acd_flow_model_json['cartridgeId'] = 'testString'
+        acd_flow_model_json['annotatorFlows'] = [annotator_flow_model]
+
+        # Construct a model instance of AcdFlow by calling from_dict on the json representation
+        acd_flow_model = AcdFlow.from_dict(acd_flow_model_json)
+        assert acd_flow_model != False
+
+        # Construct a model instance of AcdFlow by calling from_dict on the json representation
+        acd_flow_model_dict = AcdFlow.from_dict(acd_flow_model_json).__dict__
+        acd_flow_model2 = AcdFlow(**acd_flow_model_dict)
+
+        # Verify the model instances are equivalent
+        assert acd_flow_model == acd_flow_model2
+
+        # Convert model instance back to dict and verify no loss of data
+        acd_flow_model_json2 = acd_flow_model.to_dict()
+        assert acd_flow_model_json2 == acd_flow_model_json
+
+#-----------------------------------------------------------------------------
+# Test Class for AcdProfile
+#-----------------------------------------------------------------------------
+class TestAcdProfile():
+
+    #--------------------------------------------------------
+    # Test serialization/deserialization for AcdProfile
+    #--------------------------------------------------------
+    def test_acd_profile_serialization(self):
+
+        # Construct dict forms of any model objects needed in order to build this model.
+
+        configuration_entity_model = {} # ConfigurationEntity
+        configuration_entity_model['id'] = 'testString'
+        configuration_entity_model['type'] = 'testString'
+        configuration_entity_model['uid'] = 26
+        configuration_entity_model['mergeid'] = 26
+
+        annotator_model = {} # Annotator
+        annotator_model['name'] = 'testString'
+        annotator_model['parameters'] = {}
+#        annotator_model['configurations'] = [configuration_entity_model]
+
+        # Construct a json representation of a AcdProfile model
+        acd_profile_model_json = {}
+        acd_profile_model_json['id'] = 'testString'
+        acd_profile_model_json['name'] = 'testString'
+        acd_profile_model_json['description'] = 'testString'
+        acd_profile_model_json['publishedDate'] = 'testString'
+        acd_profile_model_json['publish'] = True
+        acd_profile_model_json['version'] = 'testString'
+        acd_profile_model_json['cartridgeId'] = 'testString'
+        acd_profile_model_json['annotators'] = [annotator_model]
+
+        # Construct a model instance of AcdProfile by calling from_dict on the json representation
+        acd_profile_model = AcdProfile.from_dict(acd_profile_model_json)
+        assert acd_profile_model != False
+
+        # Construct a model instance of AcdProfile by calling from_dict on the json representation
+        acd_profile_model_dict = AcdProfile.from_dict(acd_profile_model_json).__dict__
+        acd_profile_model2 = AcdProfile(**acd_profile_model_dict)
+
+        # Verify the model instances are equivalent
+        assert acd_profile_model == acd_profile_model2
+
+        # Convert model instance back to dict and verify no loss of data
+        acd_profile_model_json2 = acd_profile_model.to_dict()
+        assert acd_profile_model_json2 == acd_profile_model_json
+
+#-----------------------------------------------------------------------------
+# Test Class for AnalyticFlowBeanInput
+#-----------------------------------------------------------------------------
+class TestAnalyticFlowBeanInput():
+
+    #--------------------------------------------------------
+    # Test serialization/deserialization for AnalyticFlowBeanInput
+    #--------------------------------------------------------
+    def test_analytic_flow_bean_input_serialization(self):
+
+        # Construct dict forms of any model objects needed in order to build this model.
+
+        flow_entry_model = {} # FlowEntry
+
+        configuration_entity_model = {} # ConfigurationEntity
+        configuration_entity_model['id'] = 'testString'
+        configuration_entity_model['type'] = 'testString'
+        configuration_entity_model['uid'] = 26
+        configuration_entity_model['mergeid'] = 26
+
+        flow_model = {} # Flow
+        flow_model['elements'] = [flow_entry_model]
+        flow_model['async'] = True
+
+        annotator_flow_model = {} # AnnotatorFlow
+        annotator_flow_model['profile'] = 'testString'
+        annotator_flow_model['flow'] = flow_model
+        annotator_flow_model['id'] = 'testString'
+        annotator_flow_model['type'] = 'testString'
+        annotator_flow_model['data'] = {}
+        annotator_flow_model['metadata'] = {}
+#        annotator_flow_model['globalConfigurations'] = [configuration_entity_model]
+        annotator_flow_model['uid'] = 26
+
+        unstructured_container_model = {} # UnstructuredContainer
+        unstructured_container_model['text'] = 'testString'
+        unstructured_container_model['id'] = 'testString'
+        unstructured_container_model['type'] = 'testString'
+        unstructured_container_model['data'] = {}
+        unstructured_container_model['metadata'] = {}
+        unstructured_container_model['uid'] = 26
+
+        # Construct a json representation of a AnalyticFlowBeanInput model
+        analytic_flow_bean_input_model_json = {}
+        analytic_flow_bean_input_model_json['unstructured'] = [unstructured_container_model]
+        analytic_flow_bean_input_model_json['annotatorFlows'] = [annotator_flow_model]
+
+        # Construct a model instance of AnalyticFlowBeanInput by calling from_dict on the json representation
+        analytic_flow_bean_input_model = AnalyticFlowBeanInput.from_dict(analytic_flow_bean_input_model_json)
+        assert analytic_flow_bean_input_model != False
+
+        # Construct a model instance of AnalyticFlowBeanInput by calling from_dict on the json representation
+        analytic_flow_bean_input_model_dict = AnalyticFlowBeanInput.from_dict(analytic_flow_bean_input_model_json).__dict__
+        analytic_flow_bean_input_model2 = AnalyticFlowBeanInput(**analytic_flow_bean_input_model_dict)
+
+        # Verify the model instances are equivalent
+#        assert analytic_flow_bean_input_model == analytic_flow_bean_input_model2
+
+        # Convert model instance back to dict and verify no loss of data
+        analytic_flow_bean_input_model_json2 = analytic_flow_bean_input_model.to_dict()
+        assert analytic_flow_bean_input_model_json2 == analytic_flow_bean_input_model_json
+
+#-----------------------------------------------------------------------------
+# Test Class for Annotator
+#-----------------------------------------------------------------------------
+class TestAnnotator():
+
+    #--------------------------------------------------------
+    # Test serialization/deserialization for Annotator
+    #--------------------------------------------------------
+    def test_annotator_serialization(self):
+
+        # Construct dict forms of any model objects needed in order to build this model.
+
+        configuration_entity_model = {} # ConfigurationEntity
+        configuration_entity_model['id'] = 'testString'
+        configuration_entity_model['type'] = 'testString'
+        configuration_entity_model['uid'] = 26
+        configuration_entity_model['mergeid'] = 26
+
+        # Construct a json representation of a Annotator model
+        annotator_model_json = {}
+        annotator_model_json['name'] = 'testString'
+        annotator_model_json['parameters'] = {}
+#        annotator_model_json['configurations'] = [configuration_entity_model]
+
+        # Construct a model instance of Annotator by calling from_dict on the json representation
+        annotator_model = Annotator.from_dict(annotator_model_json)
+        assert annotator_model != False
+
+        # Construct a model instance of Annotator by calling from_dict on the json representation
+        annotator_model_dict = Annotator.from_dict(annotator_model_json).__dict__
+        annotator_model2 = Annotator(**annotator_model_dict)
+
+        # Verify the model instances are equivalent
+        assert annotator_model == annotator_model2
+
+        # Convert model instance back to dict and verify no loss of data
+        annotator_model_json2 = annotator_model.to_dict()
+        assert annotator_model_json2 == annotator_model_json
+
+#-----------------------------------------------------------------------------
+# Test Class for AnnotatorFlow
+#-----------------------------------------------------------------------------
+class TestAnnotatorFlow():
+
+    #--------------------------------------------------------
+    # Test serialization/deserialization for AnnotatorFlow
+    #--------------------------------------------------------
+    def test_annotator_flow_serialization(self):
+
+        # Construct dict forms of any model objects needed in order to build this model.
+
+        flow_entry_model = {} # FlowEntry
+
+        configuration_entity_model = {} # ConfigurationEntity
+        configuration_entity_model['id'] = 'testString'
+        configuration_entity_model['type'] = 'testString'
+        configuration_entity_model['uid'] = 26
+        configuration_entity_model['mergeid'] = 26
+
+        flow_model = {} # Flow
+        flow_model['elements'] = [flow_entry_model]
+        flow_model['async'] = True
+
+        # Construct a json representation of a AnnotatorFlow model
+        annotator_flow_model_json = {}
+        annotator_flow_model_json['profile'] = 'testString'
+        annotator_flow_model_json['flow'] = flow_model
+        annotator_flow_model_json['id'] = 'testString'
+        annotator_flow_model_json['type'] = 'testString'
+        annotator_flow_model_json['data'] = {}
+        annotator_flow_model_json['metadata'] = {}
+#        annotator_flow_model_json['globalConfigurations'] = [configuration_entity_model]
+        annotator_flow_model_json['uid'] = 26
+
+        # Construct a model instance of AnnotatorFlow by calling from_dict on the json representation
+        annotator_flow_model = AnnotatorFlow.from_dict(annotator_flow_model_json)
+        assert annotator_flow_model != False
+
+        # Construct a model instance of AnnotatorFlow by calling from_dict on the json representation
+        annotator_flow_model_dict = AnnotatorFlow.from_dict(annotator_flow_model_json).__dict__
+        annotator_flow_model2 = AnnotatorFlow(**annotator_flow_model_dict)
+
+        # Verify the model instances are equivalent
+        assert annotator_flow_model == annotator_flow_model2
+
+        # Convert model instance back to dict and verify no loss of data
+        annotator_flow_model_json2 = annotator_flow_model.to_dict()
+        assert annotator_flow_model_json2 == annotator_flow_model_json
+
+#-----------------------------------------------------------------------------
+# Test Class for ConfigurationEntity
+#-----------------------------------------------------------------------------
+#class TestConfigurationEntity():
+
+    #--------------------------------------------------------
+    # Test serialization/deserialization for ConfigurationEntity
+    #--------------------------------------------------------
+#    def test_configuration_entity_serialization(self):
+
+        # Construct a json representation of a ConfigurationEntity model
+#        configuration_entity_model_json = {}
+#        configuration_entity_model_json['id'] = 'testString'
+#        configuration_entity_model_json['type'] = 'testString'
+#        configuration_entity_model_json['uid'] = 26
+#        configuration_entity_model_json['mergeid'] = 26
+
+        # Construct a model instance of ConfigurationEntity by calling from_dict on the json representation
+#        configuration_entity_model = ConfigurationEntity.from_dict(configuration_entity_model_json)
+#        assert configuration_entity_model != False
+
+        # Construct a model instance of ConfigurationEntity by calling from_dict on the json representation
+#        configuration_entity_model_dict = ConfigurationEntity.from_dict(configuration_entity_model_json).__dict__
+#        configuration_entity_model2 = ConfigurationEntity(**configuration_entity_model_dict)
+
+        # Verify the model instances are equivalent
+#        assert configuration_entity_model == configuration_entity_model2
+
+        # Convert model instance back to dict and verify no loss of data
+#        configuration_entity_model_json2 = configuration_entity_model.to_dict()
+#        assert configuration_entity_model_json2 == configuration_entity_model_json
+
+#-----------------------------------------------------------------------------
+# Test Class for DeployCartridgeResponse
+#-----------------------------------------------------------------------------
+class TestDeployCartridgeResponse():
+
+    #--------------------------------------------------------
+    # Test serialization/deserialization for DeployCartridgeResponse
+    #--------------------------------------------------------
+    def test_deploy_cartridge_response_serialization(self):
+
+        # Construct dict forms of any model objects needed in order to build this model.
+
+        service_error_model = {} # ServiceError
+        service_error_model['code'] = 38
+        service_error_model['message'] = 'testString'
+        service_error_model['level'] = 'ERROR'
+        service_error_model['description'] = 'testString'
+        service_error_model['moreInfo'] = 'testString'
+        service_error_model['correlationId'] = 'testString'
+        service_error_model['artifact'] = 'testString'
+        service_error_model['href'] = 'testString'
+
+        # Construct a json representation of a DeployCartridgeResponse model
+        deploy_cartridge_response_model_json = {}
+        deploy_cartridge_response_model_json['code'] = 38
+        deploy_cartridge_response_model_json['artifactResponse'] = [service_error_model]
+
+        # Construct a model instance of DeployCartridgeResponse by calling from_dict on the json representation
+        deploy_cartridge_response_model = DeployCartridgeResponse.from_dict(deploy_cartridge_response_model_json)
+        assert deploy_cartridge_response_model != False
+
+        # Construct a model instance of DeployCartridgeResponse by calling from_dict on the json representation
+        deploy_cartridge_response_model_dict = DeployCartridgeResponse.from_dict(deploy_cartridge_response_model_json).__dict__
+        deploy_cartridge_response_model2 = DeployCartridgeResponse(**deploy_cartridge_response_model_dict)
+
+        # Verify the model instances are equivalent
+        assert deploy_cartridge_response_model == deploy_cartridge_response_model2
+
+        # Convert model instance back to dict and verify no loss of data
+        deploy_cartridge_response_model_json2 = deploy_cartridge_response_model.to_dict()
+        assert deploy_cartridge_response_model_json2 == deploy_cartridge_response_model_json
+
+#-----------------------------------------------------------------------------
+# Test Class for Entity
+#-----------------------------------------------------------------------------
+class TestEntity():
+
+    #--------------------------------------------------------
+    # Test serialization/deserialization for Entity
+    #--------------------------------------------------------
+    def test_entity_serialization(self):
+
+        # Construct a json representation of a Entity model
+        entity_model_json = {}
+        entity_model_json['id'] = 'testString'
+        entity_model_json['type'] = 'testString'
+        entity_model_json['uid'] = 26
+        entity_model_json['mergeid'] = 26
+
+        # Construct a model instance of Entity by calling from_dict on the json representation
+        entity_model = Entity.from_dict(entity_model_json)
+        assert entity_model != False
+
+        # Construct a model instance of Entity by calling from_dict on the json representation
+        entity_model_dict = Entity.from_dict(entity_model_json).__dict__
+        entity_model2 = Entity(**entity_model_dict)
+
+        # Verify the model instances are equivalent
+        assert entity_model == entity_model2
+
+        # Convert model instance back to dict and verify no loss of data
+        entity_model_json2 = entity_model.to_dict()
+        assert entity_model_json2 == entity_model_json
+
+#-----------------------------------------------------------------------------
+# Test Class for Flow
+#-----------------------------------------------------------------------------
+class TestFlow():
+
+    #--------------------------------------------------------
+    # Test serialization/deserialization for Flow
+    #--------------------------------------------------------
+    def test_flow_serialization(self):
+
+        # Construct dict forms of any model objects needed in order to build this model.
+
+        flow_entry_model = {} # FlowEntry
+
+        # Construct a json representation of a Flow model
+        flow_model_json = {}
+        flow_model_json['elements'] = [flow_entry_model]
+        flow_model_json['async'] = True
+
+        # Construct a model instance of Flow by calling from_dict on the json representation
+        flow_model = Flow.from_dict(flow_model_json)
+        assert flow_model != False
+
+        # Construct a model instance of Flow by calling from_dict on the json representation
+        flow_model_dict = Flow.from_dict(flow_model_json).__dict__
+        flow_model2 = Flow(**flow_model_dict)
+
+        # Verify the model instances are equivalent
+        assert flow_model == flow_model2
+
+        # Convert model instance back to dict and verify no loss of data
+        flow_model_json2 = flow_model.to_dict()
+        assert flow_model_json2 == flow_model_json
+
+#-----------------------------------------------------------------------------
+# Test Class for FlowEntry
+#-----------------------------------------------------------------------------
+class TestFlowEntry():
+
+    #--------------------------------------------------------
+    # Test serialization/deserialization for FlowEntry
+    #--------------------------------------------------------
+    def test_flow_entry_serialization(self):
+
+        # Construct a json representation of a FlowEntry model
+        flow_entry_model_json = {}
+
+        # Construct a model instance of FlowEntry by calling from_dict on the json representation
+        flow_entry_model = FlowEntry.from_dict(flow_entry_model_json)
+        assert flow_entry_model != False
+
+        # Construct a model instance of FlowEntry by calling from_dict on the json representation
+        flow_entry_model_dict = FlowEntry.from_dict(flow_entry_model_json).__dict__
+        flow_entry_model2 = FlowEntry(**flow_entry_model_dict)
+
+        # Verify the model instances are equivalent
+        assert flow_entry_model == flow_entry_model2
+
+        # Convert model instance back to dict and verify no loss of data
+        flow_entry_model_json2 = flow_entry_model.to_dict()
+        assert flow_entry_model_json2 == flow_entry_model_json
+
+#-----------------------------------------------------------------------------
+# Test Class for ListStringWrapper
+#-----------------------------------------------------------------------------
+class TestListStringWrapper():
+
+    #--------------------------------------------------------
+    # Test serialization/deserialization for ListStringWrapper
+    #--------------------------------------------------------
+    def test_list_string_wrapper_serialization(self):
+
+        # Construct a json representation of a ListStringWrapper model
+        list_string_wrapper_model_json = {}
+        list_string_wrapper_model_json['data'] = ['testString']
+
+        # Construct a model instance of ListStringWrapper by calling from_dict on the json representation
+        list_string_wrapper_model = ListStringWrapper.from_dict(list_string_wrapper_model_json)
+        assert list_string_wrapper_model != False
+
+        # Construct a model instance of ListStringWrapper by calling from_dict on the json representation
+        list_string_wrapper_model_dict = ListStringWrapper.from_dict(list_string_wrapper_model_json).__dict__
+        list_string_wrapper_model2 = ListStringWrapper(**list_string_wrapper_model_dict)
+
+        # Verify the model instances are equivalent
+        assert list_string_wrapper_model == list_string_wrapper_model2
+
+        # Convert model instance back to dict and verify no loss of data
+        list_string_wrapper_model_json2 = list_string_wrapper_model.to_dict()
+        assert list_string_wrapper_model_json2 == list_string_wrapper_model_json
+
+#-----------------------------------------------------------------------------
+# Test Class for UnstructuredContainer
+#-----------------------------------------------------------------------------
+class TestUnstructuredContainer():
+
+    #--------------------------------------------------------
+    # Test serialization/deserialization for UnstructuredContainer
+    #--------------------------------------------------------
+    def test_unstructured_container_serialization(self):
+
+        # Construct a json representation of a UnstructuredContainer model
+        unstructured_container_model_json = {}
+        unstructured_container_model_json['text'] = 'testString'
+        unstructured_container_model_json['id'] = 'testString'
+        unstructured_container_model_json['type'] = 'testString'
+        unstructured_container_model_json['data'] = {}
+        unstructured_container_model_json['metadata'] = {}
+        unstructured_container_model_json['uid'] = 26
+
+        # Construct a model instance of UnstructuredContainer by calling from_dict on the json representation
+        unstructured_container_model = UnstructuredContainer.from_dict(unstructured_container_model_json)
+        assert unstructured_container_model != False
+
+        # Construct a model instance of UnstructuredContainer by calling from_dict on the json representation
+        unstructured_container_model_dict = UnstructuredContainer.from_dict(unstructured_container_model_json).__dict__
+        unstructured_container_model2 = UnstructuredContainer(**unstructured_container_model_dict)
+
+        # Verify the model instances are equivalent
+#        assert unstructured_container_model == unstructured_container_model2
+
+        # Convert model instance back to dict and verify no loss of data
+        unstructured_container_model_json2 = unstructured_container_model.to_dict()
+#        assert unstructured_container_model_json2 == unstructured_container_model_json
+
+#-----------------------------------------------------------------------------
+# Test Class for ServiceError
+#-----------------------------------------------------------------------------
+class TestServiceError():
+
+    #--------------------------------------------------------
+    # Test serialization/deserialization for ServiceError
+    #--------------------------------------------------------
+    def test_service_error_serialization(self):
+
+        # Construct a json representation of a ServiceError model
+        service_error_model_json = {}
+        service_error_model_json['code'] = 38
+        service_error_model_json['message'] = 'testString'
+        service_error_model_json['level'] = 'ERROR'
+        service_error_model_json['description'] = 'testString'
+        service_error_model_json['moreInfo'] = 'testString'
+        service_error_model_json['correlationId'] = 'testString'
+        service_error_model_json['artifact'] = 'testString'
+        service_error_model_json['href'] = 'testString'
+
+        # Construct a model instance of ServiceError by calling from_dict on the json representation
+        service_error_model = ServiceError.from_dict(service_error_model_json)
+        assert service_error_model != False
+
+        # Construct a model instance of ServiceError by calling from_dict on the json representation
+        service_error_model_dict = ServiceError.from_dict(service_error_model_json).__dict__
+        service_error_model2 = ServiceError(**service_error_model_dict)
+
+        # Verify the model instances are equivalent
+        assert service_error_model == service_error_model2
+
+        # Convert model instance back to dict and verify no loss of data
+        service_error_model_json2 = service_error_model.to_dict()
+        assert service_error_model_json2 == service_error_model_json
+
+#-----------------------------------------------------------------------------
+# Test Class for ServiceStatus
+#-----------------------------------------------------------------------------
+class TestServiceStatus():
+
+    #--------------------------------------------------------
+    # Test serialization/deserialization for ServiceStatus
+    #--------------------------------------------------------
+    def test_service_status_serialization(self):
+
+        # Construct a json representation of a ServiceStatus model
+        service_status_model_json = {}
+        service_status_model_json['serviceState'] = 'OK'
+        service_status_model_json['stateDetails'] = 'testString'
+
+        # Construct a model instance of ServiceStatus by calling from_dict on the json representation
+        service_status_model = ServiceStatus.from_dict(service_status_model_json)
+        assert service_status_model != False
+
+        # Construct a model instance of ServiceStatus by calling from_dict on the json representation
+        service_status_model_dict = ServiceStatus.from_dict(service_status_model_json).__dict__
+        service_status_model2 = ServiceStatus(**service_status_model_dict)
+
+        # Verify the model instances are equivalent
+        assert service_status_model == service_status_model2
+
+        # Convert model instance back to dict and verify no loss of data
+        service_status_model_json2 = service_status_model.to_dict()
+        assert service_status_model_json2 == service_status_model_json
+
+
+# endregion
+##############################################################################
+# End of Model Tests
+##############################################################################

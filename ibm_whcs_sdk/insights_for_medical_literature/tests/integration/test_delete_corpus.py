@@ -15,6 +15,7 @@
 # limitations under the License.
 import configparser
 import ibm_whcs_sdk.insights_for_medical_literature as wh
+from ibm_cloud_sdk_core.authenticators.iam_authenticator import IAMAuthenticator
 
 CONFIG = configparser.RawConfigParser()
 CONFIG.read('./ibm_whcs_sdk/insights_for_medical_literature/tests/config.ini')
@@ -27,7 +28,11 @@ VERSION = CONFIG.get('settings', 'version')
 DISABLE_SSL = CONFIG.get('settings', 'disable_ssl')
 CORPUS = CONFIG.get('custom', 'custom_corpus')
 
-IML_TEST = wh.InsightsForMedicalLiteratureServiceV1(BASE_URL, APIKEY, IAMURL, VERSION, LEVEL, DISABLE_SSL)
+IML_TEST = wh.InsightsForMedicalLiteratureServiceV1(
+    authenticator=IAMAuthenticator(apikey=APIKEY),
+    version=VERSION
+    )
+IML_TEST.set_service_url(BASE_URL)
 
 def test_delete_corpus():
     try:

@@ -1,6 +1,6 @@
 # coding: utf-8
 
-# Copyright 2018 IBM All Rights Reserved.
+# (C) Copyright IBM Corp. 2020.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ children, siblings...) and, related concepts. <LI><B>Corpora</B> : Corpora
 information</LI><P>You can retrieve a list of corpus names.  For each corpus a unique list
 of semantic groups and semantic types is provided. <LI><B>Documents</B> : Document
 information</LI><P>These APIs enable full text documents and document annotations to be
-retrieved.  Concepts mentioned in a medical document may also be categorized by semantic
+retreived.  Concepts mentioned in a medical document may also be categorized by semantic
 groups and types.  The best matching search concepts can also be identified in a medical
 document.<LI><B>Search</B> : Concept search</LI><P>These APIs perform typeahead concept
 searches, ranked document searches, and cohesive and co-occurring concept searches.  A
@@ -56,7 +56,7 @@ search targets a single medical document corpus.<LI><B>Status</B> : Check the st
 this service</LI></UL><h3>Terminology</h3><UL><LI><B>Concept Unique Identifier
 (cui)</B></LI>A UMLS CUI identifies a concept, and is specified as a path or query
 parameter to select a specific concept.  A CUI always begins with an uppercase letter 'C'
-followed by seven decimal digits (e.g., C0446516).<LI><B>Document Identifier</B></LI>A
+followed by seven decimal digits (e.g., C0446516).<LI><B>Document Identifiter</B></LI>A
 document ID uniquely identifies a document in a corpus, and is specified as a path or
 query parameter to select a specific medical document.<LI><B>Hit count</B></LI>A hit count
 specifies the number of times a specific concept is mentioned in a corpus.<LI><B>Preferred
@@ -86,21 +86,21 @@ search concepts in a ranked documents<p>8. <b>GET
 and genes in a ranked document
 """
 
-from __future__ import absolute_import
-
+from enum import Enum
+from typing import Dict, List
 import json
-import logging
-from ibm_cloud_sdk_core import BaseService
-from ibm_cloud_sdk_core.authenticators import NoAuthAuthenticator
-from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
-from ibm_cloud_sdk_core import ApiException
+
+from ibm_cloud_sdk_core import BaseService, DetailedResponse, ApiException
+from ibm_cloud_sdk_core.authenticators.authenticator import Authenticator
+from ibm_cloud_sdk_core.get_authenticator import get_authenticator_from_environment
+from ibm_cloud_sdk_core.utils import convert_list, convert_model
+
 from ibm_whcs_sdk.common import get_sdk_headers
-import urllib3
-urllib3.disable_warnings()
 
-SERVICE_NAME = 'InisghtsForMedicalLiteratureServiceV1'
-LOGGER = logging.getLogger(SERVICE_NAME)
 
+##############################################################################
+# Exception Handling
+##############################################################################
 class IMLException(Exception):
     """
     Custom exception class for errors returned from IML APIs.
@@ -118,7 +118,6 @@ class IMLException(Exception):
     def __str__(self):
         msg = ('Error: ' + str(self.message) + ', Code: ' + str(self.code)
                + ' CorrelationId: ' + str(self.correlation_id))
-        LOGGER.error(msg)
         return msg
 
 ##############################################################################
@@ -128,66 +127,54 @@ class IMLException(Exception):
 class InsightsForMedicalLiteratureServiceV1(BaseService):
     """The Insights for Medical Literature Service V1 service."""
 
+    DEFAULT_SERVICE_URL = 'https://insights-for-medical-literature-service.cloud.ibm.com/services/medical_insights/api'
+    DEFAULT_SERVICE_NAME = 'insights_for_medical_literature_service'
+
+    @classmethod
+    def new_instance(cls,
+                     version: str,
+                     service_name: str = DEFAULT_SERVICE_NAME,
+                    ) -> 'InsightsForMedicalLiteratureServiceV1':
+        """
+        Return a new client for the Insights for Medical Literature Service service
+               using the specified parameters and external configuration.
+
+        :param str version: The release date of the version of the API you want to
+               use. Specify dates in YYYY-MM-DD format.
+        """
+        if version is None:
+            raise ValueError('version must be provided')
+
+        authenticator = get_authenticator_from_environment(service_name)
+        service = cls(
+            version,
+            authenticator
+            )
+        service.configure_service(service_name)
+        return service
+
     def __init__(self,
-                 url=None,
-                 apikey=None,
-                 iam_url=None,
-                 version=None,
-                 logging_level=None,
-                 disable_ssl_verification=False):
+                 version: str,
+                 authenticator: Authenticator = None,
+                ) -> None:
         """
         Construct a new client for the Insights for Medical Literature Service service.
-        :param str version: (required) The API version date to use with the service, in
-               "YYYY-MM-DD" format. Whenever the API is changed in a backwards
-               incompatible way, a new minor version of the API is released.
-               The service uses the API version for the date you specify, or
-               the most recent version before that date. Note that you should
-               not programmatically specify the current date at runtime, in
-               case the API has been updated since your application's release.
-               Instead, specify a version date that is compatible with your
-               application, and don't change it until your application is
-               ready for a later version.
-        :param str url: (required) The base url to use when contacting the service (e.g.
-               "https://us-south.wh-iml.cloud.ibm.com/wh-iml").
-               The base url may differ between IBM Cloud regions.
-        :param str apikey: (required) The IAM apikey for accessing the service instance
-        :param str iam_url: (optional) The url for the IAM cloud instance the service
-                uses for authentication.  It not specified a default url is used.
-        :param str logging_level: (optional)  Level of service API logging.  By default
-                all error messages are logged.  Valid values are CRITICAL, ERROR, WARNING,
-                INFO, DEBUG, and NOTSET
-        :param bool disable_ssl_verification: (optional) Determines whethher SSL verification
-                should be performed during service calls.  Default is False.  Setting to 
-                True is not recommend for production environments.
+
+        :param str version: The release date of the version of the API you want to
+               use. Specify dates in YYYY-MM-DD format.
+
+        :param Authenticator authenticator: The authenticator specifies the authentication mechanism.
+               Get up to date information from https://github.com/IBM/python-sdk-core/blob/master/README.md
+               about initializing the authenticator of your choice.
         """
+        if version is None:
+            raise ValueError('version must be provided')
 
-        if logging_level is not None:
-            LOGGING_LEVEL = logging_level
-        else:
-            LOGGING_LEVEL = logging.ERROR
-        logging.basicConfig(filename='iml_sdk.log', level=LOGGING_LEVEL, format='%(asctime)s %(message)s')
-
-        if apikey is None or len(apikey) == 0:
-            auth = NoAuthAuthenticator()
-            disable_ssl_verification = True
-        else:
-            if iam_url is None or len(iam_url) == 0:
-                LOGGER.debug('SSL disabled : ' + str(disable_ssl_verification))
-                auth = IAMAuthenticator(apikey, disable_ssl_verification=disable_ssl_verification)
-            else:
-                LOGGER.debug('Custom IAM service being used : ' + iam_url)
-                LOGGER.debug('SSL disabled : ' + str(disable_ssl_verification))
-                auth = IAMAuthenticator(apikey=apikey, url=iam_url, disable_ssl_verification=disable_ssl_verification)
-
-        super(InsightsForMedicalLiteratureServiceV1, self).__init__(
-            service_url=url,
-            authenticator=auth,
-            disable_ssl_verification=disable_ssl_verification)
-        self.auth = auth
+        BaseService.__init__(self,
+                             service_url=self.DEFAULT_SERVICE_URL,
+                             authenticator=authenticator)
         self.version = version
-        self.url = url
-        self.iam_apikey = apikey
-        self.configure_service('IML')
+
 
     def request_iml(self, request=None):
         """
@@ -206,8 +193,12 @@ class InsightsForMedicalLiteratureServiceV1(BaseService):
                 error_message = "No error message available"
             if api_except.code is not None:
                 status_code = api_except.code
-            if api_except.global_transaction_id is not None:
-                correlation_id = api_except.global_transaction_id
+            if (
+                api_except.http_response is not None
+                and api_except.http_response.headers is not None
+                and api_except.http_response.headers.get('x-correlation-id') is not None
+                ):
+                correlation_id = api_except.http_response.headers.get('x-correlation-id')
             else:
                 correlation_id = "None"
             raise IMLException(status_code, error_message, correlation_id)
@@ -218,7 +209,8 @@ class InsightsForMedicalLiteratureServiceV1(BaseService):
     # Documents
     #########################
 
-    def get_documents(self, corpus, **kwargs):
+
+    def get_documents(self, corpus: str, **kwargs) -> DetailedResponse:
         """
         Retrieves information about the documents in this corpus.
 
@@ -226,72 +218,72 @@ class InsightsForMedicalLiteratureServiceV1(BaseService):
         corpus</li><li>corpus provider</li></ul>.
 
         :param str corpus: Corpus name.
-        :return: A `DetailedResponse` result or IMLException
-        :rtype: DetailedResponse result representing a CorpusInfoModel object.
+        :param dict headers: A `dict` containing the request headers
+        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
+        :rtype: DetailedResponse with `dict` result representing a `CorpusModel` object
         """
 
         if corpus is None:
             raise ValueError('corpus must be provided')
         headers = {}
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='analyze_org')
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='get_documents')
         headers.update(sdk_headers)
 
-        if 'headers' in kwargs:
-            headers.update(kwargs.get('headers'))
         params = {
             'version': self.version
         }
 
-        url = '/v1/corpora/{0}/documents'.format(*self._encode_path_vars(corpus))
-        request = self.prepare_request(method='GET', url=url, params=params, headers=headers)
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
+        url = '/v1/corpora/{0}/documents'.format(*self.encode_path_vars(corpus))
+        request = self.prepare_request(method='GET',
+                                       url=url,
+                                       headers=headers,
+                                       params=params)
+
         response = self.request_iml(request)
         return response
 
 
-    def add_corpus_document(self, corpus, document=None, acd_url=None, api_key=None,
-                            flow_id=None, access_token=None, other_annotators=None, **kwargs):
+    def add_corpus_document(self, corpus: str, *, document: dict = None, acd_url: str = None, api_key: str = None, flow_id: str = None, access_token: str = None, other_annotators: List[object] = None, **kwargs) -> DetailedResponse:
         """
         Define enrichment document.
 
         The response returns whether the document was properly added to the corpus.
         <P>This API should be used for adding a document to a custom corpus.<P>Example
         POST body:<pre>{
-          \"acdUrl\" :
-          \"acdApiKeyl\" :
-          \"flowId\" :
-          \"document\" : {
-           \"doc_id\" :
-           \"field[n]\" : \"value\"
+          "acdUrl" :
+          "acdApiKeyl" :
+          "flowId" :
+          "document" : {
+           "doc_id" :
+           "field[n]" : "value"
           }
-          \"otherAnnotators\" : [   \"{    \"annotatorUrl    \"annotatorApiKey
-        \"containerName   \"}  ]
+          "otherAnnotators" : [   "{    "annotatorUrl    "annotatorApiKey
+        "containerName   "}  ]
         }
         </pre>.
 
         :param str corpus: Corpus name.
-        :param dict document: JSON based document for enrichment.
-        :param str acd_url: Annotator for clinical data url.
-        :param str api_key: Security key.
-        :param str flow_id: Enrichment flow identifier.
-        :param str access_token: Cloud access token.
-        :param list[object] other_annotators: URLs and API keys for custom annotators.
+        :param dict document: (optional) JSON based document for enrichment.
+        :param str acd_url: (optional) Annotator for clincial data url.
+        :param str api_key: (optional) Security key.
+        :param str flow_id: (optional) Enrichment flow identifier.
+        :param str access_token: (optional) Cloud access token.
+        :param List[object] other_annotators: (optional) URLs and API keys for
+               custom annotators.
         :param dict headers: A `dict` containing the request headers
         :return: A `DetailedResponse` containing the result, headers and HTTP status code.
-        :rtype: DetailedResponse - 201 code indicates document was created.
+        :rtype: DetailedResponse
         """
 
         if corpus is None:
             raise ValueError('corpus must be provided')
-
-        headers = {
-            "content-type": "application/json",
-            "Accept": "application/json"
-        }
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='analyze_org')
+        headers = {}
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='add_corpus_document')
         headers.update(sdk_headers)
 
-        if 'headers' in kwargs:
-            headers.update(kwargs.get('headers'))
         params = {
             'version': self.version
         }
@@ -304,30 +296,40 @@ class InsightsForMedicalLiteratureServiceV1(BaseService):
             'accessToken': access_token,
             'otherAnnotators': other_annotators
         }
+        data = {k: v for (k, v) in data.items() if v is not None}
+        data = json.dumps(data)
+        headers['content-type'] = 'application/json'
 
-        url = '/v1/corpora/{0}/documents'.format(*self._encode_path_vars(corpus))
-        request = self.prepare_request(method='POST', url=url, headers=headers,
-                                       params=params, data=data)
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
+        url = '/v1/corpora/{0}/documents'.format(*self.encode_path_vars(corpus))
+        request = self.prepare_request(method='POST',
+                                       url=url,
+                                       headers=headers,
+                                       params=params,
+                                       data=data)
+
         response = self.request_iml(request)
         return response
 
 
-    def get_document_info(self, corpus, document_id, verbose=None, **kwargs):
+    def get_document_info(self, corpus: str, document_id: str, *, verbose: bool = None, **kwargs) -> DetailedResponse:
         """
         Retrieves the external ID, title, abstract and text for a document.
 
         The response may return the following fields:<ul><li>external ID (e.g., PubMed
-        ID)</li><li>title</li><li>abstract</li><li>body</li><li>pdfUrl</li>
-        <li>referenceUrl</li><li>other metadata</li></ul>Note, some documents
-        may not have an abstract, or only the abstract may be available without
-        the body text.
+        ID)</li><li>title</li><li>abstract</li><li>body</li><li>pdfUrl</li><li>referenceUrl</li><li>other
+        metadata</li></ul>Note, some documents may not have an abstract, or only the
+        abstract may be available without the body text.
 
         :param str corpus: Corpus name.
         :param str document_id: Document ID.
-        :param bool verbose: Verbose output. If true, text for all document sections is
-        returned.
-        :return: A DetailedResponse result or IMLException
-        :rtype: DetailedResponse result representing a DocumentTextModel object
+        :param bool verbose: (optional) Verbose output. If true, text for all
+               document sections is returned.
+        :param dict headers: A `dict` containing the request headers
+        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
+        :rtype: DetailedResponse with `dict` result representing a `GetDocumentInfoResponse` object
         """
 
         if corpus is None:
@@ -335,37 +337,43 @@ class InsightsForMedicalLiteratureServiceV1(BaseService):
         if document_id is None:
             raise ValueError('document_id must be provided')
         headers = {}
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='analyze_org')
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='get_document_info')
         headers.update(sdk_headers)
 
-        if 'headers' in kwargs:
-            headers.update(kwargs.get('headers'))
         params = {
             'version': self.version,
             'verbose': verbose
         }
 
-        url = '/v1/corpora/{0}/documents/{1}'.format(*self._encode_path_vars(corpus, document_id))
-        request = self.prepare_request(method='GET', url=url, params=params, headers=headers)
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
+        url = '/v1/corpora/{0}/documents/{1}'.format(*self.encode_path_vars(corpus, document_id))
+        request = self.prepare_request(method='GET',
+                                       url=url,
+                                       headers=headers,
+                                       params=params)
+
         response = self.request_iml(request)
         return response
 
 
-    def get_document_annotations(self, corpus, document_id, document_section, cuis=None,
-                                 include_text=None, **kwargs):
+    def get_document_annotations(self, corpus: str, document_id: str, document_section: str, *, cuis: List[str] = None, include_text: bool = None, **kwargs) -> DetailedResponse:
         """
         Retrieves annotations for a document.
 
-        The response returns a list of all the UMLS annotations contained in the document.
+        The response returns a list of all the annotations contained in the document.
 
         :param str corpus: Corpus name.
         :param str document_id: Document ID.
-        :param str document_section: Document section to annotate. (e.g., title, abstract,
-        body...
-        :param list[str] cuis: Concepts to show.  Defaults to all concepts.
-        :param bool include_text: Include document text.
-        :return: A `DetailedResponse` result or IMLException
-        :rtype: DetailedResponse - annotations are an unstructured JSON objedt
+        :param str document_section: Document section to annotate. (e.g., title,
+               abstract, body...
+        :param List[str] cuis: (optional) Concepts to show.  Defaults to all
+               concepts.
+        :param bool include_text: (optional) Include document text.
+        :param dict headers: A `dict` containing the request headers
+        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
+        :rtype: DetailedResponse
         """
 
         if corpus is None:
@@ -375,29 +383,30 @@ class InsightsForMedicalLiteratureServiceV1(BaseService):
         if document_section is None:
             raise ValueError('document_section must be provided')
         headers = {}
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='analyze_org')
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='get_document_annotations')
         headers.update(sdk_headers)
 
-        if 'headers' in kwargs:
-            headers.update(kwargs.get('headers'))
         params = {
             'version': self.version,
             'document_section': document_section,
-            'cuis': cuis,
+            'cuis': convert_list(cuis),
             'include_text': include_text
         }
 
-        url = ('/v1/corpora/{0}/documents/{1}/annotations'
-               .format(*self._encode_path_vars(corpus, document_id)))
-        request = self.prepare_request(method='GET', url=url, params=params, headers=headers)
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
+        url = '/v1/corpora/{0}/documents/{1}/annotations'.format(*self.encode_path_vars(corpus, document_id))
+        request = self.prepare_request(method='GET',
+                                       url=url,
+                                       headers=headers,
+                                       params=params)
+
         response = self.request_iml(request)
         return response
 
 
-    def get_document_categories(self, corpus, document_id, highlight_tag_begin=None,
-                                highlight_tag_end=None, types=None, category=None,
-                                only_negated_concepts=None, fields=None,
-                                limit=None, **kwargs):
+    def get_document_categories(self, corpus: str, document_id: str, *, highlight_tag_begin: str = None, highlight_tag_end: str = None, types: List[str] = None, category: str = None, only_negated_concepts: bool = None, fields: str = None, limit: int = None, **kwargs) -> DetailedResponse:
         """
         Categorizes concepts in a document.
 
@@ -406,23 +415,25 @@ class InsightsForMedicalLiteratureServiceV1(BaseService):
 
         :param str corpus: Corpus name.
         :param str document_id: Document ID.
-        :param str highlight_tag_begin: HTML tag used to highlight concepts found in the
-        text.  Default is '&ltb&gt'.
-        :param str highlight_tag_end: HTML tag used to highlight concepts found in the
-        text.  Default is '&lt/b&gt'.
-        :param list[str] types: Select concepts belonging to these semantic types to
-        return. Semantic types for the corpus can be found using the
-        /v1/corpora/{corpus}/types method.Defaults to 'all'.
-        :param str category: Select concepts belonging to disorders, drugs or genes.
-        :param bool only_negated_concepts: Only return negated concepts?.
-        :param str fields: Comma separated list of fields to return:  passages,
-        annotations, highlightedTitle, highlightedAbstract, highlightedBody,
-        highlightedSections.
-        :param int limit: Limit the number of passages per search concept (1 to 250).
-        Default is 50.
+        :param str highlight_tag_begin: (optional) HTML tag used to highlight
+               concepts found in the text.  Default is '&ltb&gt'.
+        :param str highlight_tag_end: (optional) HTML tag used to highlight
+               concepts found in the text.  Default is '&lt/b&gt'.
+        :param List[str] types: (optional) Select concepts belonging to these
+               semantic types to return. Semantic types for the corpus can be found using
+               the /v1/corpora/{corpus}/types method.Defaults to 'all'.
+        :param str category: (optional) Select concepts belonging to disorders,
+               drugs or genes.
+        :param bool only_negated_concepts: (optional) Only return negated
+               concepts?.
+        :param str fields: (optional) Comma separated list of fields to return:
+               passages, annotations, highlightedTitle, highlightedAbstract,
+               highlightedBody, highlightedSections.
+        :param int limit: (optional) Limit the number of passages per search
+               concept (1 to 250).  Default is 50.
         :param dict headers: A `dict` containing the request headers
-        :return: A DetailedResponse result or an IMLException.
-        :rtype: DetailedResponse result representing a CategoriesModel object.
+        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
+        :rtype: DetailedResponse with `dict` result representing a `CategoriesModel` object
         """
 
         if corpus is None:
@@ -430,31 +441,34 @@ class InsightsForMedicalLiteratureServiceV1(BaseService):
         if document_id is None:
             raise ValueError('document_id must be provided')
         headers = {}
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='analyze_org')
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='get_document_categories')
         headers.update(sdk_headers)
 
-        if 'headers' in kwargs:
-            headers.update(kwargs.get('headers'))
         params = {
             'version': self.version,
             'highlight_tag_begin': highlight_tag_begin,
             'highlight_tag_end': highlight_tag_end,
-            'types': types,
+            'types': convert_list(types),
             'category': category,
             'only_negated_concepts': only_negated_concepts,
             '_fields': fields,
             '_limit': limit
         }
 
-        url = ('/v1/corpora/{0}/documents/{1}/categories'
-               .format(*self._encode_path_vars(corpus, document_id)))
-        request = self.prepare_request(method='GET', url=url, params=params, headers=headers)
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
+        url = '/v1/corpora/{0}/documents/{1}/categories'.format(*self.encode_path_vars(corpus, document_id))
+        request = self.prepare_request(method='GET',
+                                       url=url,
+                                       headers=headers,
+                                       params=params)
+
         response = self.request_iml(request)
         return response
 
 
-    def get_doc_multiple_categories(self, corpus, document_id, categories=None, highlight_tag_begin=None,
-                                    highlight_tag_end=None, fields=None, limit=None, **kwargs):
+    def get_doc_multiple_categories(self, corpus: str, document_id: str, categories = None, *, highlight_tag_begin: str = None, highlight_tag_end: str = None, fields: str = None, limit: int = None, **kwargs) -> DetailedResponse:
         """
         Categorizes concepts in a document.
 
@@ -489,40 +503,38 @@ class InsightsForMedicalLiteratureServiceV1(BaseService):
 
         :param str corpus: Corpus name.
         :param str document_id: Document ID.
-        :param str license: License for corpus.
         :param list[Category] categories:
-        :param str highlight_tag_begin: HTML tag used to highlight concepts found in the
-        text.  Default is '&ltb&gt'.
-        :param str highlight_tag_end: HTML tag used to highlight concepts found in the
-        text.  Default is '&lt/b&gt'.
-        :param str fields: Comma separated list of fields to return:  passages,
-        annotations, highlightedTitle, highlightedAbstract, highlightedBody,
-        highlightedSections.
-        :param int limit: Limit the number of passages per search concept (1 to 250).
-        Default is 50.
-        :return: A DetailedResponse result or an IMLException.
-        :rtype: DetailedResponse result representing a CategoriesModel object.
+        :param str highlight_tag_begin: (optional) HTML tag used to highlight
+               concepts found in the text.  Default is '&ltb&gt'.
+        :param str highlight_tag_end: (optional) HTML tag used to highlight
+               concepts found in the text.  Default is '&lt/b&gt'.
+        :param str fields: (optional) Comma separated list of fields to return:
+               passages, annotations, highlightedTitle, highlightedAbstract,
+               highlightedBody, highlightedSections.
+        :param int limit: (optional) Limit the number of passages per search
+               concept (1 to 250).  Default is 50.
+        :param dict headers: A `dict` containing the request headers
+        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
+        :rtype: DetailedResponse with `dict` result representing a `CategoriesModel` object
         """
 
         if corpus is None:
             raise ValueError('corpus must be provided')
         if document_id is None:
             raise ValueError('document_id must be provided')
-        if categories is not None:
-            categories = [self._convert_model(x) for x in categories]
-            _categories = {}
-            _categories['categories'] = categories
-            json_string = json.dumps(_categories)
+
+        categories = [self._convert_model(x) for x in categories]
+        _categories = {}
+        _categories['categories'] = categories
+        json_string = json.dumps(_categories)
 
         headers = {
             "content-type": "application/json",
             "Accept": "application/json"
         }
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='analyze_org')
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='get_document_multiple_categories')
         headers.update(sdk_headers)
 
-        if 'headers' in kwargs:
-            headers.update(kwargs.get('headers'))
         params = {
             'version': self.version,
             'highlight_tag_begin': highlight_tag_begin,
@@ -531,18 +543,21 @@ class InsightsForMedicalLiteratureServiceV1(BaseService):
             '_limit': limit
         }
 
-        url = ('/v1/corpora/{0}/documents/{1}/categories'
-               .format(*self._encode_path_vars(corpus, document_id)))
-        request = self.prepare_request(method='POST', url=url, headers=headers,
-                                       params=params, data=json_string)
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
+        url = '/v1/corpora/{0}/documents/{1}/categories'.format(*self.encode_path_vars(corpus, document_id))
+        request = self.prepare_request(method='POST',
+                                       url=url,
+                                       headers=headers,
+                                       params=params,
+                                       data=json_string)
+
         response = self.request_iml(request)
         return response
 
 
-    def get_search_matches(self, corpus, document_id, min_score, cuis=None, text=None,
-                           types=None, attributes=None, values=None, nlu_relations=None,
-                           limit=None, search_tag_begin=None, search_tag_end=None,
-                           related_tag_begin=None, related_tag_end=None, fields=None, **kwargs):
+    def get_search_matches(self, corpus: str, document_id: str, min_score: float, *, cuis: List[str] = None, text: List[str] = None, types: List[str] = None, attributes: List[str] = None, values: List[str] = None, nlu_relations: List[str] = None, limit: int = None, search_tag_begin: str = None, search_tag_end: str = None, related_tag_begin: str = None, related_tag_end: str = None, fields: str = None, **kwargs) -> DetailedResponse:
         """
         Finds concepts in a document matching a set of search concepts.
 
@@ -553,56 +568,60 @@ class InsightsForMedicalLiteratureServiceV1(BaseService):
         application to easily show the annotation details when hovering over a text span.
         The iml-annotation-id may also be used to color code the text spans.  The
         ibm_annotation-id is used as a key for the returned annotations. <p>For example, a
-        search match on the concept \"Breast Carcinoma\" will have a class name
-        \"iml-breast-carcinoma\" inserted in the highlight tag, and the returned
+        search match on the concept "Breast Carcinoma" will have a class name
+        "iml-breast-carcinoma" inserted in the highlight tag, and the returned
         annotations['umls-breast_carcinoma-hypothetical'] JSON field will contain the
         detailed annotation data: <pre>{
-         \"cui\": \"C0678222\"
-         \"hypothetical\": true
-         \"preferredName\": \"Breast Carcinoma\"
-         \"semanticType\": \"umls.NeoplasticProcess\"
-         \"source\": \"umls\"
-         \"type\": \"umls.NeoplasticProcess\"
+         "cui": "C0678222"
+         "hypothetical": true
+         "preferredName": "Breast Carcinoma"
+         "semanticType": "umls.NeoplasticProcess"
+         "source": "umls"
+         "type": "umls.NeoplasticProcess"
         }
         </pre>.
 
         :param str corpus: Corpus name.
         :param str document_id: Document ID (e.g, 7014026).
         :param float min_score: Minimum score .0 to 1.0.
-        :param list[str] cuis: cui[,rank,[type]] - Example: \"C0030567,10\". The rank is
-        an optional value from 0 to 10 (defalut is 10). Special rank values: 0=omit,
-        10=require. Related concepts can also be included by appending, '-PAR' (parents),
-        '-CHD' (children), or '-SIB' (siblings) to the CUI (eg., to include all children
-        of C0030567: 'C0030567-CHD')).  The type may explicitly select a semanic type for
-        a concept.  If no type is specified, a default type is selected.
-        :param list[str] text: Case insensitive text searches.
-        :param list[str] types: Highlight all text spans matching these semantic types.
-        Semantic types for the corpus can be found using the /v1/corpora/{corpus}/types
-        method.
-        :param list[str] attributes: Highlight all text spans matching these attributes.
-        An attribute may also specify a range value (e.g., age:years:65-100) or  a string
-        value (e.g., gender:female).  The attribute may be qualified with one or more
-        qualifiers (e.g., Treated,Severe>>diabetes)  An attribute may target a specific
-        CUI.  (e.g., C0003864::disease).
-        :param list[str] values: Highlight all text spans matching these values.  e.g.,
-        age:years:within:65-100 or gender:female  a string value (e.g., gender:female).
-        :param list[str] nlu_relations: Highlight all text spans matching these NLU
-        relations.  e.g., druggroup,treat,indication.
-        :param int limit: Limit the number of matching passages per search concept/search
-        term (1 to 250).  Default is 50.
-        :param str search_tag_begin: HTML tag used to highlight search concepts found in
-        the text.  Default is '&ltb&gt'.
-        :param str search_tag_end: HTML tag used to highlight search concepts found in the
-        text.  Default is '&lt/b&gt'.
-        :param str related_tag_begin: HTML tag used to highlight related concepts found in
-        the text.
-        :param str related_tag_end: HTML tag used to highlight related concepts found in
-        the text.
-        :param str fields: Comma separated list of fields to return:  passages,
-        annotations, highlightedTitle, highlightedAbstract, highlightedBody,
-        highlightedSections.
-        :return: A DetailedResponse result or IMLException.
-        :rtype: DetailedResponse result representing a SearchMatchesModel object.
+        :param List[str] cuis: (optional) cui[,rank,[type]] - Example:
+               "C0030567,10". The rank is an optional value from 0 to 10 (defalut is 10).
+               Special rank values: 0=omit, 10=require. Related concepts can also be
+               included by appending, '-PAR' (parents), '-CHD' (children), or '-SIB'
+               (siblings) to the CUI (eg., to include all children of C0030567:
+               'C0030567-CHD')).  The type may explicitly select a semanic type for a
+               concept.  If no type is specified, a default type is selected.
+        :param List[str] text: (optional) Case insensitive text searches.
+        :param List[str] types: (optional) Highlight all text spans matching these
+               semantic types.  Semantic types for the corpus can be found using the
+               /v1/corpora/{corpus}/types method.
+        :param List[str] attributes: (optional) Highlight all text spans matching
+               these attributes.  An attribute may also specify a range value (e.g.,
+               age:years:65-100) or  a string value (e.g., gender:female).  The attribute
+               may be qualified with one or more qualifiers (e.g.,
+               Treated,Severe>>diabetes)  An attribute may target a specific CUI.  (e.g.,
+               C0003864::disease).
+        :param List[str] values: (optional) Highlight all text spans matching these
+               values.  e.g., age:years:within:65-100 or gender:female  a string value
+               (e.g., gender:female).
+        :param List[str] nlu_relations: (optional) Highlight all text spans
+               matching these NLU relations.  e.g., druggroup,treat,indication.
+        :param int limit: (optional) Limit the number of matching passages per
+               search concept/search term (1 to 250).  Default is 50.
+        :param str search_tag_begin: (optional) HTML tag used to highlight search
+               concepts found in the text.  Default is '&ltb&gt'.
+        :param str search_tag_end: (optional) HTML tag used to highlight search
+               concepts found in the text.  Default is '&lt/b&gt'.
+        :param str related_tag_begin: (optional) HTML tag used to highlight related
+               concepts found in the text.
+        :param str related_tag_end: (optional) HTML tag used to highlight related
+               concepts found in the text.
+        :param str fields: (optional) Comma separated list of fields to return:
+               passages, annotations, highlightedTitle, highlightedAbstract,
+               highlightedBody, highlightedSections.
+        :param dict headers: A `dict` containing the request headers
+        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
+        :rtype: DetailedResponse with `dict` result representing a `SearchMatchesModel` object
         """
 
         if corpus is None:
@@ -612,20 +631,18 @@ class InsightsForMedicalLiteratureServiceV1(BaseService):
         if min_score is None:
             raise ValueError('min_score must be provided')
         headers = {}
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='analyze_org')
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='get_search_matches')
         headers.update(sdk_headers)
 
-        if 'headers' in kwargs:
-            headers.update(kwargs.get('headers'))
         params = {
             'version': self.version,
             'min_score': min_score,
-            'cuis': cuis,
-            'text': text,
-            'types': types,
-            'attributes': attributes,
-            'values': values,
-            'nlu_relations': nlu_relations,
+            'cuis': convert_list(cuis),
+            'text': convert_list(text),
+            'types': convert_list(types),
+            'attributes': convert_list(attributes),
+            'values': convert_list(values),
+            'nlu_relations': convert_list(nlu_relations),
             '_limit': limit,
             'search_tag_begin': search_tag_begin,
             'search_tag_end': search_tag_end,
@@ -634,296 +651,164 @@ class InsightsForMedicalLiteratureServiceV1(BaseService):
             '_fields': fields
         }
 
-        url = ('/v1/corpora/{0}/documents/{1}/search_matches'
-               .format(*self._encode_path_vars(corpus, document_id)))
-        request = self.prepare_request(method='GET', url=url, params=params, headers=headers)
-        response = self.request_iml(request)
-        return response
-
-
-    #########################
-    # Search
-    #########################
-
-    def search(self, corpus, query=None, returns=None, verbose=None, **kwargs):
-        """
-        Search for concepts, documents, and authors.
-        Features include:<ul><li>Concept search</li><li>Keyword search</li><li>Attributes
-        search</li><li>Attributes typeahead</li><li>Regular expressions</li><li>Find
-        passages</li><li>Selecting authors</li><li>Selecting providers</li><li>Date
-        ranges: publish date</li><li>Pagination</li><li>Aggregation: authors, concepts,
-        and documents</li><li>Document date histogram</li></ul>.
-        :param str corpus: Corpus name.
-        :param Query query:
-        :param ReturnsModel returns:
-        :param bool verbose: Verbose output.
-        :param dict headers: A `dict` containing the request headers
-        :return: A DetailedResponse result or an IMLException.
-        :rtype: DetailedResponse result 'dict' representing a SearchModel object.
-        """
-        if corpus is None:
-            raise ValueError('corpus must be provided')
-        if query is not None:
-            query = self._convert_model(query)
-        if returns is None:
-            raise ValueError('returns must be provided')
-        else:
-            returns = self._convert_model(returns)
-        params = {
-            'version': self.version,
-            'verbose': verbose
-        }
-        data = {
-            "query": query,
-            "returns": returns
-        }
-        headers = {
-            "content-type": "application/json",
-            "Accept": "application/json"
-        }
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='analyze_org')
-        headers.update(sdk_headers)
-
         if 'headers' in kwargs:
             headers.update(kwargs.get('headers'))
-        json_string = json.dumps(data, indent=2, cls=SearchableConceptEncoder)
 
-        url = '/v1/corpora/{0}/search'.format(*self._encode_path_vars(corpus))
-        request = self.prepare_request(method='POST', url=url, headers=headers,
-                                       params=params, data=json_string)
-        response = self.request_iml(request)
+        url = '/v1/corpora/{0}/documents/{1}/search_matches'.format(*self.encode_path_vars(corpus, document_id))
+        request = self.prepare_request(method='GET',
+                                       url=url,
+                                       headers=headers,
+                                       params=params)
 
-        return response
-
-
-    def get_fields(self, corpus, **kwargs):
-        """
-        Retrieves a list of metadata fields defined in the corpus.
-
-        The response returns a list of metadata field names that can be used by the POST
-        search API.
-
-        :param str corpus: Corpus name.
-        :param dict headers: A `dict` containing the request headers
-        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
-        :rtype: DetailedResponse with results 'dict' representing a MetadataModel object.
-        """
-
-        if corpus is None:
-            raise ValueError('corpus must be provided')
-        headers = {}
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='analyze_org')
-        headers.update(sdk_headers)
-
-        if 'headers' in kwargs:
-            headers.update(kwargs.get('headers'))
-        params = {
-            'version': self.version
-        }
-
-        url = '/v1/corpora/{0}/search/metadata'.format(*self._encode_path_vars(corpus))
-        request = self.prepare_request(method='GET', url=url, params=params, headers=headers)
-        response = self.request_iml(request)
-
-        return response
-
-
-    def typeahead(self, corpus, query, ontologies=None, types=None, category=None, verbose=None,
-                  limit=None, max_hit_count=None, no_duplicates=None, **kwargs):
-        """
-        Find concepts matching the specified query string.
-
-        Searches concepts mentioned in the corpus looking for matches on the query string
-        field. The comparison is not case sensitive. The main use of this method is to
-        build query boxes that offer auto-complete, to allow users to select valid
-        concepts.
-
-        :param str corpus: Comma-separated corpora names.
-        :param str query: Query string.
-        :param list[str] ontologies: Include suggestions belonging to the selected
-        ontology(ies).
-        :param list[str] types: Include or exclude suggestions belonging to one of these
-        types.  Types can be found using /v1/corpora/{corpus}/types method.  Defaults to
-        all.
-        :param str category: Select concepts belonging to disorders, drugs or genes.
-        :param bool verbose: Verbose output.  Include hit counts and relationship counts
-        for each concept.
-        :param int limit: Maximum number of suggestions to return.
-        :param int max_hit_count: Maximum hit (document) count for suggested concepts.
-        Default is 500000.  High hit count concepts tend to be very broad (e.g, Disease)
-        and result in longer search times.
-        :param bool no_duplicates: Remove duplicate concepts.
-        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
-        :rtype: DetailedResponse with results 'dict' representing a ConceptListModel object.
-        """
-
-        if corpus is None:
-            raise ValueError('corpus must be provided')
-        if query is None:
-            raise ValueError('query must be provided')
-        headers = {}
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='analyze_org')
-        headers.update(sdk_headers)
-
-        if 'headers' in kwargs:
-            headers.update(kwargs.get('headers'))
-        params = {
-            'version': self.version,
-            'query': query,
-            'ontologies': ontologies,
-            'types': types,
-            'category': category,
-            'verbose': verbose,
-            '_limit': limit,
-            'max_hit_count': max_hit_count,
-            'no_duplicates': no_duplicates
-        }
-
-        url = '/v1/corpora/{0}/search/typeahead'.format(*self._encode_path_vars(corpus))
-        request = self.prepare_request(method='GET', url=url, params=params)
         response = self.request_iml(request)
         return response
-
 
     #########################
     # Corpora
     #########################
 
-    def get_corpora_config(self, verbose=None, **kwargs):
+
+    def get_corpora_config(self, *, verbose: bool = None, **kwargs) -> DetailedResponse:
         """
         Retrieves the available corpus names and configuration.
 
         The response returns an array of available corpus names and optionally includes
-        detailed configuration parameters.
+        detailed configuation parameters.
 
-        :param bool verbose: Verbose output.  Default verbose = false.
-        :return:  A `DetailedResponse` containing the result, headers and HTTP status code.
-        :rtype: DetailedResponse with results 'dict' representing a CorporaConfigModel object.
+        :param bool verbose: (optional) Verbose output.  Default verbose = false.
+        :param dict headers: A `dict` containing the request headers
+        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
+        :rtype: DetailedResponse with `dict` result representing a `CorporaConfig` object
         """
+
         headers = {}
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='analyze_org')
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='get_corpora_config')
         headers.update(sdk_headers)
 
-        if 'headers' in kwargs:
-            headers.update(kwargs.get('headers'))
         params = {
             'version': self.version,
             'verbose': verbose
         }
 
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
         url = '/v1/corpora'
+        request = self.prepare_request(method='GET',
+                                       url=url,
+                                       headers=headers,
+                                       params=params)
 
-        request = self.prepare_request(method='GET', url=url, params=params)
         response = self.request_iml(request)
-
         return response
 
 
-    def set_corpus_schema(self, user_name=None, password=None, corpus_uri=None,
-                          enrichment_targets=None, metadata_fields=None,
-                          corpus_name=None, references=None, **kwargs):
+    def set_corpus_schema(self, *, enrichment_targets: List[object] = None, metadata_fields: List[object] = None, corpus_name: str = None, references: dict = None, **kwargs) -> DetailedResponse:
         """
-        Define service repository.
+        Define service repository data model.
 
         The response returns whether the instance schema was properly created.  <P>This
         API should be used for defining a custom corpus schema.<P>Example POST body:<pre>{
-           userName : 'string',
-           password : 'string'
-           repositoryUri : 'uri'
            corpusName : 'string'
-          \"enrichmentTargets\" : [
+          "enrichmentTargets" : [
            {
-            \"contentField\": 'string',
-            \"enrichmentField : 'string'
+            "contentField": 'string',
+            "enrichmentField : 'string'
            }
           ],
-          \"metadataFields\" : [
+          "metadataFields" : [
            {
-            \"fieldName\": 'string',
-            \"usageType : 'string'
+            "fieldName": 'string',
+            "fieldType : 'string'
            }
           ],
-          \"referenceIndices\" : {
-           \"dictionaryIndex\" : \"my_umls\",
-           \"attributeIndex\" : \"my_attributes\",
-           \"meshIndex\" : \"my_mesh\",
+          "referenceIndices" : {
+           "dictionaryIndex" : "my_umls",
+           "attributeIndex" : "my_attributes",
+           "meshIndex" : "my_mesh",
           }
         }
         </pre>.
 
-        :param str user_name: Repository connection userid.
-        :param str password: Repository connection password.
-        :param str corpus_uri: Repository connection URI.
-        :param list[object] enrichment_targets: Input and Output field names.
-        :param list[object] metadata_fields: Metadata field names.
-        :param str corpus_name: Corpus name.
-        :param dict references: Reference indices.
+        :param List[object] enrichment_targets: (optional) Input and Output field
+               names.
+        :param List[object] metadata_fields: (optional) Metadata field names.
+        :param str corpus_name: (optional) Corpus name.
+        :param dict references: (optional) Reference indices.
+        :param dict headers: A `dict` containing the request headers
         :return: A `DetailedResponse` containing the result, headers and HTTP status code.
-        :rtype: DetailedResponse
+        :rtype: DetailedResponse with `dict` result representing a `CorporaConfig` object
         """
 
-
-        headers = {
-            "content-type": "application/json",
-            "Accept": "application/json"
-        }
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='analyze_org')
+        headers = {}
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='set_corpus_schema')
         headers.update(sdk_headers)
 
-        if 'headers' in kwargs:
-            headers.update(kwargs.get('headers'))
         params = {
             'version': self.version
         }
 
         data = {
-            'userName': user_name,
-            'password': password,
-            'corpusURI': corpus_uri,
             'enrichmentTargets': enrichment_targets,
             'metadataFields': metadata_fields,
             'corpusName': corpus_name,
             'references': references
         }
+        data = {k: v for (k, v) in data.items() if v is not None}
+        data = json.dumps(data)
+        headers['content-type'] = 'application/json'
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
 
         url = '/v1/corpora'
-        request = self.prepare_request(method='POST', url=url, headers=headers,
-                                       params=params, data=data)
+        request = self.prepare_request(method='POST',
+                                       url=url,
+                                       headers=headers,
+                                       params=params,
+                                       data=data)
+
         response = self.request_iml(request)
         return response
 
 
-    def delete_corpus_schema(self, instance, **kwargs):
+    def delete_corpus_schema(self, instance: str, **kwargs) -> DetailedResponse:
         """
         Delete a corpus.
 
         The response returns whether the instance schema was properly deleted.
 
         :param str instance: corpus schema.
+        :param dict headers: A `dict` containing the request headers
         :return: A `DetailedResponse` containing the result, headers and HTTP status code.
-        :rtype: DetailedResponse
+        :rtype: DetailedResponse with `dict` result representing a `CorporaConfig` object
         """
 
         if instance is None:
             raise ValueError('instance must be provided')
         headers = {}
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='analyze_org')
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='delete_corpus_schema')
         headers.update(sdk_headers)
 
-        if 'headers' in kwargs:
-            headers.update(kwargs.get('headers'))
         params = {
             'version': self.version,
             'instance': instance
         }
 
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
         url = '/v1/corpora'
-        request = self.prepare_request(method='DELETE', url=url, params=params, headers=headers)
+        request = self.prepare_request(method='DELETE',
+                                       url=url,
+                                       headers=headers,
+                                       params=params)
+
         response = self.request_iml(request)
         return response
 
 
-    def set_corpus_config(self, user_name=None, password=None, corpus_uri=None, **kwargs):
+    def set_corpus_config(self, *, user_name: str = None, password: str = None, corpus_uri: str = None, **kwargs) -> DetailedResponse:
         """
         Define service repository.
 
@@ -936,23 +821,18 @@ class InsightsForMedicalLiteratureServiceV1(BaseService):
         }
         </pre>.
 
-        :param str user_name: Repository connection userid.
-        :param str password: Repository connection password.
-        :param str corpus_uri: Repository connection URI.
+        :param str user_name: (optional) Repository connection userid.
+        :param str password: (optional) Repository connection password.
+        :param str corpus_uri: (optional) Repository connection URI.
+        :param dict headers: A `dict` containing the request headers
         :return: A `DetailedResponse` containing the result, headers and HTTP status code.
-        :rtype: DetailedResponse
+        :rtype: DetailedResponse with `dict` result representing a `CorporaConfig` object
         """
 
-
-        headers = {
-            "content-type": "application/json",
-            "Accept": "application/json"
-        }
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='analyze_org')
+        headers = {}
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='set_corpus_config')
         headers.update(sdk_headers)
 
-        if 'headers' in kwargs:
-            headers.update(kwargs.get('headers'))
         params = {
             'version': self.version
         }
@@ -962,15 +842,25 @@ class InsightsForMedicalLiteratureServiceV1(BaseService):
             'password': password,
             'corpusURI': corpus_uri
         }
+        data = {k: v for (k, v) in data.items() if v is not None}
+        data = json.dumps(data)
+        headers['content-type'] = 'application/json'
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
 
         url = '/v1/corpora/configure'
-        request = self.prepare_request(method='POST', url=url, headers=headers,
-                                       params=params, data=data)
+        request = self.prepare_request(method='POST',
+                                       url=url,
+                                       headers=headers,
+                                       params=params,
+                                       data=data)
+
         response = self.request_iml(request)
         return response
 
 
-    def monitor_corpus(self, apikey, **kwargs):
+    def monitor_corpus(self, apikey: str, **kwargs) -> DetailedResponse:
         """
         Enable monitoring for a custom instance.
 
@@ -986,54 +876,96 @@ class InsightsForMedicalLiteratureServiceV1(BaseService):
 
         if apikey is None:
             raise ValueError('apikey must be provided')
-
-        headers = {
-            "content-type": "application/json",
-            "Accept": "application/json"
-        }
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='analyze_org')
+        headers = {}
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='monitor_corpus')
         headers.update(sdk_headers)
 
-        if 'headers' in kwargs:
-            headers.update(kwargs.get('headers'))
         params = {
             'version': self.version,
             'apikey': apikey
         }
 
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
         url = '/v1/corpora/monitor'
-        request = self.prepare_request(method='PUT', url=url, headers=headers, params=params)
+        request = self.prepare_request(method='PUT',
+                                       url=url,
+                                       headers=headers,
+                                       params=params)
+
         response = self.request_iml(request)
         return response
 
 
-    def get_corpus_config(self, corpus, verbose=None, **kwargs):
+    def enable_corpus_search_tracking(self, *, enable_tracking: bool = None, **kwargs) -> DetailedResponse:
+        """
+        Toggle Search Activity Tracking.
+
+        The response returns whether the tracking was enabled or disabled.
+
+        :param bool enable_tracking: (optional) Enable corpus read event tracking.
+               Default is false.
+        :param dict headers: A `dict` containing the request headers
+        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
+        :rtype: DetailedResponse
+        """
+
+        headers = {}
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='enable_corpus_search_tracking')
+        headers.update(sdk_headers)
+
+        params = {
+            'version': self.version,
+            'enable_tracking': enable_tracking
+        }
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
+        url = '/v1/corpora/tracking'
+        request = self.prepare_request(method='PUT',
+                                       url=url,
+                                       headers=headers,
+                                       params=params)
+
+        response = self.request_iml(request)
+        return response
+
+
+    def get_corpus_config(self, corpus: str, *, verbose: bool = None, **kwargs) -> DetailedResponse:
         """
         Retrieves the corpus configuration.
 
         The response returns the corpus configuration.
 
         :param str corpus: Corpus name.
-        :param bool verbose: Verbose output.  Default verbose = false.
+        :param bool verbose: (optional) Verbose output.  Default verbose = false.
+        :param dict headers: A `dict` containing the request headers
         :return: A `DetailedResponse` containing the result, headers and HTTP status code.
-        :rtype: DetailedResponse with results 'dict' representing a CorpusConfigModel object.
+        :rtype: DetailedResponse with `dict` result representing a `CorporaConfig` object
         """
 
         if corpus is None:
             raise ValueError('corpus must be provided')
         headers = {}
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='analyze_org')
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='get_corpus_config')
         headers.update(sdk_headers)
 
-        if 'headers' in kwargs:
-            headers.update(kwargs.get('headers'))
         params = {
             'version': self.version,
             'verbose': verbose
         }
 
-        url = '/v1/corpora/{0}'.format(*self._encode_path_vars(corpus))
-        request = self.prepare_request(method='GET', url=url, params=params, headers=headers)
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
+        url = '/v1/corpora/{0}'.format(*self.encode_path_vars(corpus))
+        request = self.prepare_request(method='GET',
+                                       url=url,
+                                       headers=headers,
+                                       params=params)
+
         response = self.request_iml(request)
         return response
 
@@ -1042,108 +974,279 @@ class InsightsForMedicalLiteratureServiceV1(BaseService):
     # Status
     #########################
 
-    def get_health_check_status(self, accept=None, apikey=None, data_format=None, **kwargs):
+
+    def get_health_check_status(self, *, accept: str = None, format: str = None, **kwargs) -> DetailedResponse:
         """
         Determine if service is running correctly.
 
         This resource differs from /status in that it will will always return a 500 error
         if the service state is not OK.  This makes it simpler for service front ends
-        to detect a failed service.
+        (such as Datapower) to detect a failed service.
 
-        :param str accept: The type of the response: application/json or application/xml.
-        :param str apikey: access key.
-        :param str data_format: Override response format.
+        :param str accept: (optional) The type of the response: application/json or
+               application/xml.
+        :param str format: (optional) Override response format.
+        :param dict headers: A `dict` containing the request headers
         :return: A `DetailedResponse` containing the result, headers and HTTP status code.
-        :rtype: DetailedResponse
+        :rtype: DetailedResponse with `dict` result representing a `ServiceStatus` object
         """
-        headers = {}
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='analyze_org')
+
+        headers = {
+            'Accept': accept
+        }
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='get_health_check_status')
         headers.update(sdk_headers)
+
+        params = {
+            'format': format
+        }
 
         if 'headers' in kwargs:
             headers.update(kwargs.get('headers'))
-        params = {
-            'accept': accept,
-            'version': self.version,
-            'apikey': apikey,
-            'format': data_format
-        }
 
         url = '/v1/status/health_check'
-        request = self.prepare_request(method='GET', url=url, params=params, headers=headers)
+        request = self.prepare_request(method='GET',
+                                       url=url,
+                                       headers=headers,
+                                       params=params)
+
         response = self.request_iml(request)
         return response
 
-
     #########################
-    # Concepts
+    # Search
     #########################
 
-    def get_concepts(self, corpus, cuis=None, preferred_names=None, surface_forms=None,
-                     attributes=None, verbose=None, sort=None, limit=None, **kwargs):
+
+    def search(self, corpus: str, returns: dict = None, *, query = None, verbose: bool = None, **kwargs) -> DetailedResponse:
         """
-        Retrieves information for concepts mentioned in this corpus.
+        Search for concepts, documents, and authors.
 
-        The response returns concepts mentioned in this corpus.  The returned concepts may
-        be selected by CUI, preferred name, surface forms and attribute name.  All
-        selected concepts are returned.
+        Features include:<ul><li>Concept search</li><li>Keyword search</li><li>Attributes
+        search</li><li>Attributes typeahead</li><li>Regular expressions</li><li>Find
+        passages</li><li>Selecting authors</li><li>Selecting providers</li><li>Date
+        ranges: publish date</li><li>Pagination</li><li>Aggregation: authors, concepts,
+        and documents</li><li>Document date histogram</li></ul>.
 
         :param str corpus: Corpus name.
-        :param list[str] cuis: Select concepts with the specified CUIs. Each cui is
-        assumed to be from UMLS unless an ontology is explicitly specified using the
-        syntax [ontology:]cui, e.g., 'umls:C0018787'.
-        :param list[str] preferred_names: Select concepts with the specified preferred
-        names. Each preferred name is assumed to be from UMLS unless an ontology is
-        explicitly specified using the syntax [ontology:::]preferred_name, e.g.,
-        'umls:::HEART'.
-        :param list[str] surface_forms: Select all concepts having these surface forms.
-        The match is case insensitive. Each surface form is matched against UMLS unless an
-        ontology is explicitly specified using the syntax [ontology:::]surface_form, e.g.,
-        'umls:::heart attack'.
-        :param list[str] attributes: Select all concepts having these attributes. The
-        match is case insensitive.
-        :param bool verbose: Verbose output.  Default is false.
-        :param str sort: Sort by hitCount (in document count).  Set to ascending order
-        (_sort=+hitCount) or descending order (_sort=-hitCount).
-        :param int limit: Number of possible concepts to return. Default is 250.
+        :param dict returns: Search definition - must include a returns data block
+        :param bool verbose: (optional) Verbose output.
+        :param dict headers: A `dict` containing the request headers
         :return: A `DetailedResponse` containing the result, headers and HTTP status code.
-        :rtype: DetailedResponse with results 'dict' representing a ConceptListModel object.
+        :rtype: DetailedResponse with `dict` result representing a `SearchModel` object
+        """
+
+        if corpus is None:
+            raise ValueError('corpus must be provided')
+        if query is not None:
+            query = self._convert_model(query)
+        if returns is None:
+            raise ValueError('returns must be provided')
+        else:
+            returns = self._convert_model(returns)
+        headers = {}
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='search')
+        headers.update(sdk_headers)
+
+        params = {
+            'version': self.version,
+            'verbose': verbose
+        }
+
+        data = {
+            "query": query,
+            "returns": returns
+        }
+        headers['content-type'] = 'application/json'
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+        json_string = json.dumps(data, indent=2, cls=SearchableConceptEncoder)
+
+        url = '/v1/corpora/{0}/search'.format(*self.encode_path_vars(corpus))
+        request = self.prepare_request(method='POST',
+                                       url=url,
+                                       headers=headers,
+                                       params=params,
+                                       data=json_string)
+
+        response = self.send(request)
+        return response
+
+
+    def get_fields(self, corpus: str, **kwargs) -> DetailedResponse:
+        """
+        Retrieves a list of metadata fields defined in the corpus.
+
+        The response returns a list of metadata field names that can be used by the POST
+        search API.
+
+        :param str corpus: Corpus name.
+        :param dict headers: A `dict` containing the request headers
+        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
+        :rtype: DetailedResponse with `dict` result representing a `MetadataModel` object
         """
 
         if corpus is None:
             raise ValueError('corpus must be provided')
         headers = {}
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='analyze_org')
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='get_fields')
         headers.update(sdk_headers)
+
+        params = {
+            'version': self.version
+        }
 
         if 'headers' in kwargs:
             headers.update(kwargs.get('headers'))
+
+        url = '/v1/corpora/{0}/search/metadata'.format(*self.encode_path_vars(corpus))
+        request = self.prepare_request(method='GET',
+                                       url=url,
+                                       headers=headers,
+                                       params=params)
+
+        response = self.request_iml(request)
+        return response
+
+
+    def typeahead(self, corpus: str, query: str, *, ontologies: List[str] = None, types: List[str] = None, category: str = None, verbose: bool = None, limit: int = None, max_hit_count: int = None, no_duplicates: bool = None, **kwargs) -> DetailedResponse:
+        """
+        Find concepts matching the specified query string.
+
+        Searches concepts mentioned in the corpus looking for matches on the query string
+        field. The comparison is not case sensitive. The main use of this method is to
+        build query boxes that offer auto-complete, to allow users to select valid
+        concepts.
+
+        :param str corpus: Comma-separated corpora names.
+        :param str query: Query string.
+        :param List[str] ontologies: (optional) Include suggestions belonging to
+               the selected ontology(ies).
+        :param List[str] types: (optional) Include or exclude suggestions belonging
+               to one of these types.  Types can be found using /v1/corpora/{corpus}/types
+               method.  Defaults to all.
+        :param str category: (optional) Select concepts belonging to disorders,
+               drugs or genes.
+        :param bool verbose: (optional) Verbose output.  Include hit counts and
+               relationship counts for each concept.
+        :param int limit: (optional) Maximum number of suggestions to return.
+        :param int max_hit_count: (optional) Maximum hit (document) count for
+               suggested concepts. Default is 500000.  High hit count concepts tend to be
+               very broad (e.g, Disease) and result in longer search times.
+        :param bool no_duplicates: (optional) Remove duplicate concepts.
+        :param dict headers: A `dict` containing the request headers
+        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
+        :rtype: DetailedResponse with `dict` result representing a `ConceptListModel` object
+        """
+
+        if corpus is None:
+            raise ValueError('corpus must be provided')
+        if query is None:
+            raise ValueError('query must be provided')
+        headers = {}
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='typeahead')
+        headers.update(sdk_headers)
+
         params = {
             'version': self.version,
-            'cuis': cuis,
-            'preferred_names': preferred_names,
-            'surface_forms': surface_forms,
-            'attributes': attributes,
+            'query': query,
+            'ontologies': convert_list(ontologies),
+            'types': convert_list(types),
+            'category': category,
+            'verbose': verbose,
+            '_limit': limit,
+            'max_hit_count': max_hit_count,
+            'no_duplicates': no_duplicates
+        }
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
+        url = '/v1/corpora/{0}/search/typeahead'.format(*self.encode_path_vars(corpus))
+        request = self.prepare_request(method='GET',
+                                       url=url,
+                                       headers=headers,
+                                       params=params)
+
+        response = self.request_iml(request)
+        return response
+
+    #########################
+    # Concepts
+    #########################
+
+
+    def get_concepts(self, corpus: str, *, cuis: List[str] = None, preferred_names: List[str] = None, surface_forms: List[str] = None, attributes: List[str] = None, verbose: bool = None, sort: str = None, limit: int = None, **kwargs) -> DetailedResponse:
+        """
+        Retrieves information for concepts mentioned in this corpus.
+
+        The response returns concepts mentioned in this corpus.  The returned concepts may
+        be selected by CUI, preferred name, suface forms and attribute name.  All selected
+        concepts are returned.
+
+        :param str corpus: Corpus name.
+        :param List[str] cuis: (optional) Select concepts with the specified CUIs.
+               Each cui is assumed to be from UMLS unless an ontology is explicitly
+               specified using the syntax [ontology:]cui, e.g., 'concepts:C0018787'.
+        :param List[str] preferred_names: (optional) Select concepts with the
+               specified preferred names. Each preferred name is assumed to be from UMLS
+               unless an ontology is explicitly specified using the syntax
+               [ontology:::]preferred_name, e.g., 'concepts:::HEART'.
+        :param List[str] surface_forms: (optional) Select all concepts having these
+               surface forms. The match is case insensitive. Each surface form is matched
+               against UMLS unless an ontology is explicitly specified using the syntax
+               [ontology:::]surface_form, e.g., 'concepts:::heart attack'.
+        :param List[str] attributes: (optional) Select all concepts having these
+               attributes. The match is case insensitive.
+        :param bool verbose: (optional) Verbose output.  Default is false.
+        :param str sort: (optional) Sort by hitCount (in document count).  Set to
+               ascending order (_sort=+hitCount) or descending order (_sort=-hitCount).
+        :param int limit: (optional) Number of possible concepts to return. Default
+               is 250.
+        :param dict headers: A `dict` containing the request headers
+        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
+        :rtype: DetailedResponse with `dict` result representing a `ConceptListModel` object
+        """
+
+        if corpus is None:
+            raise ValueError('corpus must be provided')
+        headers = {}
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='get_concepts')
+        headers.update(sdk_headers)
+
+        params = {
+            'version': self.version,
+            'cuis': convert_list(cuis),
+            'preferred_names': convert_list(preferred_names),
+            'surface_forms': convert_list(surface_forms),
+            'attributes': convert_list(attributes),
             'verbose': verbose,
             '_sort': sort,
             '_limit': limit
         }
 
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
 
+        url = '/v1/corpora/{0}/concepts'.format(*self.encode_path_vars(corpus))
+        request = self.prepare_request(method='GET',
+                                       url=url,
+                                       headers=headers,
+                                       params=params)
 
-        url = '/v1/corpora/{0}/concepts'.format(*self._encode_path_vars(corpus))
-        request = self.prepare_request(method='GET', url=url, params=params, headers=headers)
         response = self.request_iml(request)
         return response
 
 
-    def add_artifact(self, corpus, dictionary_entry=None, attribute_entry=None, **kwargs):
+    def add_artifact(self, corpus: str, *, dictionary_entry: 'DictonaryEntry' = None, attribute_entry: 'AttributeEntry' = None, **kwargs) -> DetailedResponse:
         """
         Add cartridge artifact.
 
         :param str corpus: Corpus name.
-        :param DictionaryEntry dictionary_entry:
-        :param AttributeEntry attribute_entry:
+        :param DictonaryEntry dictionary_entry: (optional)
+        :param AttributeEntry attribute_entry: (optional)
+        :param dict headers: A `dict` containing the request headers
         :return: A `DetailedResponse` containing the result, headers and HTTP status code.
         :rtype: DetailedResponse
         """
@@ -1151,19 +1254,13 @@ class InsightsForMedicalLiteratureServiceV1(BaseService):
         if corpus is None:
             raise ValueError('corpus must be provided')
         if dictionary_entry is not None:
-            dictionary_entry = self._convert_model(dictionary_entry)
+            dictionary_entry = convert_model(dictionary_entry)
         if attribute_entry is not None:
-            attribute_entry = self._convert_model(attribute_entry)
-
-        headers = {
-            "content-type": "application/json",
-            "Accept": "application/json"
-        }
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='analyze_org')
+            attribute_entry = convert_model(attribute_entry)
+        headers = {}
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='add_artifact')
         headers.update(sdk_headers)
 
-        if 'headers' in kwargs:
-            headers.update(kwargs.get('headers'))
         params = {
             'version': self.version
         }
@@ -1172,19 +1269,29 @@ class InsightsForMedicalLiteratureServiceV1(BaseService):
             'dictionaryEntry': dictionary_entry,
             'attributeEntry': attribute_entry
         }
+        data = {k: v for (k, v) in data.items() if v is not None}
+        data = json.dumps(data)
+        headers['content-type'] = 'application/json'
 
-        url = '/v1/corpora/{0}/concepts/definitions'.format(*self._encode_path_vars(corpus))
-        request = self.prepare_request(method='POST', url=url, headers=headers,
-                                       params=params, data=data)
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
+        url = '/v1/corpora/{0}/concepts/definitions'.format(*self.encode_path_vars(corpus))
+        request = self.prepare_request(method='POST',
+                                       url=url,
+                                       headers=headers,
+                                       params=params,
+                                       data=data)
+
         response = self.request_iml(request)
         return response
 
 
-    def get_cui_info(self, corpus, name_or_id, ontology=None, fields=None, tree_layout=None, **kwargs):
+    def get_cui_info(self, corpus: str, name_or_id: str, *, ontology: str = None, fields: str = None, tree_layout: bool = None, **kwargs) -> DetailedResponse:
         """
         Retrieve information for a concept.
 
-        The following fields may be retrieved: <ul><li>Preferred name</li><li>Semantic
+        The followning fields may be retrieved: <ul><li>Preferred name</li><li>Semantic
         types</li><li>Surface forms - Ontology Dictionary names for this
         concept</li><li>Definition - Concept definition (if available)</li><li>Related
         Concepts info</li></ul><P>The default is to return all fields.  Individual fields
@@ -1192,14 +1299,15 @@ class InsightsForMedicalLiteratureServiceV1(BaseService):
 
         :param str corpus: Corpus name.
         :param str name_or_id: Preferred name or concept ID.
-        :param str ontology: The ontology that defines the cui.
-        :param str fields: Comma separated list of fields to return: preferredName,
-        semanticTypes, surfaceForms, typeahead, variants, definition.  Defaults to all
-        fields.
-        :param bool tree_layout: Generate JSON output that is compatible with a d3 tree
-        layout.  Default is false.
+        :param str ontology: (optional) The ontology that defines the cui.
+        :param str fields: (optional) Comma separated list of fields to return:
+               preferredName, semanticTypes, surfaceForms, typeahead, variants,
+               definition.  Defaults to all fields.
+        :param bool tree_layout: (optional) Generate JSON output that is compatible
+               with a d3 tree layout.  Default is false.
+        :param dict headers: A `dict` containing the request headers
         :return: A `DetailedResponse` containing the result, headers and HTTP status code.
-        :rtype: DetailedResponse with result 'dict' representing a ConceptInfoModel object.
+        :rtype: DetailedResponse with `dict` result representing a `ConceptInfoModel` object
         """
 
         if corpus is None:
@@ -1207,11 +1315,9 @@ class InsightsForMedicalLiteratureServiceV1(BaseService):
         if name_or_id is None:
             raise ValueError('name_or_id must be provided')
         headers = {}
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='analyze_org')
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='get_cui_info')
         headers.update(sdk_headers)
 
-        if 'headers' in kwargs:
-            headers.update(kwargs.get('headers'))
         params = {
             'version': self.version,
             'ontology': ontology,
@@ -1219,13 +1325,20 @@ class InsightsForMedicalLiteratureServiceV1(BaseService):
             'tree_layout': tree_layout
         }
 
-        url = '/v1/corpora/{0}/concepts/{1}'.format(*self._encode_path_vars(corpus, name_or_id))
-        request = self.prepare_request(method='GET', url=url, params=params, headers=headers)
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
+        url = '/v1/corpora/{0}/concepts/{1}'.format(*self.encode_path_vars(corpus, name_or_id))
+        request = self.prepare_request(method='GET',
+                                       url=url,
+                                       headers=headers,
+                                       params=params)
+
         response = self.request_iml(request)
         return response
 
 
-    def get_hit_count(self, corpus, name_or_id, ontology=None, **kwargs):
+    def get_hit_count(self, corpus: str, name_or_id: str, *, ontology: str = None, **kwargs) -> DetailedResponse:
         """
         Retrieves a count of the number of times a concept is mentioned in the corpus.
 
@@ -1234,9 +1347,10 @@ class InsightsForMedicalLiteratureServiceV1(BaseService):
 
         :param str corpus: Corpus name.
         :param str name_or_id: Preferred name or concept ID.
-        :param str ontology: The ontology that defines the cui.
+        :param str ontology: (optional) The ontology that defines the cui.
+        :param dict headers: A `dict` containing the request headers
         :return: A `DetailedResponse` containing the result, headers and HTTP status code.
-        :rtype: DetailedResponse
+        :rtype: DetailedResponse with `dict` result representing a `HitCount` object
         """
 
         if corpus is None:
@@ -1244,36 +1358,38 @@ class InsightsForMedicalLiteratureServiceV1(BaseService):
         if name_or_id is None:
             raise ValueError('name_or_id must be provided')
         headers = {}
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='analyze_org')
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='get_hit_count')
         headers.update(sdk_headers)
 
-        if 'headers' in kwargs:
-            headers.update(kwargs.get('headers'))
         params = {
             'version': self.version,
             'ontology': ontology
         }
 
-        url = ('/v1/corpora/{0}/concepts/{1}/hit_count'
-               .format(*self._encode_path_vars(corpus, name_or_id)))
-        request = self.prepare_request(method='GET', url=url, params=params, headers=headers)
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
+        url = '/v1/corpora/{0}/concepts/{1}/hit_count'.format(*self.encode_path_vars(corpus, name_or_id))
+        request = self.prepare_request(method='GET',
+                                       url=url,
+                                       headers=headers,
+                                       params=params)
+
         response = self.request_iml(request)
         return response
 
 
-    def get_related_concepts(self, corpus, name_or_id, relationship, ontology=None,
-                             relationship_attributes=None, sources=None, recursive=None,
-                             tree_layout=None, max_depth=None, **kwargs):
+    def get_related_concepts(self, corpus: str, name_or_id: str, relationship: str, *, ontology: str = None, relationship_attributes: List[str] = None, sources: List[str] = None, recursive: bool = None, tree_layout: bool = None, max_depth: int = None, **kwargs) -> DetailedResponse:
         """
         Retrieve concepts related to a concept.
 
         Returns a list of related concepts mentioned in the specified corpus. The
-        following relationships are supported: <ul><li><b>children</b> child
+        following relationships are suppored: <ul><li><b>children</b> child
         concepts</li><li><b>parents</b> parent concepts</li><li><b>siblings</b> sibling
         concepts</li><li><b>synonyms</b> synonym concepts</li><li><b>qualified by</b>
         qualified by concepts</li><li><b>broader</b> broader
         concepts</li><li><b>narrower</b> narrower concepts</li><li><b>other</b> other than
-        synonyms, narrower or broader</li><li><b>related</b> related and possibly
+        synonyms, narrower or broader</li><li><b>related</b> related and posibly
         synonymous concepts</li></ul><p>If the corpus path parameter can be set to 'umls'
         to look up relationship in the entire UMLS dictionary.  Otherwise, an actual
         corpus name may be specified to limit the output to only those concepts mentioned
@@ -1282,18 +1398,20 @@ class InsightsForMedicalLiteratureServiceV1(BaseService):
         :param str corpus: Corpus name or null to show all ontology relationships.
         :param str name_or_id: Preferred name or concept ID.
         :param str relationship: Select the relationship to retrieve.
-        :param str ontology: The ontology that defines the cui.
-        :param list[str] relationship_attributes: Select UMLS relationship attributes.  If
-        null, all relationship attributes are returned.
-        :param list[str] sources: Select source vocabularies.  If null, concepts for all
-        source vocabularies are returned.
-        :param bool recursive: Recursively return parents, children, broader and narrower
-        relations.  Default is false.
-        :param bool tree_layout: Generate JSON output that is compatible with a d3 tree
-        layout.  Default is true.
-        :param int max_depth: Maximum depth.  Default is 3.
+        :param str ontology: (optional) The ontology that defines the cui.
+        :param List[str] relationship_attributes: (optional) Select UMLS
+               relationship attributes.  If null, all relationship attributes are
+               returned.
+        :param List[str] sources: (optional) Select source vocabularies.  If null,
+               concepts for all source vocabularies are returned.
+        :param bool recursive: (optional) Recursively return parents, children,
+               broader and narrower relations.  Default is false.
+        :param bool tree_layout: (optional) Generate JSON output that is compatible
+               with a d3 tree layout.  Default is true.
+        :param int max_depth: (optional) Maximum depth.  Default is 3.
+        :param dict headers: A `dict` containing the request headers
         :return: A `DetailedResponse` containing the result, headers and HTTP status code.
-        :rtype: DetailedResponse with result 'dict' representing a RelatedConceptsModel object.
+        :rtype: DetailedResponse with `dict` result representing a `RelatedConceptsModel` object
         """
 
         if corpus is None:
@@ -1303,31 +1421,34 @@ class InsightsForMedicalLiteratureServiceV1(BaseService):
         if relationship is None:
             raise ValueError('relationship must be provided')
         headers = {}
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='analyze_org')
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='get_related_concepts')
         headers.update(sdk_headers)
 
-        if 'headers' in kwargs:
-            headers.update(kwargs.get('headers'))
         params = {
-            'version': self.version,
             'relationship': relationship,
+            'version': self.version,
             'ontology': ontology,
-            'relationship_attributes': relationship_attributes,
-            'sources': sources,
+            'relationship_attributes': convert_list(relationship_attributes),
+            'sources': convert_list(sources),
             'recursive': recursive,
             'tree_layout': tree_layout,
             'max_depth': max_depth
         }
 
-        url = ('/v1/corpora/{0}/concepts/{1}/related_concepts'
-               .format(*self._encode_path_vars(corpus, name_or_id)))
-        request = self.prepare_request(method='GET', url=url, params=params, headers=headers)
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
+        url = '/v1/corpora/{0}/concepts/{1}/related_concepts'.format(*self.encode_path_vars(corpus, name_or_id))
+        request = self.prepare_request(method='GET',
+                                       url=url,
+                                       headers=headers,
+                                       params=params)
+
         response = self.request_iml(request)
         return response
 
 
-    def get_similar_concepts(self, corpus, name_or_id, ontology=None, return_ontologies=None,
-                             limit=None, **kwargs):
+    def get_similar_concepts(self, corpus: str, name_or_id: str, return_ontologies: List[str], *, ontology: str = None, limit: int = None, **kwargs) -> DetailedResponse:
         """
         Find similar concepts.
 
@@ -1337,37 +1458,172 @@ class InsightsForMedicalLiteratureServiceV1(BaseService):
 
         :param str corpus: Corpus name.
         :param str name_or_id: Preferred name or concept ID.
-        :param str ontology: The ontology that defines the cui.
-        :param list[str] return_ontologies: Return similar concepts from any of these
-        ontologies.
-        :param int limit: Number of possible concepts to return. Default is 250.
-        :return:  A `DetailedResponse` containing the result, headers and HTTP status code.
-        :rtype: DetailedResponse with result 'dict' representing a ConceptListModel object.
+        :param List[str] return_ontologies: Return similar concepts from any of
+               these ontologites.
+        :param str ontology: (optional) The ontology that defines the cui.
+        :param int limit: (optional) Number of possible concepts to return. Default
+               is 250.
+        :param dict headers: A `dict` containing the request headers
+        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
+        :rtype: DetailedResponse with `dict` result representing a `ConceptListModel` object
         """
 
         if corpus is None:
             raise ValueError('corpus must be provided')
         if name_or_id is None:
             raise ValueError('name_or_id must be provided')
+        if return_ontologies is None:
+            raise ValueError('return_ontologies must be provided')
         headers = {}
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='analyze_org')
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='get_similar_concepts')
         headers.update(sdk_headers)
 
-        if 'headers' in kwargs:
-            headers.update(kwargs.get('headers'))
         params = {
             'version': self.version,
+            'return_ontologies': convert_list(return_ontologies),
             'ontology': ontology,
-            'return_ontologies': return_ontologies,
             '_limit': limit
         }
 
-        url = ('/v1/corpora/{0}/concepts/{1}/similar_concepts'
-               .format(*self._encode_path_vars(corpus, name_or_id)))
-        request = self.prepare_request(method='GET', url=url, params=params, headers=headers)
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
+        url = '/v1/corpora/{0}/concepts/{1}/similar_concepts'.format(*self.encode_path_vars(corpus, name_or_id))
+        request = self.prepare_request(method='GET',
+                                       url=url,
+                                       headers=headers,
+                                       params=params)
+
         response = self.request_iml(request)
         return response
 
+
+class GetDocumentCategoriesEnums:
+    """
+    Enums for get_document_categories parameters.
+    """
+
+    class Category(Enum):
+        """
+        Select concepts belonging to disorders, drugs or genes.
+        """
+        DISORDERS = 'disorders'
+        DRUGS = 'drugs'
+        GENES = 'genes'
+
+
+class GetServiceStatusEnums:
+    """
+    Enums for get_service_status parameters.
+    """
+
+    class Accept(Enum):
+        """
+        The type of the response: application/json or application/xml.
+        """
+        APPLICATION_JSON = 'application/json'
+        APPLICATION_XML = 'application/xml'
+    class Format(Enum):
+        """
+        Override response format.
+        """
+        JSON = 'json'
+        XML = 'xml'
+    class LivenessCheck(Enum):
+        """
+        Perform a shallow liveness check.
+        """
+        TRUE = 'true'
+        FALSE = 'false'
+
+
+class GetHealthCheckStatusEnums:
+    """
+    Enums for get_health_check_status parameters.
+    """
+
+    class Accept(Enum):
+        """
+        The type of the response: application/json or application/xml.
+        """
+        APPLICATION_JSON = 'application/json'
+        APPLICATION_XML = 'application/xml'
+    class Format(Enum):
+        """
+        Override response format.
+        """
+        JSON = 'json'
+        XML = 'xml'
+
+
+class TypeaheadEnums:
+    """
+    Enums for typeahead parameters.
+    """
+
+    class Ontologies(Enum):
+        """
+        Include suggestions belonging to the selected ontology(ies).
+        """
+        CONCEPTS = 'concepts'
+        MESH = 'mesh'
+    class Category(Enum):
+        """
+        Select concepts belonging to disorders, drugs or genes.
+        """
+        DISORDERS = 'disorders'
+        DRUGS = 'drugs'
+        GENES = 'genes'
+
+
+class GetRelatedConceptsEnums:
+    """
+    Enums for get_related_concepts parameters.
+    """
+
+    class Relationship(Enum):
+        """
+        Select the relationship to retrieve.
+        """
+        CHILDREN = 'children'
+        PARENTS = 'parents'
+        SIBLINGS = 'siblings'
+        ALLOWEDQUALIFIER = 'allowedQualifier'
+        QUALIFIEDBY = 'qualifiedBy'
+        BROADER = 'broader'
+        ALIKE = 'alike'
+        NARROWER = 'narrower'
+        OTHER = 'other'
+        RELATEDUNSPECIFIED = 'relatedUnspecified'
+        RELATED = 'related'
+        SYNONYM = 'synonym'
+        NOTRELATED = 'notRelated'
+        CHD = 'chd'
+        PAR = 'par'
+        SIB = 'sib'
+        AQ = 'aq'
+        QB = 'qb'
+        RB = 'rb'
+        RL = 'rl'
+        RN = 'rn'
+        RO = 'ro'
+        RU = 'ru'
+        RQ = 'rq'
+        SY = 'sy'
+        XR = 'xr'
+
+
+class TokenizeEnums:
+    """
+    Enums for tokenize parameters.
+    """
+
+    class Ontologies(Enum):
+        """
+        Detect artifacts in the selected ontology(ies).
+        """
+        MESH = 'mesh'
+        CONCEPTS = 'concepts'
 
 
 ##############################################################################
@@ -1378,7 +1634,6 @@ class InsightsForMedicalLiteratureServiceV1(BaseService):
 class AggregationModel(object):
     """
     Model for field aggregations.
-
     :attr str name: (optional) Name of the aggregation.
     :attr int document_count: (optional) Corpus frequency of the aggregation.
     """
@@ -1386,7 +1641,6 @@ class AggregationModel(object):
     def __init__(self, name=None, document_count=None):
         """
         Initialize a AggregationModel object.
-
         :param str name: (optional) Name of the aggregation.
         :param int document_count: (optional) Corpus frequency of the aggregation.
         """
@@ -1394,7 +1648,7 @@ class AggregationModel(object):
         self.document_count = document_count
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a AggregationModel object from a json dictionary."""
         args = {}
         if 'name' in _dict:
@@ -1403,7 +1657,12 @@ class AggregationModel(object):
             args['document_count'] = _dict.get('documentCount')
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a AggregationModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'name') and self.name is not None:
@@ -1411,6 +1670,10 @@ class AggregationModel(object):
         if hasattr(self, 'document_count') and self.document_count is not None:
             _dict['documentCount'] = self.document_count
         return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
     def __str__(self):
         """Return a `str` version of this AggregationModel object."""
@@ -1426,6 +1689,68 @@ class AggregationModel(object):
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
 
+
+class AggregationModel():
+    """
+    Model for field aggregations.
+
+    :attr str name: (optional) Name of the aggregation.
+    :attr int document_count: (optional) Corpus frequency of the aggregation.
+    """
+
+    def __init__(self, *, name: str = None, document_count: int = None) -> None:
+        """
+        Initialize a AggregationModel object.
+
+        :param str name: (optional) Name of the aggregation.
+        :param int document_count: (optional) Corpus frequency of the aggregation.
+        """
+        self.name = name
+        self.document_count = document_count
+
+    @classmethod
+    def from_dict(cls, _dict: Dict) -> 'AggregationModel':
+        """Initialize a AggregationModel object from a json dictionary."""
+        args = {}
+        if 'name' in _dict:
+            args['name'] = _dict.get('name')
+        if 'documentCount' in _dict:
+            args['document_count'] = _dict.get('documentCount')
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a AggregationModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'name') and self.name is not None:
+            _dict['name'] = self.name
+        if hasattr(self, 'document_count') and self.document_count is not None:
+            _dict['documentCount'] = self.document_count
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __str__(self) -> str:
+        """Return a `str` version of this AggregationModel object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'AggregationModel') -> bool:
+        """Return `true` when self and other are equal, false otherwise."""
+        if not isinstance(other, self.__class__):
+            return False
+        return self.__dict__ == other.__dict__
+
+    def __ne__(self, other: 'AggregationModel') -> bool:
+        """Return `true` when self and other are not equal, false otherwise."""
+        return not self == other
+
+
 class Aggregations(object):
     """
     Aggregations.
@@ -1440,19 +1765,28 @@ class Aggregations(object):
         self.limit = limit
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a Aggregations object from a json dictionary."""
         args = {}
         if 'limit' in _dict:
             args['limit'] = _dict.get('limit')
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a AggregationModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'limit') and self.limit is not None:
             _dict['limit'] = self.limit
         return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
     def __str__(self):
         """Return a `str` version of this Aggregations object."""
@@ -1468,10 +1802,10 @@ class Aggregations(object):
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
 
+
 class AnnotationModel(object):
     """
     Model for congntive asset annotations.
-
     :attr int unique_id: (optional) Unique identifer of annotation.
     :attr list[int] sticky_ids: (optional) List of identifiers associated with annotation.
     :attr str ontology: (optional) Source ontology of annotation.
@@ -1510,7 +1844,6 @@ class AnnotationModel(object):
                  begin=None, end=None, score=None, timestamp=None, features=None, hits=None):
         """
         Initialize a AnnotationModel object.
-
         :param int unique_id: (optional) Unique identifer of annotation.
         :param list[int] sticky_ids: (optional) List of identifiers associated with
         annotation.
@@ -1576,7 +1909,7 @@ class AnnotationModel(object):
         self.hits = hits
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a AnnotationModel object from a json dictionary."""
         args = {}
         if 'uniqueId' in _dict:
@@ -1637,7 +1970,12 @@ class AnnotationModel(object):
             args['hits'] = _dict.get('hits')
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a AggregationModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'unique_id') and self.unique_id is not None:
@@ -1698,6 +2036,10 @@ class AnnotationModel(object):
             _dict['hits'] = self.hits
         return _dict
 
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
     def __str__(self):
         """Return a `str` version of this AnnotationModel object."""
         return json.dumps(self._to_dict(), indent=2)
@@ -1716,7 +2058,6 @@ class AnnotationModel(object):
 class ArtifactModel(object):
     """
     Model for ontology artifact.
-
     :attr str cui: (optional) Ontology provided unique identifier for artifact.
     :attr str ontology: (optional) Source ontology for artifact.
     :attr str preferred_name: (optional) Ontology provided normalized name for artifact.
@@ -1733,7 +2074,6 @@ class ArtifactModel(object):
                  type=None, rank=None, hit_count=None, score=None, surface_forms=None):
         """
         Initialize a ArtifactModel object.
-
         :param str cui: (optional) Ontology provided unique identifier for artifact.
         :param str ontology: (optional) Source ontology for artifact.
         :param str preferred_name: (optional) Ontology provided normalized name for
@@ -1757,7 +2097,7 @@ class ArtifactModel(object):
         self.surface_forms = surface_forms
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a ArtifactModel object from a json dictionary."""
         args = {}
         if 'cui' in _dict:
@@ -1780,7 +2120,16 @@ class ArtifactModel(object):
             args['surface_forms'] = _dict.get('surfaceForms')
         return cls(**args)
 
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a AggregationModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
     def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'cui') and self.cui is not None:
@@ -1821,7 +2170,6 @@ class ArtifactModel(object):
 class Attribute(object):
     """
     Object representing an attribute artifact.
-
     :attr str attribute_id: (optional) Unique identifier for attribute artifact.
     :attr str display_name: (optional) Display name for attribute artifact.
     :attr int count: (optional) Corpus frequency for attribute artifact.
@@ -1830,7 +2178,6 @@ class Attribute(object):
     def __init__(self, attribute_id=None, display_name=None, count=None):
         """
         Initialize a Attribute object.
-
         :param str attribute_id: (optional) Unique identifier for attribute artifact.
         :param str display_name: (optional) Display name for attribute artifact.
         :param int count: (optional) Corpus frequency for attribute artifact.
@@ -1840,7 +2187,7 @@ class Attribute(object):
         self.count = count
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a Attribute object from a json dictionary."""
         args = {}
         if 'attributeId' in _dict:
@@ -1851,7 +2198,12 @@ class Attribute(object):
             args['count'] = _dict.get('count')
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a AggregationModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'attribute_id') and self.attribute_id is not None:
@@ -1861,6 +2213,10 @@ class Attribute(object):
         if hasattr(self, 'count') and self.count is not None:
             _dict['count'] = self.count
         return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
     def __str__(self):
         """Return a `str` version of this Attribute object."""
@@ -1877,7 +2233,7 @@ class Attribute(object):
         return not self == other
 
 
-class AttributeEntry(object):
+class AttributeEntry():
     """
     AttributeEntry.
 
@@ -1887,19 +2243,16 @@ class AttributeEntry(object):
     :attr str description: (optional)
     :attr str display_name: (optional)
     :attr str doc_id: (optional)
-    :attr list[str] field_values: (optional)
+    :attr List[str] field_values: (optional)
     :attr str maximum_value: (optional)
     :attr str minimum_value: (optional)
     :attr bool multi_value: (optional)
     :attr str units: (optional)
     :attr str value_type: (optional)
-    :attr list[PossbileValues] possible_values: (optional)
+    :attr List[PossbileValues] possible_values: (optional)
     """
 
-    def __init__(self, attr_name=None, data_type=None, default_value=None, description=None,
-                 display_name=None, doc_id=None, field_values=None, maximum_value=None,
-                 minimum_value=None, multi_value=None, units=None, value_type=None,
-                 possible_values=None):
+    def __init__(self, *, attr_name: str = None, data_type: str = None, default_value: str = None, description: str = None, display_name: str = None, doc_id: str = None, field_values: List[str] = None, maximum_value: str = None, minimum_value: str = None, multi_value: bool = None, units: str = None, value_type: str = None, possible_values: List['PossbileValues'] = None) -> None:
         """
         Initialize a AttributeEntry object.
 
@@ -1909,13 +2262,13 @@ class AttributeEntry(object):
         :param str description: (optional)
         :param str display_name: (optional)
         :param str doc_id: (optional)
-        :param list[str] field_values: (optional)
+        :param List[str] field_values: (optional)
         :param str maximum_value: (optional)
         :param str minimum_value: (optional)
         :param bool multi_value: (optional)
         :param str units: (optional)
         :param str value_type: (optional)
-        :param list[PossbileValues] possible_values: (optional)
+        :param List[PossbileValues] possible_values: (optional)
         """
         self.attr_name = attr_name
         self.data_type = data_type
@@ -1932,7 +2285,7 @@ class AttributeEntry(object):
         self.possible_values = possible_values
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict: Dict) -> 'AttributeEntry':
         """Initialize a AttributeEntry object from a json dictionary."""
         args = {}
         if 'attr_name' in _dict:
@@ -1960,11 +2313,15 @@ class AttributeEntry(object):
         if 'valueType' in _dict:
             args['value_type'] = _dict.get('valueType')
         if 'possible_values' in _dict:
-            args['possible_values'] = ([PossibleValues._from_dict(x) for x in
-                                        _dict.get('possible_values')])
+            args['possible_values'] = [PossibleValues.from_dict(x) for x in _dict.get('possible_values')]
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a AttributeEntry object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'attr_name') and self.attr_name is not None:
@@ -1992,22 +2349,27 @@ class AttributeEntry(object):
         if hasattr(self, 'value_type') and self.value_type is not None:
             _dict['valueType'] = self.value_type
         if hasattr(self, 'possible_values') and self.possible_values is not None:
-            _dict['possible_values'] = [x._to_dict() for x in self.possible_values]
+            _dict['possible_values'] = [x.to_dict() for x in self.possible_values]
         return _dict
 
-    def __str__(self):
-        """Return a `str` version of this AttributeEntry object."""
-        return json.dumps(self._to_dict(), indent=2)
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
-    def __eq__(self, other):
+    def __str__(self) -> str:
+        """Return a `str` version of this AttributeEntry object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'AttributeEntry') -> bool:
         """Return `true` when self and other are equal, false otherwise."""
         if not isinstance(other, self.__class__):
             return False
         return self.__dict__ == other.__dict__
 
-    def __ne__(self, other):
+    def __ne__(self, other: 'AttributeEntry') -> bool:
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
+
 
 class Attributes(object):
     """
@@ -2023,14 +2385,19 @@ class Attributes(object):
             setattr(self, _key, _value)
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a Attributes object from a json dictionary."""
         args = {}
         xtra = _dict.copy()
         args.update(xtra)
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a AggregationModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, '_additionalProperties'):
@@ -2039,6 +2406,10 @@ class Attributes(object):
                 if _value is not None:
                     _dict[_key] = _value
         return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
     def __setattr__(self, name, value):
         properties = {}
@@ -2062,10 +2433,127 @@ class Attributes(object):
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
 
+
+class Backend():
+    """
+    Object representing repository response.
+
+    :attr List[Message] messages: (optional) Repository messages.
+    """
+
+    def __init__(self, *, messages: List['Message'] = None) -> None:
+        """
+        Initialize a Backend object.
+
+        :param List[Message] messages: (optional) Repository messages.
+        """
+        self.messages = messages
+
+    @classmethod
+    def from_dict(cls, _dict: Dict) -> 'Backend':
+        """Initialize a Backend object from a json dictionary."""
+        args = {}
+        if 'messages' in _dict:
+            args['messages'] = [Message.from_dict(x) for x in _dict.get('messages')]
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a Backend object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'messages') and self.messages is not None:
+            _dict['messages'] = [x.to_dict() for x in self.messages]
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __str__(self) -> str:
+        """Return a `str` version of this Backend object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'Backend') -> bool:
+        """Return `true` when self and other are equal, false otherwise."""
+        if not isinstance(other, self.__class__):
+            return False
+        return self.__dict__ == other.__dict__
+
+    def __ne__(self, other: 'Backend') -> bool:
+        """Return `true` when self and other are not equal, false otherwise."""
+        return not self == other
+
+
+class BooleanOperands():
+    """
+    Object representingn boolean operands search criteria.
+
+    :attr str bool_expression: (optional) Boolean search condition.
+    :attr List[BoolOperand] bool_operands: (optional) Ontology artifacts supporing
+          boolean search condition.
+    """
+
+    def __init__(self, *, bool_expression: str = None, bool_operands: List['BoolOperand'] = None) -> None:
+        """
+        Initialize a BooleanOperands object.
+
+        :param str bool_expression: (optional) Boolean search condition.
+        :param List[BoolOperand] bool_operands: (optional) Ontology artifacts
+               supporing boolean search condition.
+        """
+        self.bool_expression = bool_expression
+        self.bool_operands = bool_operands
+
+    @classmethod
+    def from_dict(cls, _dict: Dict) -> 'BooleanOperands':
+        """Initialize a BooleanOperands object from a json dictionary."""
+        args = {}
+        if 'boolExpression' in _dict:
+            args['bool_expression'] = _dict.get('boolExpression')
+        if 'boolOperands' in _dict:
+            args['bool_operands'] = [BoolOperand.from_dict(x) for x in _dict.get('boolOperands')]
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a BooleanOperands object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'bool_expression') and self.bool_expression is not None:
+            _dict['boolExpression'] = self.bool_expression
+        if hasattr(self, 'bool_operands') and self.bool_operands is not None:
+            _dict['boolOperands'] = [x.to_dict() for x in self.bool_operands]
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __str__(self) -> str:
+        """Return a `str` version of this BooleanOperands object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'BooleanOperands') -> bool:
+        """Return `true` when self and other are equal, false otherwise."""
+        if not isinstance(other, self.__class__):
+            return False
+        return self.__dict__ == other.__dict__
+
+    def __ne__(self, other: 'BooleanOperands') -> bool:
+        """Return `true` when self and other are not equal, false otherwise."""
+        return not self == other
+
+
 class BooleanConcepts(object):
     """
     Object representingn boolean concept search criteria.
-
     :attr str bool: (optional) Boolean search condition.
     :attr list[Concept] concepts: (optional) Ontology artifacts supporing boolean search
     condition.
@@ -2074,7 +2562,6 @@ class BooleanConcepts(object):
     def __init__(self, bool_term=None, concepts=None):
         """
         Initialize a BooleanConcepts object.
-
         :param str bool: (optional) Boolean search condition.
         :param list[Concept] concepts: (optional) Ontology artifacts supporing boolean
         search condition.
@@ -2083,7 +2570,7 @@ class BooleanConcepts(object):
         self.concepts = concepts
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a BooleanConcepts object from a json dictionary."""
         args = {}
         if 'bool' in _dict:
@@ -2092,7 +2579,16 @@ class BooleanConcepts(object):
             args['concepts'] = [Concept._from_dict(x) for x in _dict.get('concepts')]
         return cls(**args)
 
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a AggregationModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
     def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'bool') and self.bool is not None:
@@ -2116,35 +2612,88 @@ class BooleanConcepts(object):
         return not self == other
 
 
-class CategoriesModel(object):
+class BoolOperand():
+    """
+    BoolOperand.
+
+    :attr str bool_operand: (optional)
+    """
+
+    def __init__(self, *, bool_operand: str = None) -> None:
+        """
+        Initialize a BoolOperand object.
+
+        :param str bool_operand: (optional)
+        """
+        self.bool_operand = bool_operand
+
+    @classmethod
+    def from_dict(cls, _dict: Dict) -> 'BoolOperand':
+        """Initialize a BoolOperand object from a json dictionary."""
+        args = {}
+        if 'boolOperand' in _dict:
+            args['bool_operand'] = _dict.get('boolOperand')
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a BoolOperand object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'bool_operand') and self.bool_operand is not None:
+            _dict['boolOperand'] = self.bool_operand
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __str__(self) -> str:
+        """Return a `str` version of this BoolOperand object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'BoolOperand') -> bool:
+        """Return `true` when self and other are equal, false otherwise."""
+        if not isinstance(other, self.__class__):
+            return False
+        return self.__dict__ == other.__dict__
+
+    def __ne__(self, other: 'BoolOperand') -> bool:
+        """Return `true` when self and other are not equal, false otherwise."""
+        return not self == other
+
+
+class CategoriesModel():
     """
     Model representing ontology categories.
 
-    :attr str license: (optional) License for corpus.
-    :attr StringBuilder highlighted_title: (optional)
-    :attr StringBuilder highlighted_abstract: (optional)
-    :attr StringBuilder highlighted_body: (optional)
-    :attr dict highlighted_sections: (optional) Document sections with annotation tags.
+    :attr str model_license: (optional) License for corpus.
+    :attr str highlighted_title: (optional)
+    :attr str highlighted_abstract: (optional)
+    :attr str highlighted_body: (optional)
+    :attr dict highlighted_sections: (optional) Document sections with annotation
+          tags.
     :attr dict passages: (optional) Document passages with annotation tags.
     :attr dict annotations: (optional) List of document annotations.
     """
 
-    def __init__(self, license=None, highlighted_title=None, highlighted_abstract=None,
-                 highlighted_body=None, highlighted_sections=None, passages=None,
-                 annotations=None):
+    def __init__(self, *, model_license: str = None, highlighted_title: 'StringBuilder' = None, highlighted_abstract: 'StringBuilder' = None, highlighted_body: 'StringBuilder' = None, highlighted_sections: dict = None, passages: dict = None, annotations: dict = None) -> None:
         """
         Initialize a CategoriesModel object.
 
-        :param str license: (optional) License for corpus.
-        :param StringBuilder highlighted_title: (optional)
-        :param StringBuilder highlighted_abstract: (optional)
-        :param StringBuilder highlighted_body: (optional)
-        :param dict highlighted_sections: (optional) Document sections with annotation
-        tags.
+        :param str model_license: (optional) License for corpus.
+        :param str highlighted_title: (optional)
+        :param str highlighted_abstract: (optional)
+        :param str highlighted_body: (optional)
+        :param dict highlighted_sections: (optional) Document sections with
+               annotation tags.
         :param dict passages: (optional) Document passages with annotation tags.
         :param dict annotations: (optional) List of document annotations.
         """
-        self.license = license
+        self.model_license = model_license
         self.highlighted_title = highlighted_title
         self.highlighted_abstract = highlighted_abstract
         self.highlighted_body = highlighted_body
@@ -2153,61 +2702,67 @@ class CategoriesModel(object):
         self.annotations = annotations
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict: Dict) -> 'CategoriesModel':
         """Initialize a CategoriesModel object from a json dictionary."""
         args = {}
-        if 'license' in _dict:
-            args['license'] = _dict.get('license')
+        if 'modelLicense' in _dict:
+            args['model_license'] = _dict.get('modelLicense')
         if 'highlightedTitle' in _dict:
-            args['highlighted_title'] = StringBuilder._from_dict(_dict.get('highlightedTitle'))
+            args['highlighted_title'] = _dict.get('highlightedTitle')
         if 'highlightedAbstract' in _dict:
-            args['highlighted_abstract'] = (StringBuilder
-                                            ._from_dict(_dict.get('highlightedAbstract')))
+            args['highlighted_abstract'] = _dict.get('highlightedAbstract')
         if 'highlightedBody' in _dict:
-            args['highlighted_body'] = StringBuilder._from_dict(_dict.get('highlightedBody'))
+            args['highlighted_body'] = _dict.get('highlightedBody')
         if 'highlightedSections' in _dict:
-            args['highlighted_sections'] = ({k : StringBuilder._from_dict(v) for k, v in
-                                             (_dict.get('highlightedSections').items())})
+            args['highlighted_sections'] = {k : StringBuilder.from_dict(v) for k,v in _dict.get('highlightedSections').items()}
         if 'passages' in _dict:
             args['passages'] = _dict.get('passages')
         if 'annotations' in _dict:
-            args['annotations'] = ({k : AnnotationModel._from_dict(v) for k, v in
-                                    (_dict.get('annotations').items())})
+            args['annotations'] = {k : AnnotationModel.from_dict(v) for k,v in _dict.get('annotations').items()}
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a CategoriesModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
         """Return a json dictionary representing this model."""
         _dict = {}
-        if hasattr(self, 'license') and self.license is not None:
-            _dict['license'] = self.license
+        if hasattr(self, 'model_license') and self.model_license is not None:
+            _dict['modelLicense'] = self.model_license
         if hasattr(self, 'highlighted_title') and self.highlighted_title is not None:
-            _dict['highlightedTitle'] = self.highlighted_title._to_dict()
+            _dict['highlightedTitle'] = self.highlighted_title
         if hasattr(self, 'highlighted_abstract') and self.highlighted_abstract is not None:
-            _dict['highlightedAbstract'] = self.highlighted_abstract._to_dict()
+            _dict['highlightedAbstract'] = self.highlighted_abstract
         if hasattr(self, 'highlighted_body') and self.highlighted_body is not None:
-            _dict['highlightedBody'] = self.highlighted_body._to_dict()
+            _dict['highlightedBody'] = self.highlighted_body
         if hasattr(self, 'highlighted_sections') and self.highlighted_sections is not None:
-            _dict['highlightedSections'] = ({k : v._to_dict() for k, v in
-                                             self.highlighted_sections.items()})
+            _dict['highlightedSections'] = {k : v.to_dict() for k,v in self.highlighted_sections.items()}
         if hasattr(self, 'passages') and self.passages is not None:
             _dict['passages'] = self.passages
         if hasattr(self, 'annotations') and self.annotations is not None:
-            _dict['annotations'] = {k : v._to_dict() for k, v in self.annotations.items()}
+            _dict['annotations'] = {k : v.to_dict() for k,v in self.annotations.items()}
         return _dict
 
-    def __str__(self):
-        """Return a `str` version of this CategoriesModel object."""
-        return json.dumps(self._to_dict(), indent=2)
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
-    def __eq__(self, other):
+    def __str__(self) -> str:
+        """Return a `str` version of this CategoriesModel object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'CategoriesModel') -> bool:
         """Return `true` when self and other are equal, false otherwise."""
         if not isinstance(other, self.__class__):
             return False
         return self.__dict__ == other.__dict__
 
-    def __ne__(self, other):
+    def __ne__(self, other: 'CategoriesModel') -> bool:
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
+
 
 class Category(object):
     """
@@ -2232,7 +2787,7 @@ class Category(object):
         self.only_negated_concepts = only_negated_concepts
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a Category object from a json dictionary."""
         args = {}
         if 'name' in _dict:
@@ -2245,7 +2800,12 @@ class Category(object):
             args['only_negated_concepts'] = _dict.get('onlyNegatedConcepts')
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a AggregationModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'name') and self.name is not None:
@@ -2257,6 +2817,10 @@ class Category(object):
         if hasattr(self, 'only_negated_concepts') and self.only_negated_concepts is not None:
             _dict['onlyNegatedConcepts'] = self.only_negated_concepts
         return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
     def __str__(self):
         """Return a `str` version of this Category object."""
@@ -2272,81 +2836,134 @@ class Category(object):
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
 
-class Concept(object):
+
+class CommonDataModel():
     """
-    Object representing an ontology artifact.
+    Model representing common data across annotations.
+
+    :attr List[UnstructuredModel] unstructured: (optional) Object of all ontology
+          artifacts found in the document.
+    """
+
+    def __init__(self, *, unstructured: List['UnstructuredModel'] = None) -> None:
+        """
+        Initialize a CommonDataModel object.
+
+        :param List[UnstructuredModel] unstructured: (optional) Object of all
+               ontology artifacts found in the document.
+        """
+        self.unstructured = unstructured
+
+    @classmethod
+    def from_dict(cls, _dict: Dict) -> 'CommonDataModel':
+        """Initialize a CommonDataModel object from a json dictionary."""
+        args = {}
+        if 'unstructured' in _dict:
+            args['unstructured'] = [UnstructuredModel.from_dict(x) for x in _dict.get('unstructured')]
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a CommonDataModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'unstructured') and self.unstructured is not None:
+            _dict['unstructured'] = [x.to_dict() for x in self.unstructured]
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __str__(self) -> str:
+        """Return a `str` version of this CommonDataModel object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'CommonDataModel') -> bool:
+        """Return `true` when self and other are equal, false otherwise."""
+        if not isinstance(other, self.__class__):
+            return False
+        return self.__dict__ == other.__dict__
+
+    def __ne__(self, other: 'CommonDataModel') -> bool:
+        """Return `true` when self and other are not equal, false otherwise."""
+        return not self == other
+
+
+class Concept():
+    """
+    Object reprensting an ontology artifact.
 
     :attr str ontology: (optional) Ontology for artifact in search results.
-    :attr str id: (optional) Unique identifier for ontology artifact in search results.
-    :attr str preferred_name: (optional) Ontology defined semantic type for artifact in
-    search results.
-    :attr str alternative_name: (optional) Ontology defined normalized name for artifact
-    in search results.
-    :attr str type: (optional) Ontology defined alternative name for artifact in search
-    results.
+    :attr str cui: (optional) Unique identifier for ontolgoy artifact in search
+          results.
+    :attr str preferred_name: (optional) Ontology defined semantic type for artifact
+          in search results.
+    :attr str alternative_name: (optional) Ontology defined normalized name for
+          artifact in search results.
+    :attr str semantic_type: (optional) Ontology defined alternative name for
+          artifact in search results.
     :attr int count: (optional) Corpus frequency of artifact.
     :attr int hit_count: (optional) Corpus frequency of artifact.
-    :attr float idf: (optional) Indirect frequency of artifact in search results.
     :attr float score: (optional) Relevancy score of artifact in search results.
     :attr Count parents: (optional) Corpus frequency count.
     :attr Count children: (optional) Corpus frequency count.
     :attr Count siblings: (optional) Corpus frequency count.
     :attr Count related: (optional) Corpus frequency count.
-    :attr list[str] document_ids: (optional) Document identifiers for artifacts in search
-    results.
-    :attr str data_type: (optional) attribute data type for artifact in search results.
+    :attr List[str] document_ids: (optional) Document identifiers for artifacts in
+          search results.
+    :attr str data_type: (optional) attribute data type for artifact in search
+          results.
     :attr str unit: (optional) Attribute value unit for artifact.
     :attr str operator: (optional) Attribute value operator for artifact.
     :attr str min_value: (optional) Minimum value for attribute artifact.
     :attr str max_value: (optional) Maximum value for attribute artifact.
-    :attr str vocab: (optional) Source vocabulary of artifact.
-    :attr list[str] properties: (optional) Artifact properties.
+    :attr str vocab: (optional) Source vocabulary of arttifact.
+    :attr List[str] properties: (optional) Artifact properties.
     """
 
-    def __init__(self, ontology=None, cui=None, preferred_name=None, alternative_name=None,
-                 semantic_type=None, count=None, hit_count=None, idf=None, score=None, parents=None,
-                 children=None, siblings=None, related=None, document_ids=None, data_type=None,
-                 unit=None, operator=None, min_value=None, max_value=None, vocab=None,
-                 properties=None):
+    def __init__(self, *, ontology: str = None, cui: str = None, preferred_name: str = None, alternative_name: str = None, semantic_type: str = None, count: int = None, hit_count: int = None, score: float = None, parents: 'Count' = None, children: 'Count' = None, siblings: 'Count' = None, related: 'Count' = None, document_ids: List[str] = None, data_type: str = None, unit: str = None, operator: str = None, min_value: str = None, max_value: str = None, vocab: str = None, properties: List[str] = None) -> None:
         """
         Initialize a Concept object.
 
         :param str ontology: (optional) Ontology for artifact in search results.
-        :param str id: (optional) Unique identifier for ontology artifact in search
-        results.
-        :param str preferred_name: (optional) Ontology defined semantic type for artifact
-        in search results.
-        :param str alternative_name: (optional) Ontology defined normalized name for
-        artifact in search results.
-        :param str type: (optional) Ontology defined alternative name for artifact in
-        search results.
+        :param str cui: (optional) Unique identifier for ontolgoy artifact in
+               search results.
+        :param str preferred_name: (optional) Ontology defined semantic type for
+               artifact in search results.
+        :param str alternative_name: (optional) Ontology defined normalized name
+               for artifact in search results.
+        :param str semantic_type: (optional) Ontology defined alternative name for
+               artifact in search results.
         :param int count: (optional) Corpus frequency of artifact.
         :param int hit_count: (optional) Corpus frequency of artifact.
-        :param float idf: (optional) Indirect frequency of artifact in search results.
-        :param float score: (optional) Relevancy score of artifact in search results.
+        :param float score: (optional) Relevancy score of artifact in search
+               results.
         :param Count parents: (optional) Corpus frequency count.
         :param Count children: (optional) Corpus frequency count.
         :param Count siblings: (optional) Corpus frequency count.
         :param Count related: (optional) Corpus frequency count.
-        :param list[str] document_ids: (optional) Document identifiers for artifacts in
-        search results.
+        :param List[str] document_ids: (optional) Document identifiers for
+               artifacts in search results.
         :param str data_type: (optional) attribute data type for artifact in search
-        results.
+               results.
         :param str unit: (optional) Attribute value unit for artifact.
         :param str operator: (optional) Attribute value operator for artifact.
         :param str min_value: (optional) Minimum value for attribute artifact.
         :param str max_value: (optional) Maximum value for attribute artifact.
-        :param str vocab: (optional) Source vocabulary of artifact.
-        :param list[str] properties: (optional) Artifact properties.
+        :param str vocab: (optional) Source vocabulary of arttifact.
+        :param List[str] properties: (optional) Artifact properties.
         """
         self.ontology = ontology
         self.cui = cui
         self.preferred_name = preferred_name
         self.alternative_name = alternative_name
-        self.type = semantic_type
+        self.semantic_type = semantic_type
         self.count = count
         self.hit_count = hit_count
-        self.idf = idf
         self.score = score
         self.parents = parents
         self.children = children
@@ -2362,7 +2979,7 @@ class Concept(object):
         self.properties = properties
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict: Dict) -> 'Concept':
         """Initialize a Concept object from a json dictionary."""
         args = {}
         if 'ontology' in _dict:
@@ -2373,24 +2990,22 @@ class Concept(object):
             args['preferred_name'] = _dict.get('preferredName')
         if 'alternativeName' in _dict:
             args['alternative_name'] = _dict.get('alternativeName')
-        if 'type' in _dict:
-            args['type'] = _dict.get('type')
+        if 'semanticType' in _dict:
+            args['semantic_type'] = _dict.get('semanticType')
         if 'count' in _dict:
             args['count'] = _dict.get('count')
         if 'hitCount' in _dict:
             args['hit_count'] = _dict.get('hitCount')
-        if 'idf' in _dict:
-            args['idf'] = _dict.get('idf')
         if 'score' in _dict:
             args['score'] = _dict.get('score')
         if 'parents' in _dict:
-            args['parents'] = Count._from_dict(_dict.get('parents'))
+            args['parents'] = Count.from_dict(_dict.get('parents'))
         if 'children' in _dict:
-            args['children'] = Count._from_dict(_dict.get('children'))
+            args['children'] = Count.from_dict(_dict.get('children'))
         if 'siblings' in _dict:
-            args['siblings'] = Count._from_dict(_dict.get('siblings'))
+            args['siblings'] = Count.from_dict(_dict.get('siblings'))
         if 'related' in _dict:
-            args['related'] = Count._from_dict(_dict.get('related'))
+            args['related'] = Count.from_dict(_dict.get('related'))
         if 'documentIds' in _dict:
             args['document_ids'] = _dict.get('documentIds')
         if 'dataType' in _dict:
@@ -2409,7 +3024,12 @@ class Concept(object):
             args['properties'] = _dict.get('properties')
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a Concept object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'ontology') and self.ontology is not None:
@@ -2420,24 +3040,22 @@ class Concept(object):
             _dict['preferredName'] = self.preferred_name
         if hasattr(self, 'alternative_name') and self.alternative_name is not None:
             _dict['alternativeName'] = self.alternative_name
-        if hasattr(self, 'type') and self.type is not None:
-            _dict['type'] = self.type
+        if hasattr(self, 'semantic_type') and self.semantic_type is not None:
+            _dict['semanticType'] = self.semantic_type
         if hasattr(self, 'count') and self.count is not None:
             _dict['count'] = self.count
         if hasattr(self, 'hit_count') and self.hit_count is not None:
             _dict['hitCount'] = self.hit_count
-        if hasattr(self, 'idf') and self.idf is not None:
-            _dict['idf'] = self.idf
         if hasattr(self, 'score') and self.score is not None:
             _dict['score'] = self.score
         if hasattr(self, 'parents') and self.parents is not None:
-            _dict['parents'] = self.parents._to_dict()
+            _dict['parents'] = self.parents.to_dict()
         if hasattr(self, 'children') and self.children is not None:
-            _dict['children'] = self.children._to_dict()
+            _dict['children'] = self.children.to_dict()
         if hasattr(self, 'siblings') and self.siblings is not None:
-            _dict['siblings'] = self.siblings._to_dict()
+            _dict['siblings'] = self.siblings.to_dict()
         if hasattr(self, 'related') and self.related is not None:
-            _dict['related'] = self.related._to_dict()
+            _dict['related'] = self.related.to_dict()
         if hasattr(self, 'document_ids') and self.document_ids is not None:
             _dict['documentIds'] = self.document_ids
         if hasattr(self, 'data_type') and self.data_type is not None:
@@ -2456,60 +3074,67 @@ class Concept(object):
             _dict['properties'] = self.properties
         return _dict
 
-    def __str__(self):
-        """Return a `str` version of this Concept object."""
-        return json.dumps(self._to_dict(), indent=2)
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
-    def __eq__(self, other):
+    def __str__(self) -> str:
+        """Return a `str` version of this Concept object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'Concept') -> bool:
         """Return `true` when self and other are equal, false otherwise."""
         if not isinstance(other, self.__class__):
             return False
         return self.__dict__ == other.__dict__
 
-    def __ne__(self, other):
+    def __ne__(self, other: 'Concept') -> bool:
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
 
 
-class ConceptInfoModel(object):
+class ConceptInfoModel():
     """
     Model representing ontology annotations.
 
     :attr str cui: (optional) Ontology provided unique identifier for artifact.
-    :attr str ontology: (optional) Source ontology of artifact.
-    :attr str preferred_name: (optional) Ontology defined normalized name for artifact.
-    :attr list[str] semantic_types: (optional) Ontology defined semantic types for
-    artifact.
-    :attr list[str] surface_forms: (optional) Ontology defined synonyms for artifact.
+    :attr str ontology: (optional) Source onology of artifact.
+    :attr str preferred_name: (optional) Ontology defined normalized name for
+          artifact.
+    :attr List[str] semantic_types: (optional) Ontology defined semanic types for
+          artifact.
+    :attr List[str] surface_forms: (optional) Ontology defined synonyms for
+          artifact.
     :attr str definition: (optional) Ontology provided definition for artifact.
-    :attr bool has_parents: (optional) Whether the artifact has parent artifacts in the
-    ontology.
-    :attr bool has_children: (optional) Whether the artifact has child artifacts in the
-    ontology.
-    :attr bool has_siblings: (optional) Whether the artifact has sibling artifacts in the
-    ontology.
+    :attr bool has_parents: (optional) Whether the artifact has parent artifacts in
+          the ontology.
+    :attr bool has_children: (optional) Whether the artifact has child artifacts in
+          the ontology.
+    :attr bool has_siblings: (optional) Whether the artifact has sibling artifacts
+          in the ontology.
     """
 
-    def __init__(self, cui=None, ontology=None, preferred_name=None, semantic_types=None,
-                 surface_forms=None, definition=None, has_parents=None, has_children=None,
-                 has_siblings=None):
+    def __init__(self, *, cui: str = None, ontology: str = None, preferred_name: str = None, semantic_types: List[str] = None, surface_forms: List[str] = None, definition: str = None, has_parents: bool = None, has_children: bool = None, has_siblings: bool = None) -> None:
         """
         Initialize a ConceptInfoModel object.
 
-        :param str cui: (optional) Ontology provided unique identifier for artifact.
-        :param str ontology: (optional) Source ontology of artifact.
+        :param str cui: (optional) Ontology provided unique identifier for
+               artifact.
+        :param str ontology: (optional) Source onology of artifact.
         :param str preferred_name: (optional) Ontology defined normalized name for
-        artifact.
-        :param list[str] semantic_types: (optional) Ontology defined semantic types for
-        artifact.
-        :param list[str] surface_forms: (optional) Ontology defined synonyms for artifact.
-        :param str definition: (optional) Ontology provided definition for artifact.
-        :param bool has_parents: (optional) Whether the artifact has parent artifacts in
-        the ontology.
-        :param bool has_children: (optional) Whether the artifact has child artifacts in
-        the ontology.
-        :param bool has_siblings: (optional) Whether the artifact has sibling artifacts in
-        the ontology.
+               artifact.
+        :param List[str] semantic_types: (optional) Ontology defined semanic types
+               for artifact.
+        :param List[str] surface_forms: (optional) Ontology defined synonyms for
+               artifact.
+        :param str definition: (optional) Ontology provided definition for
+               artifact.
+        :param bool has_parents: (optional) Whether the artifact has parent
+               artifacts in the ontology.
+        :param bool has_children: (optional) Whether the artifact has child
+               artifacts in the ontology.
+        :param bool has_siblings: (optional) Whether the artifact has sibling
+               artifacts in the ontology.
         """
         self.cui = cui
         self.ontology = ontology
@@ -2522,7 +3147,7 @@ class ConceptInfoModel(object):
         self.has_siblings = has_siblings
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict: Dict) -> 'ConceptInfoModel':
         """Initialize a ConceptInfoModel object from a json dictionary."""
         args = {}
         if 'cui' in _dict:
@@ -2545,7 +3170,12 @@ class ConceptInfoModel(object):
             args['has_siblings'] = _dict.get('hasSiblings')
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a ConceptInfoModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'cui') and self.cui is not None:
@@ -2568,162 +3198,360 @@ class ConceptInfoModel(object):
             _dict['hasSiblings'] = self.has_siblings
         return _dict
 
-    def __str__(self):
-        """Return a `str` version of this ConceptInfoModel object."""
-        return json.dumps(self._to_dict(), indent=2)
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
-    def __eq__(self, other):
+    def __str__(self) -> str:
+        """Return a `str` version of this ConceptInfoModel object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'ConceptInfoModel') -> bool:
         """Return `true` when self and other are equal, false otherwise."""
         if not isinstance(other, self.__class__):
             return False
         return self.__dict__ == other.__dict__
 
-    def __ne__(self, other):
+    def __ne__(self, other: 'ConceptInfoModel') -> bool:
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
 
 
-class ConceptListModel(object):
+class ConceptListModel():
     """
-    List of ontology artifacts.
+    List of ontolgoy artifacts.
 
-    :attr list[ConceptModel] concepts: (optional) List of ontology artifacts.
+    :attr List[Concept] concepts: (optional) List of ontology artifacts.
     """
 
-    def __init__(self, concepts=None):
+    def __init__(self, *, concepts: List['Concept'] = None) -> None:
         """
         Initialize a ConceptListModel object.
 
-        :param list[ArtifactModel] concepts: (optional) List of ontology artifacts.
+        :param List[Concept] concepts: (optional) List of ontology artifacts.
         """
         self.concepts = concepts
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict: Dict) -> 'ConceptListModel':
         """Initialize a ConceptListModel object from a json dictionary."""
         args = {}
         if 'concepts' in _dict:
-            args['concepts'] = [ConceptModel._from_dict(x) for x in _dict.get('concepts')]
+            args['concepts'] = [Concept.from_dict(x) for x in _dict.get('concepts')]
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a ConceptListModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'concepts') and self.concepts is not None:
-            _dict['concepts'] = [x._to_dict() for x in self.concepts]
+            _dict['concepts'] = [x.to_dict() for x in self.concepts]
         return _dict
 
-    def __str__(self):
-        """Return a `str` version of this ConceptListModel object."""
-        return json.dumps(self._to_dict(), indent=2)
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
-    def __eq__(self, other):
+    def __str__(self) -> str:
+        """Return a `str` version of this ConceptListModel object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'ConceptListModel') -> bool:
         """Return `true` when self and other are equal, false otherwise."""
         if not isinstance(other, self.__class__):
             return False
         return self.__dict__ == other.__dict__
 
-    def __ne__(self, other):
+    def __ne__(self, other: 'ConceptListModel') -> bool:
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
 
-class ConceptModel(object):
+
+class ConceptModel():
     """
-    ConceptModel.
-    :attr str cui: (optional)
-    :attr str ontology: (optional)
-    :attr dict corpora: (optional)
-    :attr str preferred_name: (optional)
-    :attr str alternative_name: (optional)
-    :attr str semantic_type: (optional)
-    :attr int rank: (optional)
-    :attr int hit_count: (optional)
-    :attr list[str] surface_forms: (optional)
+    Model representing an ontology annotation.
+
+    :attr int unique_id: (optional) Service generated unique identifier of ontology
+          artifact.
+    :attr List[int] sticky_ids: (optional) Identifiers associated with artifact
+          unique identifier.
+    :attr str section: (optional) Document section where artifact was found.
+    :attr str type: (optional) Ontology semantic type for artifact (if applicable).
+    :attr int begin: (optional) Staring offset of artifact in document section.
+    :attr int end: (optional) Ending offset of artifact in document section.
+    :attr str covered_text: (optional) Actual document section text artifact
+          represents.
+    :attr str cui: (optional) Ontology defined unique identifier of artifact.
+    :attr str preferred_name: (optional) Ontology defined normalized name of
+          artifact.
+    :attr str source: (optional) Ontology providing the artifact.
+    :attr bool negated: (optional) Whether span represented by artifact is negated.
+    :attr bool hypothetical: (optional) Whether span represented by artifact is
+          hypothetical.
+    :attr int timestamp: (optional) Time based offset of artifact in a video
+          transcript (if applicable).
+    :attr str attribute_id: (optional) Identifier of attribute where artifact is
+          defined (if applicable).
+    :attr List[str] qualifiers: (optional) List of qualifers defined for an
+          attribute artifact.
+    :attr str unit: (optional) Unit of measure for attribute defined artifact (if
+          applicable).
+    :attr str min_value: (optional) Starting range value for attribute artifact (if
+          applicable).
+    :attr str max_value: (optional) Ending range value for attribute artifact (if
+          applicable).
+    :attr str operator: (optional) Mathmatical operator for attribute artifact (if
+          applicable).
+    :attr dict features: (optional) List of additional artifact features.
+    :attr str nlu_entity_index: (optional) Model coreference chain to which artifact
+          belongs.
+    :attr str nlu_mention_index: (optional) Artifact position in Model coreference
+          chain.
+    :attr str nlu_relation_id: (optional) Relation unique identifier artifact is
+          associated with.
+    :attr str nlu_side: (optional) Whether artifact is a source or target of a
+          relationship.
+    :attr str nlu_source_type: (optional) Model type for artifact when the source of
+          a relationship.
+    :attr str nlu_relation: (optional) Name of the realtion an artifact is
+          associated with.
+    :attr str nlu_target_type: (optional) Model type for artifact when the target of
+          a relationship.
+    :attr int hits: (optional) Number of times artifact is mentioned in the corpus.
     """
 
-    def __init__(self, cui=None, ontology=None, corpora=None, preferred_name=None,
-                 alternative_name=None, semantic_type=None, rank=None, hit_count=None,
-                 surface_forms=None):
+    def __init__(self, *, unique_id: int = None, sticky_ids: List[int] = None, section: str = None, type: str = None, begin: int = None, end: int = None, covered_text: str = None, cui: str = None, preferred_name: str = None, source: str = None, negated: bool = None, hypothetical: bool = None, timestamp: int = None, attribute_id: str = None, qualifiers: List[str] = None, unit: str = None, min_value: str = None, max_value: str = None, operator: str = None, features: dict = None, nlu_entity_index: str = None, nlu_mention_index: str = None, nlu_relation_id: str = None, nlu_side: str = None, nlu_source_type: str = None, nlu_relation: str = None, nlu_target_type: str = None, hits: int = None) -> None:
         """
         Initialize a ConceptModel object.
-        :param str cui: (optional)
-        :param str ontology: (optional)
-        :param dict corpora: (optional)
-        :param str preferred_name: (optional)
-        :param str alternative_name: (optional)
-        :param str type: (optional)
-        :param int rank: (optional)
-        :param int hit_count: (optional)
-        :param list[str] surface_forms: (optional)
+
+        :param int unique_id: (optional) Service generated unique identifier of
+               ontology artifact.
+        :param List[int] sticky_ids: (optional) Identifiers associated with
+               artifact unique identifier.
+        :param str section: (optional) Document section where artifact was found.
+        :param str type: (optional) Ontology semantic type for artifact (if
+               applicable).
+        :param int begin: (optional) Staring offset of artifact in document
+               section.
+        :param int end: (optional) Ending offset of artifact in document section.
+        :param str covered_text: (optional) Actual document section text artifact
+               represents.
+        :param str cui: (optional) Ontology defined unique identifier of artifact.
+        :param str preferred_name: (optional) Ontology defined normalized name of
+               artifact.
+        :param str source: (optional) Ontology providing the artifact.
+        :param bool negated: (optional) Whether span represented by artifact is
+               negated.
+        :param bool hypothetical: (optional) Whether span represented by artifact
+               is hypothetical.
+        :param int timestamp: (optional) Time based offset of artifact in a video
+               transcript (if applicable).
+        :param str attribute_id: (optional) Identifier of attribute where artifact
+               is defined (if applicable).
+        :param List[str] qualifiers: (optional) List of qualifers defined for an
+               attribute artifact.
+        :param str unit: (optional) Unit of measure for attribute defined artifact
+               (if applicable).
+        :param str min_value: (optional) Starting range value for attribute
+               artifact (if applicable).
+        :param str max_value: (optional) Ending range value for attribute artifact
+               (if applicable).
+        :param str operator: (optional) Mathmatical operator for attribute artifact
+               (if applicable).
+        :param dict features: (optional) List of additional artifact features.
+        :param str nlu_entity_index: (optional) Model coreference chain to which
+               artifact belongs.
+        :param str nlu_mention_index: (optional) Artifact position in Model
+               coreference chain.
+        :param str nlu_relation_id: (optional) Relation unique identifier artifact
+               is associated with.
+        :param str nlu_side: (optional) Whether artifact is a source or target of a
+               relationship.
+        :param str nlu_source_type: (optional) Model type for artifact when the
+               source of a relationship.
+        :param str nlu_relation: (optional) Name of the realtion an artifact is
+               associated with.
+        :param str nlu_target_type: (optional) Model type for artifact when the
+               target of a relationship.
+        :param int hits: (optional) Number of times artifact is mentioned in the
+               corpus.
         """
+        self.unique_id = unique_id
+        self.sticky_ids = sticky_ids
+        self.section = section
+        self.type = type
+        self.begin = begin
+        self.end = end
+        self.covered_text = covered_text
         self.cui = cui
-        self.ontology = ontology
-        self.corpora = corpora
         self.preferred_name = preferred_name
-        self.alternative_name = alternative_name
-        self.semantic_type = semantic_type
-        self.rank = rank
-        self.hit_count = hit_count
-        self.surface_forms = surface_forms
+        self.source = source
+        self.negated = negated
+        self.hypothetical = hypothetical
+        self.timestamp = timestamp
+        self.attribute_id = attribute_id
+        self.qualifiers = qualifiers
+        self.unit = unit
+        self.min_value = min_value
+        self.max_value = max_value
+        self.operator = operator
+        self.features = features
+        self.nlu_entity_index = nlu_entity_index
+        self.nlu_mention_index = nlu_mention_index
+        self.nlu_relation_id = nlu_relation_id
+        self.nlu_side = nlu_side
+        self.nlu_source_type = nlu_source_type
+        self.nlu_relation = nlu_relation
+        self.nlu_target_type = nlu_target_type
+        self.hits = hits
+
+    @classmethod
+    def from_dict(cls, _dict: Dict) -> 'ConceptModel':
+        """Initialize a ConceptModel object from a json dictionary."""
+        args = {}
+        if 'uniqueId' in _dict:
+            args['unique_id'] = _dict.get('uniqueId')
+        if 'stickyIds' in _dict:
+            args['sticky_ids'] = _dict.get('stickyIds')
+        if 'section' in _dict:
+            args['section'] = _dict.get('section')
+        if 'type' in _dict:
+            args['type'] = _dict.get('type')
+        if 'begin' in _dict:
+            args['begin'] = _dict.get('begin')
+        if 'end' in _dict:
+            args['end'] = _dict.get('end')
+        if 'coveredText' in _dict:
+            args['covered_text'] = _dict.get('coveredText')
+        if 'cui' in _dict:
+            args['cui'] = _dict.get('cui')
+        if 'preferredName' in _dict:
+            args['preferred_name'] = _dict.get('preferredName')
+        if 'source' in _dict:
+            args['source'] = _dict.get('source')
+        if 'negated' in _dict:
+            args['negated'] = _dict.get('negated')
+        if 'hypothetical' in _dict:
+            args['hypothetical'] = _dict.get('hypothetical')
+        if 'timestamp' in _dict:
+            args['timestamp'] = _dict.get('timestamp')
+        if 'attributeId' in _dict:
+            args['attribute_id'] = _dict.get('attributeId')
+        if 'qualifiers' in _dict:
+            args['qualifiers'] = _dict.get('qualifiers')
+        if 'unit' in _dict:
+            args['unit'] = _dict.get('unit')
+        if 'minValue' in _dict:
+            args['min_value'] = _dict.get('minValue')
+        if 'maxValue' in _dict:
+            args['max_value'] = _dict.get('maxValue')
+        if 'operator' in _dict:
+            args['operator'] = _dict.get('operator')
+        if 'features' in _dict:
+            args['features'] = _dict.get('features')
+        if 'nluEntityIndex' in _dict:
+            args['nlu_entity_index'] = _dict.get('nluEntityIndex')
+        if 'nluMentionIndex' in _dict:
+            args['nlu_mention_index'] = _dict.get('nluMentionIndex')
+        if 'nluRelationId' in _dict:
+            args['nlu_relation_id'] = _dict.get('nluRelationId')
+        if 'nluSide' in _dict:
+            args['nlu_side'] = _dict.get('nluSide')
+        if 'nluSourceType' in _dict:
+            args['nlu_source_type'] = _dict.get('nluSourceType')
+        if 'nluRelation' in _dict:
+            args['nlu_relation'] = _dict.get('nluRelation')
+        if 'nluTargetType' in _dict:
+            args['nlu_target_type'] = _dict.get('nluTargetType')
+        if 'hits' in _dict:
+            args['hits'] = _dict.get('hits')
+        return cls(**args)
 
     @classmethod
     def _from_dict(cls, _dict):
         """Initialize a ConceptModel object from a json dictionary."""
-        args = {}
-        if 'cui' in _dict:
-            args['cui'] = _dict.get('cui')
-        if 'ontology' in _dict:
-            args['ontology'] = _dict.get('ontology')
-        if 'corpora' in _dict:
-            args['corpora'] = _dict.get('corpora')
-        if 'preferredName' in _dict:
-            args['preferred_name'] = _dict.get('preferredName')
-        if 'alternativeName' in _dict:
-            args['alternative_name'] = _dict.get('alternativeName')
-        if 'semanticType' in _dict:
-            args['semantic_type'] = _dict.get('semanticType')
-        if 'rank' in _dict:
-            args['rank'] = _dict.get('rank')
-        if 'hitCount' in _dict:
-            args['hit_count'] = _dict.get('hitCount')
-        if 'surfaceForms' in _dict:
-            args['surface_forms'] = _dict.get('surfaceForms')
-        return cls(**args)
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'unique_id') and self.unique_id is not None:
+            _dict['uniqueId'] = self.unique_id
+        if hasattr(self, 'sticky_ids') and self.sticky_ids is not None:
+            _dict['stickyIds'] = self.sticky_ids
+        if hasattr(self, 'section') and self.section is not None:
+            _dict['section'] = self.section
+        if hasattr(self, 'type') and self.type is not None:
+            _dict['type'] = self.type
+        if hasattr(self, 'begin') and self.begin is not None:
+            _dict['begin'] = self.begin
+        if hasattr(self, 'end') and self.end is not None:
+            _dict['end'] = self.end
+        if hasattr(self, 'covered_text') and self.covered_text is not None:
+            _dict['coveredText'] = self.covered_text
+        if hasattr(self, 'cui') and self.cui is not None:
+            _dict['cui'] = self.cui
+        if hasattr(self, 'preferred_name') and self.preferred_name is not None:
+            _dict['preferredName'] = self.preferred_name
+        if hasattr(self, 'source') and self.source is not None:
+            _dict['source'] = self.source
+        if hasattr(self, 'negated') and self.negated is not None:
+            _dict['negated'] = self.negated
+        if hasattr(self, 'hypothetical') and self.hypothetical is not None:
+            _dict['hypothetical'] = self.hypothetical
+        if hasattr(self, 'timestamp') and self.timestamp is not None:
+            _dict['timestamp'] = self.timestamp
+        if hasattr(self, 'attribute_id') and self.attribute_id is not None:
+            _dict['attributeId'] = self.attribute_id
+        if hasattr(self, 'qualifiers') and self.qualifiers is not None:
+            _dict['qualifiers'] = self.qualifiers
+        if hasattr(self, 'unit') and self.unit is not None:
+            _dict['unit'] = self.unit
+        if hasattr(self, 'min_value') and self.min_value is not None:
+            _dict['minValue'] = self.min_value
+        if hasattr(self, 'max_value') and self.max_value is not None:
+            _dict['maxValue'] = self.max_value
+        if hasattr(self, 'operator') and self.operator is not None:
+            _dict['operator'] = self.operator
+        if hasattr(self, 'features') and self.features is not None:
+            _dict['features'] = self.features
+        if hasattr(self, 'nlu_entity_index') and self.nlu_entity_index is not None:
+            _dict['nluEntityIndex'] = self.nlu_entity_index
+        if hasattr(self, 'nlu_mention_index') and self.nlu_mention_index is not None:
+            _dict['nluMentionIndex'] = self.nlu_mention_index
+        if hasattr(self, 'nlu_relation_id') and self.nlu_relation_id is not None:
+            _dict['nluRelationId'] = self.nlu_relation_id
+        if hasattr(self, 'nlu_side') and self.nlu_side is not None:
+            _dict['nluSide'] = self.nlu_side
+        if hasattr(self, 'nlu_source_type') and self.nlu_source_type is not None:
+            _dict['nluSourceType'] = self.nlu_source_type
+        if hasattr(self, 'nlu_relation') and self.nlu_relation is not None:
+            _dict['nluRelation'] = self.nlu_relation
+        if hasattr(self, 'nlu_target_type') and self.nlu_target_type is not None:
+            _dict['nluTargetType'] = self.nlu_target_type
+        if hasattr(self, 'hits') and self.hits is not None:
+            _dict['hits'] = self.hits
+        return _dict
 
     def _to_dict(self):
         """Return a json dictionary representing this model."""
-        _dict = {}
-        if hasattr(self, 'cui') and self.cui is not None:
-            _dict['cui'] = self.cui
-        if hasattr(self, 'ontology') and self.ontology is not None:
-            _dict['ontology'] = self.ontology
-        if hasattr(self, 'corpora') and self.corpora is not None:
-            _dict['corpora'] = self.corpora
-        if hasattr(self, 'preferred_name') and self.preferred_name is not None:
-            _dict['preferredName'] = self.preferred_name
-        if hasattr(self, 'alternative_name') and self.alternative_name is not None:
-            _dict['alternativeName'] = self.alternative_name
-        if hasattr(self, 'semantic_type') and self.semantic_type is not None:
-            _dict['semanticType'] = self.semantic_type
-        if hasattr(self, 'rank') and self.rank is not None:
-            _dict['rank'] = self.rank
-        if hasattr(self, 'hit_count') and self.hit_count is not None:
-            _dict['hitCount'] = self.hit_count
-        if hasattr(self, 'surface_forms') and self.surface_forms is not None:
-            _dict['surfaceForms'] = self.surface_forms
-        return _dict
+        return self.to_dict()
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return a `str` version of this ConceptModel object."""
-        return json.dumps(self._to_dict(), indent=2)
+        return json.dumps(self.to_dict(), indent=2)
 
-    def __eq__(self, other):
+    def __eq__(self, other: 'ConceptModel') -> bool:
         """Return `true` when self and other are equal, false otherwise."""
         if not isinstance(other, self.__class__):
             return False
         return self.__dict__ == other.__dict__
 
-    def __ne__(self, other):
+    def __ne__(self, other: 'ConceptModel') -> bool:
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
 
@@ -2754,7 +3582,7 @@ class Concepts(object):
         self.mode = mode
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a Concepts object from a json dictionary."""
         args = {}
         if 'ontology' in _dict:
@@ -2769,7 +3597,12 @@ class Concepts(object):
             args['mode'] = _dict.get('mode')
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a AggregationModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'ontology') and self.ontology is not None:
@@ -2783,6 +3616,10 @@ class Concepts(object):
         if hasattr(self, 'mode') and self.mode is not None:
             _dict['mode'] = self.mode
         return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
     def __str__(self):
         """Return a `str` version of this Concepts object."""
@@ -2798,86 +3635,94 @@ class Concepts(object):
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
 
-class CorporaConfigModel(object):
+
+class CorporaConfigModel():
     """
     Model respresenting configured corpora.
 
-    :attr list[CorpusModel] corpora: (optional) List of corpora found in the instance.
+    :attr List[CorpusModel] corpora: (optional) List of corpora found in the
+          instance.
     """
 
-    def __init__(self, corpora=None):
+    def __init__(self, *, corpora: List['CorpusModel'] = None) -> None:
         """
         Initialize a CorporaConfig object.
 
-        :param list[Corpus] corpora: (optional) List of corpora found in the
-        instance.
+        :param List[CorpusModel] corpora: (optional) List of corpora found in the
+               instance.
         """
         self.corpora = corpora
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict: Dict) -> 'CorporaConfig':
         """Initialize a CorporaConfig object from a json dictionary."""
         args = {}
         if 'corpora' in _dict:
-            args['corpora'] = [Corpus._from_dict(x) for x in _dict.get('corpora')]
+            args['corpora'] = [CorpusModel.from_dict(x) for x in _dict.get('corpora')]
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a CorporaConfig object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'corpora') and self.corpora is not None:
-            _dict['corpora'] = [x._to_dict() for x in self.corpora]
+            _dict['corpora'] = [x.to_dict() for x in self.corpora]
         return _dict
 
-    def __str__(self):
-        """Return a `str` version of this CorporaConfig object."""
-        return json.dumps(self._to_dict(), indent=2)
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
-    def __eq__(self, other):
+    def __str__(self) -> str:
+        """Return a `str` version of this CorporaConfig object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'CorporaConfig') -> bool:
         """Return `true` when self and other are equal, false otherwise."""
         if not isinstance(other, self.__class__):
             return False
         return self.__dict__ == other.__dict__
 
-    def __ne__(self, other):
+    def __ne__(self, other: 'CorporaConfig') -> bool:
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
 
-class Corpus(object):
+
+class CorpusModel():
     """
-    Corpus.
-    :attr str corpus_name: (optional)
-    :attr list[str] ontologies: (optional)
-    :attr str descriptive_name: (optional)
-    :attr str umls_version: (optional)
-    :attr str umls_release: (optional)
-    :attr bool bvt: (optional)
-    :attr str elasticsearch_index: (optional)
+    Object representing a configured corpus.
+
+    :attr str corpus_name: (optional) Name of the corpus.
+    :attr List[str] ontologies: (optional) Ontologies found in the corpus.
+    :attr str descriptive_name: (optional) Descriptive name of the corpus.
+    :attr bool bvt: (optional) BVT status of the corpus.
+    :attr str elasticsearch_index: (optional) Repository location of the corpus.
     """
 
-    def __init__(self, corpus_name=None, ontologies=None, descriptive_name=None, umls_version=None,
-                 umls_release=None, bvt=None, elasticsearch_index=None):
+    def __init__(self, *, corpus_name: str = None, ontologies: List[str] = None, descriptive_name: str = None, bvt: bool = None, elasticsearch_index: str = None) -> None:
         """
-        Initialize a Corpus object.
-        :param str corpus_name: (optional)
-        :param list[str] ontologies: (optional)
-        :param str descriptive_name: (optional)
-        :param str umls_version: (optional)
-        :param str umls_release: (optional)
-        :param bool bvt: (optional)
-        :param str elasticsearch_index: (optional)
+        Initialize a CorpusModel object.
+
+        :param str corpus_name: (optional) Name of the corpus.
+        :param List[str] ontologies: (optional) Ontologies found in the corpus.
+        :param str descriptive_name: (optional) Descriptive name of the corpus.
+        :param bool bvt: (optional) BVT status of the corpus.
+        :param str elasticsearch_index: (optional) Repository location of the
+               corpus.
         """
         self.corpus_name = corpus_name
         self.ontologies = ontologies
         self.descriptive_name = descriptive_name
-        self.umls_version = umls_version
-        self.umls_release = umls_release
         self.bvt = bvt
         self.elasticsearch_index = elasticsearch_index
 
     @classmethod
-    def _from_dict(cls, _dict):
-        """Initialize a Corpus object from a json dictionary."""
+    def from_dict(cls, _dict: Dict) -> 'CorpusModel':
+        """Initialize a CorpusModel object from a json dictionary."""
         args = {}
         if 'corpusName' in _dict:
             args['corpus_name'] = _dict.get('corpusName')
@@ -2885,17 +3730,18 @@ class Corpus(object):
             args['ontologies'] = _dict.get('ontologies')
         if 'descriptiveName' in _dict:
             args['descriptive_name'] = _dict.get('descriptiveName')
-        if 'umlsVersion' in _dict:
-            args['umls_version'] = _dict.get('umlsVersion')
-        if 'umlsRelease' in _dict:
-            args['umls_release'] = _dict.get('umlsRelease')
         if 'bvt' in _dict:
             args['bvt'] = _dict.get('bvt')
         if 'elasticsearchIndex' in _dict:
             args['elasticsearch_index'] = _dict.get('elasticsearchIndex')
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a CorpusModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'corpus_name') and self.corpus_name is not None:
@@ -2904,29 +3750,30 @@ class Corpus(object):
             _dict['ontologies'] = self.ontologies
         if hasattr(self, 'descriptive_name') and self.descriptive_name is not None:
             _dict['descriptiveName'] = self.descriptive_name
-        if hasattr(self, 'umls_version') and self.umls_version is not None:
-            _dict['umlsVersion'] = self.umls_version
-        if hasattr(self, 'umls_release') and self.umls_release is not None:
-            _dict['umlsRelease'] = self.umls_release
         if hasattr(self, 'bvt') and self.bvt is not None:
             _dict['bvt'] = self.bvt
         if hasattr(self, 'elasticsearch_index') and self.elasticsearch_index is not None:
             _dict['elasticsearchIndex'] = self.elasticsearch_index
         return _dict
 
-    def __str__(self):
-        """Return a `str` version of this Corpus object."""
-        return json.dumps(self._to_dict(), indent=2)
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
-    def __eq__(self, other):
+    def __str__(self) -> str:
+        """Return a `str` version of this CorpusModel object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'CorpusModel') -> bool:
         """Return `true` when self and other are equal, false otherwise."""
         if not isinstance(other, self.__class__):
             return False
         return self.__dict__ == other.__dict__
 
-    def __ne__(self, other):
+    def __ne__(self, other: 'CorpusModel') -> bool:
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
+
 
 class CorpusInfoModel(object):
     """
@@ -2945,7 +3792,7 @@ class CorpusInfoModel(object):
         self.providers = providers
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a CorpusInfoModel object from a json dictionary."""
         args = {}
         if 'documentCount' in _dict:
@@ -2954,7 +3801,12 @@ class CorpusInfoModel(object):
             args['providers'] = [CorpusProvider._from_dict(x) for x in _dict.get('providers')]
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a AggregationModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'document_count') and self.document_count is not None:
@@ -2962,6 +3814,10 @@ class CorpusInfoModel(object):
         if hasattr(self, 'providers') and self.providers is not None:
             _dict['providers'] = [x._to_dict() for x in self.providers]
         return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
     def __str__(self):
         """Return a `str` version of this CorpusInfoModel object."""
@@ -2995,7 +3851,7 @@ class CorpusProvider(object):
         self.name = name
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a CorpusProvider object from a json dictionary."""
         args = {}
         if 'documentCount' in _dict:
@@ -3004,7 +3860,12 @@ class CorpusProvider(object):
             args['name'] = _dict.get('name')
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a AggregationModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'document_count') and self.document_count is not None:
@@ -3012,6 +3873,10 @@ class CorpusProvider(object):
         if hasattr(self, 'name') and self.name is not None:
             _dict['name'] = self.name
         return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
     def __str__(self):
         """Return a `str` version of this CorpusProvider object."""
@@ -3027,7 +3892,8 @@ class CorpusProvider(object):
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
 
-class Count(object):
+
+class Count():
     """
     Corpus frequency count.
 
@@ -3035,7 +3901,7 @@ class Count(object):
     :attr int hits: (optional) Number of documents for artifact result.
     """
 
-    def __init__(self, count=None, hits=None):
+    def __init__(self, *, count: int = None, hits: int = None) -> None:
         """
         Initialize a Count object.
 
@@ -3046,7 +3912,7 @@ class Count(object):
         self.hits = hits
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict: Dict) -> 'Count':
         """Initialize a Count object from a json dictionary."""
         args = {}
         if 'count' in _dict:
@@ -3055,7 +3921,12 @@ class Count(object):
             args['hits'] = _dict.get('hits')
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a Count object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'count') and self.count is not None:
@@ -3064,19 +3935,113 @@ class Count(object):
             _dict['hits'] = self.hits
         return _dict
 
-    def __str__(self):
-        """Return a `str` version of this Count object."""
-        return json.dumps(self._to_dict(), indent=2)
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
-    def __eq__(self, other):
+    def __str__(self) -> str:
+        """Return a `str` version of this Count object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'Count') -> bool:
         """Return `true` when self and other are equal, false otherwise."""
         if not isinstance(other, self.__class__):
             return False
         return self.__dict__ == other.__dict__
 
-    def __ne__(self, other):
+    def __ne__(self, other: 'Count') -> bool:
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
+
+
+class DataModel():
+    """
+    Model representing ontology artifacts.
+
+    :attr List[ConceptModel] concepts: (optional) List of ontolgy artifacts found in
+          the document.
+    :attr List[ConceptModel] attribute_values: (optional) List of ontolgy attribute
+          value artifacts found in the document.
+    :attr List[RelationModel] relations: (optional) List of ontology relations found
+          in the document.
+    :attr List[ConceptModel] mesh: (optional)
+    :attr List[ConceptModel] text: (optional)
+    """
+
+    def __init__(self, *, concepts: List['ConceptModel'] = None, attribute_values: List['ConceptModel'] = None, relations: List['RelationModel'] = None, mesh: List['ConceptModel'] = None, text: List['ConceptModel'] = None) -> None:
+        """
+        Initialize a DataModel object.
+
+        :param List[ConceptModel] concepts: (optional) List of ontolgy artifacts
+               found in the document.
+        :param List[ConceptModel] attribute_values: (optional) List of ontolgy
+               attribute value artifacts found in the document.
+        :param List[RelationModel] relations: (optional) List of ontology relations
+               found in the document.
+        :param List[ConceptModel] mesh: (optional)
+        :param List[ConceptModel] text: (optional)
+        """
+        self.concepts = concepts
+        self.attribute_values = attribute_values
+        self.relations = relations
+        self.mesh = mesh
+        self.text = text
+
+    @classmethod
+    def from_dict(cls, _dict: Dict) -> 'DataModel':
+        """Initialize a DataModel object from a json dictionary."""
+        args = {}
+        if 'concepts' in _dict:
+            args['concepts'] = [ConceptModel.from_dict(x) for x in _dict.get('concepts')]
+        if 'attributeValues' in _dict:
+            args['attribute_values'] = [ConceptModel.from_dict(x) for x in _dict.get('attributeValues')]
+        if 'relations' in _dict:
+            args['relations'] = [RelationModel.from_dict(x) for x in _dict.get('relations')]
+        if 'mesh' in _dict:
+            args['mesh'] = [ConceptModel.from_dict(x) for x in _dict.get('mesh')]
+        if 'text' in _dict:
+            args['text'] = [ConceptModel.from_dict(x) for x in _dict.get('text')]
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a DataModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'concepts') and self.concepts is not None:
+            _dict['concepts'] = [x.to_dict() for x in self.concepts]
+        if hasattr(self, 'attribute_values') and self.attribute_values is not None:
+            _dict['attributeValues'] = [x.to_dict() for x in self.attribute_values]
+        if hasattr(self, 'relations') and self.relations is not None:
+            _dict['relations'] = [x.to_dict() for x in self.relations]
+        if hasattr(self, 'mesh') and self.mesh is not None:
+            _dict['mesh'] = [x.to_dict() for x in self.mesh]
+        if hasattr(self, 'text') and self.text is not None:
+            _dict['text'] = [x.to_dict() for x in self.text]
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __str__(self) -> str:
+        """Return a `str` version of this DataModel object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'DataModel') -> bool:
+        """Return `true` when self and other are equal, false otherwise."""
+        if not isinstance(other, self.__class__):
+            return False
+        return self.__dict__ == other.__dict__
+
+    def __ne__(self, other: 'DataModel') -> bool:
+        """Return `true` when self and other are not equal, false otherwise."""
+        return not self == other
+
+
 
 class DateHistograms(object):
     """
@@ -3095,7 +4060,7 @@ class DateHistograms(object):
         self.utc = utc
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a DateHistograms object from a json dictionary."""
         args = {}
         if 'interval' in _dict:
@@ -3104,7 +4069,12 @@ class DateHistograms(object):
             args['utc'] = _dict.get('utc')
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a AggregationModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'interval') and self.interval is not None:
@@ -3112,6 +4082,10 @@ class DateHistograms(object):
         if hasattr(self, 'utc') and self.utc is not None:
             _dict['utc'] = self.utc
         return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
     def __str__(self):
         """Return a `str` version of this DateHistograms object."""
@@ -3127,42 +4101,41 @@ class DateHistograms(object):
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
 
-class DictionaryEntry(object):
+
+class DictionaryEntry():
     """
     DictionaryEntry.
 
-    :attr list[str] children: (optional)
+    :attr List[str] children: (optional)
     :attr str cui: (optional)
-    :attr list[str] definition: (optional)
-    :attr list[str] parents: (optional)
+    :attr List[str] definition: (optional)
+    :attr List[str] parents: (optional)
     :attr str preferred_name: (optional)
-    :attr list[str] semtypes: (optional)
-    :attr list[str] siblings: (optional)
-    :attr list[str] surface_forms: (optional)
-    :attr list[str] variants: (optional)
+    :attr List[str] semtypes: (optional)
+    :attr List[str] siblings: (optional)
+    :attr List[str] surface_forms: (optional)
+    :attr List[str] variants: (optional)
     :attr str vocab: (optional)
-    :attr list[str] related: (optional)
+    :attr List[str] related: (optional)
     :attr str source: (optional)
     :attr str source_version: (optional)
     """
 
-    def __init__(self, children=None, cui=None, definition=None, parents=None,
-                 preferred_name=None, semtypes=None, siblings=None, surface_forms=None,
-                 variants=None, vocab=None, related=None, source=None, source_version=None):
+    def __init__(self, *, children: List[str] = None, cui: str = None, definition: List[str] = None, parents: List[str] = None, preferred_name: str = None, semtypes: List[str] = None, siblings: List[str] = None, surface_forms: List[str] = None, variants: List[str] = None, vocab: str = None, related: List[str] = None, source: str = None, source_version: str = None) -> None:
         """
-        Initialize a DictonaryEntry object.
+        Initialize a DictionaryEntry object.
 
-        :param list[str] children: (optional)
+        :param List[str] children: (optional)
         :param str cui: (optional)
-        :param list[str] definition: (optional)
-        :param list[str] parents: (optional)
+        :param List[str] definition: (optional)
+        :param List[str] parents: (optional)
         :param str preferred_name: (optional)
-        :param list[str] semtypes: (optional)
-        :param list[str] siblings: (optional)
-        :param list[str] surface_forms: (optional)
-        :param list[str] variants: (optional)
+        :param List[str] semtypes: (optional)
+        :param List[str] siblings: (optional)
+        :param List[str] surface_forms: (optional)
+        :param List[str] variants: (optional)
         :param str vocab: (optional)
-        :param list[str] related: (optional)
+        :param List[str] related: (optional)
         :param str source: (optional)
         :param str source_version: (optional)
         """
@@ -3181,7 +4154,7 @@ class DictionaryEntry(object):
         self.source_version = source_version
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict: Dict) -> 'DictionaryEntry':
         """Initialize a DictionaryEntry object from a json dictionary."""
         args = {}
         if 'children' in _dict:
@@ -3197,7 +4170,6 @@ class DictionaryEntry(object):
         if 'semtypes' in _dict:
             args['semtypes'] = _dict.get('semtypes')
         if 'siblings' in _dict:
-
             args['siblings'] = _dict.get('siblings')
         if 'surfaceForms' in _dict:
             args['surface_forms'] = _dict.get('surfaceForms')
@@ -3213,7 +4185,12 @@ class DictionaryEntry(object):
             args['source_version'] = _dict.get('source_version')
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a DictionaryEntry object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'children') and self.children is not None:
@@ -3244,116 +4221,21 @@ class DictionaryEntry(object):
             _dict['source_version'] = self.source_version
         return _dict
 
-    def __str__(self):
-        """Return a `str` version of this DictionaryEntry object."""
-        return json.dumps(self._to_dict(), indent=2)
-
-    def __eq__(self, other):
-        """Return `true` when self and other are equal, false otherwise."""
-        if not isinstance(other, self.__class__):
-            return False
-        return self.__dict__ == other.__dict__
-
-    def __ne__(self, other):
-        """Return `true` when self and other are not equal, false otherwise."""
-        return not self == other
-
-class DocumentTextModel(object):
-    """
-    DocumentTextModel.
-    :attr str external_id: (optional)
-    :attr str document_id: (optional)
-    :attr str parent_document_id: (optional)
-    :attr str title: (optional)
-    :attr str abstract_text: (optional)
-    :attr str body: (optional)
-    :attr str pdf_url: (optional)
-    :attr str reference_url: (optional)
-    :attr dict metadata: (optional)
-    """
-
-    def __init__(self, external_id=None, document_id=None, parent_document_id=None, title=None,
-                 abstract_text=None, body=None, pdf_url=None, reference_url=None, metadata=None):
-        """
-        Initialize a DocumentTextModel object.
-        :param str external_id: (optional)
-        :param str document_id: (optional)
-        :param str parent_document_id: (optional)
-        :param str title: (optional)
-        :param str abstract_text: (optional)
-        :param str body: (optional)
-        :param str pdf_url: (optional)
-        :param str reference_url: (optional)
-        :param dict metadata: (optional)
-        """
-        self.external_id = external_id
-        self.document_id = document_id
-        self.parent_document_id = parent_document_id
-        self.title = title
-        self.abstract_text = abstract_text
-        self.body = body
-        self.pdf_url = pdf_url
-        self.reference_url = reference_url
-        self.metadata = metadata
-
-    @classmethod
-    def _from_dict(cls, _dict):
-        """Initialize a DocumentTextModel object from a json dictionary."""
-        args = {}
-        if 'externalId' in _dict:
-            args['external_id'] = _dict.get('externalId')
-        if 'documentId' in _dict:
-            args['document_id'] = _dict.get('documentId')
-        if 'parentDocumentId' in _dict:
-            args['parent_document_id'] = _dict.get('parentDocumentId')
-        if 'title' in _dict:
-            args['title'] = _dict.get('title')
-        if 'abstractText' in _dict:
-            args['abstract_text'] = _dict.get('abstractText')
-        if 'body' in _dict:
-            args['body'] = _dict.get('body')
-        if 'pdfUrl' in _dict:
-            args['pdf_url'] = _dict.get('pdfUrl')
-        if 'referenceUrl' in _dict:
-            args['reference_url'] = _dict.get('referenceUrl')
-        if 'metadata' in _dict:
-            args['metadata'] = _dict.get('metadata')
-        return cls(**args)
-
     def _to_dict(self):
         """Return a json dictionary representing this model."""
-        _dict = {}
-        if hasattr(self, 'external_id') and self.external_id is not None:
-            _dict['externalId'] = self.external_id
-        if hasattr(self, 'document_id') and self.document_id is not None:
-            _dict['documentId'] = self.document_id
-        if hasattr(self, 'parent_document_id') and self.parent_document_id is not None:
-            _dict['parentDocumentId'] = self.parent_document_id
-        if hasattr(self, 'title') and self.title is not None:
-            _dict['title'] = self.title
-        if hasattr(self, 'abstract_text') and self.abstract_text is not None:
-            _dict['abstractText'] = self.abstract_text
-        if hasattr(self, 'body') and self.body is not None:
-            _dict['body'] = self.body
-        if hasattr(self, 'pdf_url') and self.pdf_url is not None:
-            _dict['pdfUrl'] = self.pdf_url
-        if hasattr(self, 'reference_url') and self.reference_url is not None:
-            _dict['referenceUrl'] = self.reference_url
-        if hasattr(self, 'metadata') and self.metadata is not None:
-            _dict['metadata'] = self.metadata
-        return _dict
+        return self.to_dict()
 
-    def __str__(self):
-        """Return a `str` version of this DocumentTextModel object."""
-        return json.dumps(self._to_dict(), indent=2)
+    def __str__(self) -> str:
+        """Return a `str` version of this DictionaryEntry object."""
+        return json.dumps(self.to_dict(), indent=2)
 
-    def __eq__(self, other):
+    def __eq__(self, other: 'DictionaryEntry') -> bool:
         """Return `true` when self and other are equal, false otherwise."""
         if not isinstance(other, self.__class__):
             return False
         return self.__dict__ == other.__dict__
 
-    def __ne__(self, other):
+    def __ne__(self, other: 'DictoinaryEntry') -> bool:
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
 
@@ -3384,7 +4266,7 @@ class Documents(object):
         self.sort = sort
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a Documents object from a json dictionary."""
         args = {}
         if 'limit' in _dict:
@@ -3399,7 +4281,12 @@ class Documents(object):
             args['sort'] = [SortEntry._from_dict(x) for x in _dict.get('sort')]
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a AggregationModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'limit') and self.limit is not None:
@@ -3413,6 +4300,10 @@ class Documents(object):
         if hasattr(self, 'sort') and self.sort is not None:
             _dict['sort'] = [x._to_dict() for x in self.sort]
         return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
     def __str__(self):
         """Return a `str` version of this Documents object."""
@@ -3428,29 +4319,32 @@ class Documents(object):
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
 
-class EntryModel(object):
+
+class EntryModel():
     """
-    Object resprenting a passage.
+    Object representing a passage.
 
     :attr str id: (optional) Unique identifier of passage.
     :attr bool negated: (optional) Whether passage is a negated span.
-    :attr list[SentenceModel] sentences: (optional) List of sentences within passage.
+    :attr List[SentenceModel] sentences: (optional) List of sentences within
+          passage.
     """
 
-    def __init__(self, id=None, negated=None, sentences=None):
+    def __init__(self, *, id: str = None, negated: bool = None, sentences: List['SentenceModel'] = None) -> None:
         """
         Initialize a EntryModel object.
 
         :param str id: (optional) Unique identifier of passage.
         :param bool negated: (optional) Whether passage is a negated span.
-        :param list[SentenceModel] sentences: (optional) List of sentences within passage.
+        :param List[SentenceModel] sentences: (optional) List of sentences within
+               passage.
         """
         self.id = id
         self.negated = negated
         self.sentences = sentences
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict: Dict) -> 'EntryModel':
         """Initialize a EntryModel object from a json dictionary."""
         args = {}
         if 'id' in _dict:
@@ -3458,10 +4352,15 @@ class EntryModel(object):
         if 'negated' in _dict:
             args['negated'] = _dict.get('negated')
         if 'sentences' in _dict:
-            args['sentences'] = [SentenceModel._from_dict(x) for x in _dict.get('sentences')]
+            args['sentences'] = [SentenceModel.from_dict(x) for x in _dict.get('sentences')]
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a EntryModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'id') and self.id is not None:
@@ -3469,31 +4368,199 @@ class EntryModel(object):
         if hasattr(self, 'negated') and self.negated is not None:
             _dict['negated'] = self.negated
         if hasattr(self, 'sentences') and self.sentences is not None:
-            _dict['sentences'] = [x._to_dict() for x in self.sentences]
+            _dict['sentences'] = [x.to_dict() for x in self.sentences]
         return _dict
 
-    def __str__(self):
-        """Return a `str` version of this EntryModel object."""
-        return json.dumps(self._to_dict(), indent=2)
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
-    def __eq__(self, other):
+    def __str__(self) -> str:
+        """Return a `str` version of this EntryModel object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'EntryModel') -> bool:
         """Return `true` when self and other are equal, false otherwise."""
         if not isinstance(other, self.__class__):
             return False
         return self.__dict__ == other.__dict__
 
-    def __ne__(self, other):
+    def __ne__(self, other: 'EntryModel') -> bool:
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
 
-class HitCount(object):
+
+class FieldOptions():
+    """
+    Supported options for the field.
+
+    :attr Supports supports: (optional) List of supported options.
+    """
+
+    def __init__(self, *, supports: dict = None) -> None:
+        """
+        Initialize a FieldOptions object.
+
+        :param Supports supports: (optional) List of supported options.
+        """
+        self.supports = supports
+
+    @classmethod
+    def from_dict(cls, _dict: Dict) -> 'FieldOptions':
+        """Initialize a FieldOptions object from a json dictionary."""
+        args = {}
+        if 'supports' in _dict:
+            args['supports'] = Supports._from_dict(_dict.get('supports'))
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a FieldOptions object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'supports') and self.supports is not None:
+            _dict['supports'] = self.supports.to_dict()
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __str__(self) -> str:
+        """Return a `str` version of this FieldOptions object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'FieldOptions') -> bool:
+        """Return `true` when self and other are equal, false otherwise."""
+        if not isinstance(other, self.__class__):
+            return False
+        return self.__dict__ == other.__dict__
+
+    def __ne__(self, other: 'FieldOptions') -> bool:
+        """Return `true` when self and other are not equal, false otherwise."""
+        return not self == other
+
+
+class GetDocumentInfoResponse():
+    """
+    GetDocumentInfoResponse.
+
+    """
+
+    def __init__(self, **kwargs) -> None:
+        """
+        Initialize a GetDocumentInfoResponse object.
+
+        :param **kwargs: (optional) Any additional properties.
+        """
+        for _key, _value in kwargs.items():
+            setattr(self, _key, _value)
+
+    @classmethod
+    def from_dict(cls, _dict: Dict) -> 'GetDocumentInfoResponse':
+        """Initialize a GetDocumentInfoResponse object from a json dictionary."""
+        return cls(**_dict)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a GetDocumentInfoResponse object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
+        """Return a json dictionary representing this model."""
+        return vars(self)
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __str__(self) -> str:
+        """Return a `str` version of this GetDocumentInfoResponse object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'GetDocumentInfoResponse') -> bool:
+        """Return `true` when self and other are equal, false otherwise."""
+        if not isinstance(other, self.__class__):
+            return False
+        return self.__dict__ == other.__dict__
+
+    def __ne__(self, other: 'GetDocumentInfoResponse') -> bool:
+        """Return `true` when self and other are not equal, false otherwise."""
+        return not self == other
+
+
+class HistogramData():
+    """
+    histogram data.
+
+    :attr str date: (optional) Date associated with result.
+    :attr int hits: (optional) Number of documents for date range result.
+    """
+
+    def __init__(self, *, date: str = None, hits: int = None) -> None:
+        """
+        Initialize a HistogramData object.
+
+        :param str date: (optional) Date associated with result.
+        :param int hits: (optional) Number of documents for date range result.
+        """
+        self.date = date
+        self.hits = hits
+
+    @classmethod
+    def from_dict(cls, _dict: Dict) -> 'HistogramData':
+        """Initialize a HistogramData object from a json dictionary."""
+        args = {}
+        if 'date' in _dict:
+            args['date'] = _dict.get('date')
+        if 'hits' in _dict:
+            args['hits'] = _dict.get('hits')
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a HistogramData object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'date') and self.date is not None:
+            _dict['date'] = self.date
+        if hasattr(self, 'hits') and self.hits is not None:
+            _dict['hits'] = self.hits
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __str__(self) -> str:
+        """Return a `str` version of this HistogramData object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'HistogramData') -> bool:
+        """Return `true` when self and other are equal, false otherwise."""
+        if not isinstance(other, self.__class__):
+            return False
+        return self.__dict__ == other.__dict__
+
+    def __ne__(self, other: 'HistogramData') -> bool:
+        """Return `true` when self and other are not equal, false otherwise."""
+        return not self == other
+
+
+class HitCount():
     """
     Corpus frequency of artifact.
 
     :attr int hit_count: (optional) Corpus frequency of artifact.
     """
 
-    def __init__(self, hit_count=None):
+    def __init__(self, *, hit_count: int = None) -> None:
         """
         Initialize a HitCount object.
 
@@ -3502,63 +4569,239 @@ class HitCount(object):
         self.hit_count = hit_count
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict: Dict) -> 'HitCount':
         """Initialize a HitCount object from a json dictionary."""
         args = {}
         if 'hitCount' in _dict:
             args['hit_count'] = _dict.get('hitCount')
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a HitCount object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'hit_count') and self.hit_count is not None:
             _dict['hitCount'] = self.hit_count
         return _dict
 
-    def __str__(self):
-        """Return a `str` version of this HitCount object."""
-        return json.dumps(self._to_dict(), indent=2)
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
-    def __eq__(self, other):
+    def __str__(self) -> str:
+        """Return a `str` version of this HitCount object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'HitCount') -> bool:
         """Return `true` when self and other are equal, false otherwise."""
         if not isinstance(other, self.__class__):
             return False
         return self.__dict__ == other.__dict__
 
-    def __ne__(self, other):
+    def __ne__(self, other: 'HitCount') -> bool:
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
 
-class MetadataModel(object):
+
+class Message():
+    """
+    Object representing repository message.
+
+    :attr str message_type: (optional) Message semantic type.
+    :attr str url: (optional) Message link.
+    :attr object request: (optional) Message request.
+    :attr List[str] headers: (optional) Request headers.
+    :attr int status: (optional) Message status.
+    :attr object response: (optional) Message response.
+    """
+
+    def __init__(self, *, message_type: str = None, url: str = None, request: object = None, headers: List[str] = None, status: int = None, response: object = None) -> None:
+        """
+        Initialize a Message object.
+
+        :param str message_type: (optional) Message semantic type.
+        :param str url: (optional) Message link.
+        :param object request: (optional) Message request.
+        :param List[str] headers: (optional) Request headers.
+        :param int status: (optional) Message status.
+        :param object response: (optional) Message response.
+        """
+        self.message_type = message_type
+        self.url = url
+        self.request = request
+        self.headers = headers
+        self.status = status
+        self.response = response
+
+    @classmethod
+    def from_dict(cls, _dict: Dict) -> 'Message':
+        """Initialize a Message object from a json dictionary."""
+        args = {}
+        if 'messageType' in _dict:
+            args['message_type'] = _dict.get('messageType')
+        if 'url' in _dict:
+            args['url'] = _dict.get('url')
+        if 'request' in _dict:
+            args['request'] = _dict.get('request')
+        if 'headers' in _dict:
+            args['headers'] = _dict.get('headers')
+        if 'status' in _dict:
+            args['status'] = _dict.get('status')
+        if 'response' in _dict:
+            args['response'] = _dict.get('response')
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a Message object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'message_type') and self.message_type is not None:
+            _dict['messageType'] = self.message_type
+        if hasattr(self, 'url') and self.url is not None:
+            _dict['url'] = self.url
+        if hasattr(self, 'request') and self.request is not None:
+            _dict['request'] = self.request
+        if hasattr(self, 'headers') and self.headers is not None:
+            _dict['headers'] = self.headers
+        if hasattr(self, 'status') and self.status is not None:
+            _dict['status'] = self.status
+        if hasattr(self, 'response') and self.response is not None:
+            _dict['response'] = self.response
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __str__(self) -> str:
+        """Return a `str` version of this Message object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'Message') -> bool:
+        """Return `true` when self and other are equal, false otherwise."""
+        if not isinstance(other, self.__class__):
+            return False
+        return self.__dict__ == other.__dict__
+
+    def __ne__(self, other: 'Message') -> bool:
+        """Return `true` when self and other are not equal, false otherwise."""
+        return not self == other
+
+    
+    class MessageTypeEnum(Enum):
+        """
+        Message semantic type.
+        """
+        EXPANDED_REQUEST = "expanded_request"
+        ELASTIC_SEARCH = "elastic_search"
+
+
+class MetadataFields():
+    """
+    MetadataFields.
+
+    :attr str corpus: (optional) Corpus name.
+    :attr str corpus_description: (optional) Corpus description.
+    :attr dict fields: (optional) Metadata fields.
+    """
+
+    def __init__(self, *, corpus: str = None, corpus_description: str = None, fields: dict = None) -> None:
+        """
+        Initialize a MetadataFields object.
+
+        :param str corpus: (optional) Corpus name.
+        :param str corpus_description: (optional) Corpus description.
+        :param dict fields: (optional) Metadata fields.
+        """
+        self.corpus = corpus
+        self.corpus_description = corpus_description
+        self.fields = fields
+
+    @classmethod
+    def from_dict(cls, _dict: Dict) -> 'MetadataFields':
+        """Initialize a MetadataFields object from a json dictionary."""
+        args = {}
+        if 'corpus' in _dict:
+            args['corpus'] = _dict.get('corpus')
+        if 'corpusDescription' in _dict:
+            args['corpus_description'] = _dict.get('corpusDescription')
+        if 'fields' in _dict:
+            args['fields'] = _dict.get('fields')
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a MetadataFields object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'corpus') and self.corpus is not None:
+            _dict['corpus'] = self.corpus
+        if hasattr(self, 'corpus_description') and self.corpus_description is not None:
+            _dict['corpusDescription'] = self.corpus_description
+        if hasattr(self, 'fields') and self.fields is not None:
+            _dict['fields'] = self.fields
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __str__(self) -> str:
+        """Return a `str` version of this MetadataFields object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'MetadataFields') -> bool:
+        """Return `true` when self and other are equal, false otherwise."""
+        if not isinstance(other, self.__class__):
+            return False
+        return self.__dict__ == other.__dict__
+
+    def __ne__(self, other: 'MetadataFields') -> bool:
+        """Return `true` when self and other are not equal, false otherwise."""
+        return not self == other
+
+
+class MetadataModel():
     """
     Model for document metadata.
 
     :attr dict fields: (optional) List of document fields in the corpus.
-    :attr list[str] section_field_names: (optional) List of fields that where enriched.
-    :attr list[str] attr_section_field_names: (optional) List of fields enriched with
-    attributes.
-    :attr list[str] qualifier_section_field_names: (optional) List of fields enriched with
-    attribute qualifiers.
-    :attr list[str] mesh_section_field_names: (optional) List of fields with MeSH
-    annotations.
+    :attr List[str] section_field_names: (optional) List of fields that where
+          enriched.
+    :attr List[str] attr_section_field_names: (optional) List of fields enriched
+          with attributes.
+    :attr List[str] qualifier_section_field_names: (optional) List of fields
+          enriched with attribute qualifiers.
+    :attr List[str] mesh_section_field_names: (optional) List of fields with MeSH
+          annotations.
+    :attr dict field_index_map: (optional)
     """
 
-    def __init__(self, fields=None, section_field_names=None, attr_section_field_names=None,
-                 qualifier_section_field_names=None, mesh_section_field_names=None,
-                 field_index_map=None):
+    def __init__(self, *, fields: dict = None, section_field_names: List[str] = None, attr_section_field_names: List[str] = None, qualifier_section_field_names: List[str] = None, mesh_section_field_names: List[str] = None, field_index_map: dict = None) -> None:
         """
         Initialize a MetadataModel object.
 
         :param dict fields: (optional) List of document fields in the corpus.
-        :param list[str] section_field_names: (optional) List of fields that where
-        enriched.
-        :param list[str] attr_section_field_names: (optional) List of fields enriched with
-        attributes.
-        :param list[str] qualifier_section_field_names: (optional) List of fields enriched
-        with attribute qualifiers.
-        :param list[str] mesh_section_field_names: (optional) List of fields with MeSH
-        annotations.
+        :param List[str] section_field_names: (optional) List of fields that where
+               enriched.
+        :param List[str] attr_section_field_names: (optional) List of fields
+               enriched with attributes.
+        :param List[str] qualifier_section_field_names: (optional) List of fields
+               enriched with attribute qualifiers.
+        :param List[str] mesh_section_field_names: (optional) List of fields with
+               MeSH annotations.
+        :param dict field_index_map: (optional)
         """
         self.fields = fields
         self.section_field_names = section_field_names
@@ -3568,11 +4811,11 @@ class MetadataModel(object):
         self.field_index_map = field_index_map
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict: Dict) -> 'MetadataModel':
         """Initialize a MetadataModel object from a json dictionary."""
         args = {}
         if 'fields' in _dict:
-            args['fields'] = _dict.get('fields')
+            args['fields'] = {k : FieldOptions.from_dict(v) for k,v in _dict.get('fields').items()}
         if 'sectionFieldNames' in _dict:
             args['section_field_names'] = _dict.get('sectionFieldNames')
         if 'attrSectionFieldNames' in _dict:
@@ -3585,11 +4828,16 @@ class MetadataModel(object):
             args['field_index_map'] = _dict.get('fieldIndexMap')
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a MetadataModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'fields') and self.fields is not None:
-            _dict['fields'] = {k : v._to_dict() for k, v in self.fields.items()}
+            _dict['fields'] = {k : v.to_dict() for k,v in self.fields.items()}
         if hasattr(self, 'section_field_names') and self.section_field_names is not None:
             _dict['sectionFieldNames'] = self.section_field_names
         if hasattr(self, 'attr_section_field_names') and self.attr_section_field_names is not None:
@@ -3602,8 +4850,64 @@ class MetadataModel(object):
             _dict['fieldIndexMap'] = self.field_index_map
         return _dict
 
-    def __str__(self):
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __str__(self) -> str:
         """Return a `str` version of this MetadataModel object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'MetadataModel') -> bool:
+        """Return `true` when self and other are equal, false otherwise."""
+        if not isinstance(other, self.__class__):
+            return False
+        return self.__dict__ == other.__dict__
+
+    def __ne__(self, other: 'MetadataModel') -> bool:
+        """Return `true` when self and other are not equal, false otherwise."""
+        return not self == other
+
+
+class Order(object):
+    """
+    Object representing sort order preference.
+    :attr str order: sort direction
+    """
+
+    def __init__(self, order):
+        """
+        Initialize a SortEntry object.
+        :param str order: sort direction
+        """
+        self.order = order
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize a ServiceStatus object from a json dictionary."""
+        args = {}
+        if 'order' in _dict:
+            args['order'] = _dict.get('order')
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a AggregationModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'order') and self.order is not None:
+            _dict['order'] = self.order
+        return _dict
+
+    def __str__(self):
+        """Return a `str` version of this ServiceStatus object."""
         return json.dumps(self._to_dict(), indent=2)
 
     def __eq__(self, other):
@@ -3616,63 +4920,82 @@ class MetadataModel(object):
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
 
-class Passage(object):
+
+class Passage():
     """
     Object representing a document passage.
 
     :attr str document_section: (optional) Document section for passage.
-    :attr str text: (optional)
+    :attr StringBuilder text: (optional)
     :attr int timestamp: (optional) Timestamp of passage in video transcript.
+    :attr str preferred_name: (optional) Preferred name for highlighted text span.
     """
 
-    def __init__(self, document_section=None, text=None, timestamp=None):
+    def __init__(self, *, document_section: str = None, text: 'StringBuilder' = None, timestamp: int = None, preferred_name: str = None) -> None:
         """
         Initialize a Passage object.
 
         :param str document_section: (optional) Document section for passage.
-        :param str text: (optional)
+        :param StringBuilder text: (optional)
         :param int timestamp: (optional) Timestamp of passage in video transcript.
+        :param str preferred_name: (optional) Preferred name for highlighted text
+               span.
         """
         self.document_section = document_section
         self.text = text
         self.timestamp = timestamp
+        self.preferred_name = preferred_name
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict: Dict) -> 'Passage':
         """Initialize a Passage object from a json dictionary."""
         args = {}
         if 'documentSection' in _dict:
             args['document_section'] = _dict.get('documentSection')
         if 'text' in _dict:
-            args['text'] = _dict.get('text')
+            args['text'] = StringBuilder.from_dict(_dict.get('text'))
         if 'timestamp' in _dict:
             args['timestamp'] = _dict.get('timestamp')
+        if 'preferredName' in _dict:
+            args['preferred_name'] = _dict.get('preferredName')
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a Passage object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'document_section') and self.document_section is not None:
             _dict['documentSection'] = self.document_section
         if hasattr(self, 'text') and self.text is not None:
-            _dict['text'] = self.text
+            _dict['text'] = self.text.to_dict()
         if hasattr(self, 'timestamp') and self.timestamp is not None:
             _dict['timestamp'] = self.timestamp
+        if hasattr(self, 'preferred_name') and self.preferred_name is not None:
+            _dict['preferredName'] = self.preferred_name
         return _dict
 
-    def __str__(self):
-        """Return a `str` version of this Passage object."""
-        return json.dumps(self._to_dict(), indent=2)
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
-    def __eq__(self, other):
+    def __str__(self) -> str:
+        """Return a `str` version of this Passage object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'Passage') -> bool:
         """Return `true` when self and other are equal, false otherwise."""
         if not isinstance(other, self.__class__):
             return False
         return self.__dict__ == other.__dict__
 
-    def __ne__(self, other):
+    def __ne__(self, other: 'Passage') -> bool:
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
+
 
 class Passages(object):
     """
@@ -3707,7 +5030,7 @@ class Passages(object):
         self.min_score = min_score
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a Passages object from a json dictionary."""
         args = {}
         if 'conceptsToHighlight' in _dict:
@@ -3727,7 +5050,12 @@ class Passages(object):
             args['min_score'] = _dict.get('minScore')
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a AggregationModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'concepts_to_highlight') and self.concepts_to_highlight is not None:
@@ -3746,6 +5074,10 @@ class Passages(object):
             _dict['minScore'] = self.min_score
         return _dict
 
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
     def __str__(self):
         """Return a `str` version of this Passages object."""
         return json.dumps(self._to_dict(), indent=2)
@@ -3760,15 +5092,77 @@ class Passages(object):
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
 
-class PossibleValues(object):
+
+class PassagesModel():
     """
-    PossbileValues.
+    PassagesModel.
+
+    :attr List[Passage] all_passages: (optional) Document passages.
+    :attr dict search_term_to_passages: (optional) Search term to passages.
+    """
+
+    def __init__(self, *, all_passages: List['Passage'] = None, search_term_to_passages: dict = None) -> None:
+        """
+        Initialize a PassagesModel object.
+
+        :param List[Passage] all_passages: (optional) Document passages.
+        :param dict search_term_to_passages: (optional) Search term to passages.
+        """
+        self.all_passages = all_passages
+        self.search_term_to_passages = search_term_to_passages
+
+    @classmethod
+    def from_dict(cls, _dict: Dict) -> 'PassagesModel':
+        """Initialize a PassagesModel object from a json dictionary."""
+        args = {}
+        if 'allPassages' in _dict:
+            args['all_passages'] = [Passage.from_dict(x) for x in _dict.get('allPassages')]
+        if 'searchTermToPassages' in _dict:
+            args['search_term_to_passages'] = _dict.get('searchTermToPassages')
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a PassagesModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'all_passages') and self.all_passages is not None:
+            _dict['allPassages'] = [x.to_dict() for x in self.all_passages]
+        if hasattr(self, 'search_term_to_passages') and self.search_term_to_passages is not None:
+            _dict['searchTermToPassages'] = self.search_term_to_passages
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __str__(self) -> str:
+        """Return a `str` version of this PassagesModel object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'PassagesModel') -> bool:
+        """Return `true` when self and other are equal, false otherwise."""
+        if not isinstance(other, self.__class__):
+            return False
+        return self.__dict__ == other.__dict__
+
+    def __ne__(self, other: 'PassagesModel') -> bool:
+        """Return `true` when self and other are not equal, false otherwise."""
+        return not self == other
+
+
+class PossibleValues():
+    """
+    PossibleValues.
 
     :attr str display_value: (optional)
     :attr str value: (optional)
     """
 
-    def __init__(self, display_value=None, value=None):
+    def __init__(self, *, display_value: str = None, value: str = None) -> None:
         """
         Initialize a PossbileValues object.
 
@@ -3779,7 +5173,7 @@ class PossibleValues(object):
         self.value = value
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict: Dict) -> 'PossbileValues':
         """Initialize a PossbileValues object from a json dictionary."""
         args = {}
         if 'displayValue' in _dict:
@@ -3788,7 +5182,12 @@ class PossibleValues(object):
             args['value'] = _dict.get('value')
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a PossbileValues object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'display_value') and self.display_value is not None:
@@ -3797,65 +5196,26 @@ class PossibleValues(object):
             _dict['value'] = self.value
         return _dict
 
-    def __str__(self):
-        """Return a `str` version of this PossbileValues object."""
-        return json.dumps(self._to_dict(), indent=2)
-
-    def __eq__(self, other):
-        """Return `true` when self and other are equal, false otherwise."""
-        if not isinstance(other, self.__class__):
-            return False
-        return self.__dict__ == other.__dict__
-
-    def __ne__(self, other):
-        """Return `true` when self and other are not equal, false otherwise."""
-        return not self == other
-
-class Order(object):
-    """
-    Object representing sort order preference.
-
-    :attr str order: sort direction
-    """
-
-    def __init__(self, order):
-        """
-        Initialize a SortEntry object.
-
-        :param str order: sort direction
-        """
-        self.order = order
-
-    @classmethod
-    def _from_dict(cls, _dict):
-        """Initialize a ServiceStatus object from a json dictionary."""
-        args = {}
-        if 'order' in _dict:
-            args['order'] = _dict.get('order')
-        return cls(**args)
-
     def _to_dict(self):
         """Return a json dictionary representing this model."""
-        _dict = {}
-        if hasattr(self, 'order') and self.order is not None:
-            _dict['order'] = self.order
-        return _dict
+        return self.to_dict()
 
-    def __str__(self):
-        """Return a `str` version of this ServiceStatus object."""
-        return json.dumps(self._to_dict(), indent=2)
+    def __str__(self) -> str:
+        """Return a `str` version of this PossbileValues object."""
+        return json.dumps(self.to_dict(), indent=2)
 
-    def __eq__(self, other):
+    def __eq__(self, other: 'PossbileValues') -> bool:
         """Return `true` when self and other are equal, false otherwise."""
         if not isinstance(other, self.__class__):
             return False
         return self.__dict__ == other.__dict__
 
-    def __ne__(self, other):
+    def __ne__(self, other: 'PossbileValues') -> bool:
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
 
-class Qualifier(object):
+
+class Qualifier():
     """
     Object representing an artifact qualifier.
 
@@ -3863,48 +5223,58 @@ class Qualifier(object):
     :attr str name: (optional) Name of attribute qualifier.
     """
 
-    def __init__(self, qualifier_id=None, name=None):
+    def __init__(self, *, id: str = None, name: str = None) -> None:
         """
         Initialize a Qualifer object.
 
         :param str id: (optional) Unique identifier for attribute qualifier.
         :param str name: (optional) Name of attribute qualifier.
         """
-        self.qualifier_id = qualifier_id
-        self.qualifier_name = name
+        self.id = id
+        self.name = name
+
+    @classmethod
+    def from_dict(cls, _dict: Dict) -> 'Qualifer':
+        """Initialize a Qualifer object from a json dictionary."""
+        args = {}
+        if 'id' in _dict:
+            args['id'] = _dict.get('id')
+        if 'name' in _dict:
+            args['name'] = _dict.get('name')
+        return cls(**args)
 
     @classmethod
     def _from_dict(cls, _dict):
         """Initialize a Qualifer object from a json dictionary."""
-        args = {}
-        if 'qualifier_id' in _dict:
-            args['qualifier_id'] = _dict.get('qualifier_id')
-        if 'qualifier_name' in _dict:
-            args['name'] = _dict.get('qualifier_name')
-        return cls(**args)
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'id') and self.id is not None:
+            _dict['id'] = self.id
+        if hasattr(self, 'name') and self.name is not None:
+            _dict['name'] = self.name
+        return _dict
 
     def _to_dict(self):
         """Return a json dictionary representing this model."""
-        _dict = {}
-        if hasattr(self, 'qualifier_id') and self.qualifier_id is not None:
-            _dict['qualifier_id'] = self.qualifier_id
-        if hasattr(self, 'qualifier_name') and self.qualifier_name is not None:
-            _dict['qualifier_name'] = self.qualifier_name
-        return _dict
+        return self.to_dict()
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return a `str` version of this Qualifer object."""
-        return json.dumps(self._to_dict(), indent=2)
+        return json.dumps(self.to_dict(), indent=2)
 
-    def __eq__(self, other):
+    def __eq__(self, other: 'Qualifer') -> bool:
         """Return `true` when self and other are equal, false otherwise."""
         if not isinstance(other, self.__class__):
             return False
         return self.__dict__ == other.__dict__
 
-    def __ne__(self, other):
+    def __ne__(self, other: 'Qualifer') -> bool:
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
+
 
 class Query(object):
     """
@@ -3948,7 +5318,7 @@ class Query(object):
         self.rankedSearch = rankedSearch
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a Query object from a json dictionary."""
         args = {}
         if 'boolExpression' in _dict:
@@ -3973,7 +5343,12 @@ class Query(object):
             args['rankedSearch'] = _dict.get('rankedSearch')
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a AggregationModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'boolExpression') and self.boolExpression is not None:
@@ -3997,6 +5372,10 @@ class Query(object):
         if hasattr(self, 'rankedSearch') and self.rankedSearch is not None:
             _dict['rankedSearch'] = self.rankedSearch
         return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
     def __str__(self):
         """Return a `str` version of this Query object."""
@@ -4030,7 +5409,7 @@ class Range(object):
         self.end = end
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a Range object from a json dictionary."""
         args = {}
         if 'begin' in _dict:
@@ -4039,7 +5418,12 @@ class Range(object):
             args['end'] = _dict.get('end')
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a AggregationModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'begin') and self.begin is not None:
@@ -4047,6 +5431,10 @@ class Range(object):
         if hasattr(self, 'end') and self.end is not None:
             _dict['end'] = self.end
         return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
     def __str__(self):
         """Return a `str` version of this Range object."""
@@ -4077,19 +5465,28 @@ class Ranges(object):
         self.attribute_id = attribute_id
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a Ranges object from a json dictionary."""
         args = {}
         if 'attributeId' in _dict:
             args['attribute_id'] = _dict.get('attributeId')
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a AggregationModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'attribute_id') and self.attribute_id is not None:
             _dict['attributeId'] = self.attribute_id
         return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
     def __str__(self):
         """Return a `str` version of this Ranges object."""
@@ -4105,7 +5502,83 @@ class Ranges(object):
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
 
-class RankedDocLinks(object):
+
+class RangeModel():
+    """
+    Object representing an attribute value range.
+
+    :attr str operator: (optional) Operator assigned to attribute value.
+    :attr str min: (optional) Minimum value assigned to attribute value.
+    :attr str max: (optional) Maximum value assigned to attribute value.
+    :attr int count: (optional) Corpus frequency for attribute value.
+    """
+
+    def __init__(self, *, operator: str = None, min: str = None, max: str = None, count: int = None) -> None:
+        """
+        Initialize a RangeModel object.
+
+        :param str operator: (optional) Operator assigned to attribute value.
+        :param str min: (optional) Minimum value assigned to attribute value.
+        :param str max: (optional) Maximum value assigned to attribute value.
+        :param int count: (optional) Corpus frequency for attribute value.
+        """
+        self.operator = operator
+        self.min = min
+        self.max = max
+        self.count = count
+
+    @classmethod
+    def from_dict(cls, _dict: Dict) -> 'RangeModel':
+        """Initialize a RangeModel object from a json dictionary."""
+        args = {}
+        if 'operator' in _dict:
+            args['operator'] = _dict.get('operator')
+        if 'min' in _dict:
+            args['min'] = _dict.get('min')
+        if 'max' in _dict:
+            args['max'] = _dict.get('max')
+        if 'count' in _dict:
+            args['count'] = _dict.get('count')
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a RangeModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'operator') and self.operator is not None:
+            _dict['operator'] = self.operator
+        if hasattr(self, 'min') and self.min is not None:
+            _dict['min'] = self.min
+        if hasattr(self, 'max') and self.max is not None:
+            _dict['max'] = self.max
+        if hasattr(self, 'count') and self.count is not None:
+            _dict['count'] = self.count
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __str__(self) -> str:
+        """Return a `str` version of this RangeModel object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'RangeModel') -> bool:
+        """Return `true` when self and other are equal, false otherwise."""
+        if not isinstance(other, self.__class__):
+            return False
+        return self.__dict__ == other.__dict__
+
+    def __ne__(self, other: 'RangeModel') -> bool:
+        """Return `true` when self and other are not equal, false otherwise."""
+        return not self == other
+
+
+class RankedDocLinks():
     """
     RankedDocLinks.
 
@@ -4113,18 +5586,19 @@ class RankedDocLinks(object):
     :attr str href_categories: (optional) Links for categorized search matches.
     """
 
-    def __init__(self, href_search_matches=None, href_categories=None):
+    def __init__(self, *, href_search_matches: str = None, href_categories: str = None) -> None:
         """
         Initialize a RankedDocLinks object.
 
         :param str href_search_matches: (optional) Links for search matches.
-        :param str href_categories: (optional) Links for categorized search matches.
+        :param str href_categories: (optional) Links for categorized search
+               matches.
         """
         self.href_search_matches = href_search_matches
         self.href_categories = href_categories
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict: Dict) -> 'RankedDocLinks':
         """Initialize a RankedDocLinks object from a json dictionary."""
         args = {}
         if 'hrefSearchMatches' in _dict:
@@ -4133,7 +5607,12 @@ class RankedDocLinks(object):
             args['href_categories'] = _dict.get('hrefCategories')
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a RankedDocLinks object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'href_search_matches') and self.href_search_matches is not None:
@@ -4142,22 +5621,26 @@ class RankedDocLinks(object):
             _dict['hrefCategories'] = self.href_categories
         return _dict
 
-    def __str__(self):
-        """Return a `str` version of this RankedDocLinks object."""
-        return json.dumps(self._to_dict(), indent=2)
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
-    def __eq__(self, other):
+    def __str__(self) -> str:
+        """Return a `str` version of this RankedDocLinks object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'RankedDocLinks') -> bool:
         """Return `true` when self and other are equal, false otherwise."""
         if not isinstance(other, self.__class__):
             return False
         return self.__dict__ == other.__dict__
 
-    def __ne__(self, other):
+    def __ne__(self, other: 'RankedDocLinks') -> bool:
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
 
 
-class RankedDocument(object):
+class RankedDocument():
     """
     Object representing a document search result.
 
@@ -4168,12 +5651,11 @@ class RankedDocument(object):
     :attr str section_id: (optional) Document section identifier.
     :attr str corpus: (optional) Document corpus.
     :attr RankedDocLinks links: (optional)
-    :attr list[Passage] passages: (optional) Document passages.
+    :attr PassagesModel passages: (optional)
     :attr dict annotations: (optional) Document annotations.
     """
 
-    def __init__(self, document_id=None, title=None, metadata=None, section_name=None,
-                 section_id=None, corpus=None, links=None, passages=None, annotations=None):
+    def __init__(self, *, document_id: str = None, title: str = None, metadata: dict = None, section_name: str = None, section_id: str = None, corpus: str = None, links: 'RankedDocLinks' = None, passages: 'PassagesModel' = None, annotations: dict = None) -> None:
         """
         Initialize a RankedDocument object.
 
@@ -4184,7 +5666,7 @@ class RankedDocument(object):
         :param str section_id: (optional) Document section identifier.
         :param str corpus: (optional) Document corpus.
         :param RankedDocLinks links: (optional)
-        :param list[Passage] passages: (optional) Document passages.
+        :param PassagesModel passages: (optional)
         :param dict annotations: (optional) Document annotations.
         """
         self.document_id = document_id
@@ -4198,7 +5680,7 @@ class RankedDocument(object):
         self.annotations = annotations
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict: Dict) -> 'RankedDocument':
         """Initialize a RankedDocument object from a json dictionary."""
         args = {}
         if 'documentId' in _dict:
@@ -4214,15 +5696,19 @@ class RankedDocument(object):
         if 'corpus' in _dict:
             args['corpus'] = _dict.get('corpus')
         if 'links' in _dict:
-            args['links'] = RankedDocLinks._from_dict(_dict.get('links'))
+            args['links'] = RankedDocLinks.from_dict(_dict.get('links'))
         if 'passages' in _dict:
-            args['passages'] = [Passage._from_dict(x) for x in _dict.get('passages')]
+            args['passages'] = PassagesModel.from_dict(_dict.get('passages'))
         if 'annotations' in _dict:
-            args['annotations'] = ({k : AnnotationModel._from_dict(v) for k, v in
-                                    _dict.get('annotations').items()})
+            args['annotations'] = {k : AnnotationModel.from_dict(v) for k,v in _dict.get('annotations').items()}
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a RankedDocument object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'document_id') and self.document_id is not None:
@@ -4238,71 +5724,77 @@ class RankedDocument(object):
         if hasattr(self, 'corpus') and self.corpus is not None:
             _dict['corpus'] = self.corpus
         if hasattr(self, 'links') and self.links is not None:
-            _dict['links'] = self.links._to_dict()
+            _dict['links'] = self.links.to_dict()
         if hasattr(self, 'passages') and self.passages is not None:
-            _dict['passages'] = [x._to_dict() for x in self.passages]
+            _dict['passages'] = self.passages.to_dict()
         if hasattr(self, 'annotations') and self.annotations is not None:
-            _dict['annotations'] = {k : v._to_dict() for k, v in self.annotations.items()}
+            _dict['annotations'] = {k : v.to_dict() for k,v in self.annotations.items()}
         return _dict
 
-    def __str__(self):
-        """Return a `str` version of this RankedDocument object."""
-        return json.dumps(self._to_dict(), indent=2)
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
-    def __eq__(self, other):
+    def __str__(self) -> str:
+        """Return a `str` version of this RankedDocument object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'RankedDocument') -> bool:
         """Return `true` when self and other are equal, false otherwise."""
         if not isinstance(other, self.__class__):
             return False
         return self.__dict__ == other.__dict__
 
-    def __ne__(self, other):
+    def __ne__(self, other: 'RankedDocument') -> bool:
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
 
 
-class RelatedConceptModel(object):
+class RelatedConceptModel():
     """
     Model for concept ontology relation.
 
     :attr str cui: (optional) Ontology provided unique identifier for artifact.
     :attr str ontology: (optional) Source ontology for artifact.
-    :attr str preferred_name: (optional) Ontology provided normalized name for artifact.
+    :attr str preferred_name: (optional) Ontology provided normalized name for
+          artifact.
     :attr str alternative_name: (optional) Ontology provided alternative name for
-    artifact.
-    :attr str type: (optional) Ontology semantic type for artifact.
+          artifact.
+    :attr str semantic_type: (optional) Ontology semantic type for artifact.
     :attr int rank: (optional) Search weight assigned to artifact.
-    :attr int hit_count: (optional) Number of corpus documents artifact was found in.
+    :attr int hit_count: (optional) Number of corpus documents artifact was found
+          in.
     :attr float score: (optional) Relevance score for artifact.
-    :attr list[str] surface_forms: (optional) List of artifact synonyms.
-    :attr list[RelatedConceptModel] next_concepts: (optional) List of artifacts for the
-    relation.
+    :attr List[str] surface_forms: (optional) List of artifact synonyms.
+    :attr List[RelatedConceptModel] next_concepts: (optional) List of artifacts for
+          the relation.
     """
 
-    def __init__(self, cui=None, ontology=None, preferred_name=None, alternative_name=None,
-                 semtype=None, rank=None, hit_count=None, score=None, surface_forms=None,
-                 next_concepts=None):
+    def __init__(self, *, cui: str = None, ontology: str = None, preferred_name: str = None, alternative_name: str = None, semantic_type: str = None, rank: int = None, hit_count: int = None, score: float = None, surface_forms: List[str] = None, next_concepts: List['RelatedConceptModel'] = None) -> None:
         """
         Initialize a RelatedConceptModel object.
 
-        :param str cui: (optional) Ontology provided unique identifier for artifact.
+        :param str cui: (optional) Ontology provided unique identifier for
+               artifact.
         :param str ontology: (optional) Source ontology for artifact.
         :param str preferred_name: (optional) Ontology provided normalized name for
-        artifact.
-        :param str alternative_name: (optional) Ontology provided alternative name for
-        artifact.
-        :param str type: (optional) Ontology semantic type for artifact.
+               artifact.
+        :param str alternative_name: (optional) Ontology provided alternative name
+               for artifact.
+        :param str semantic_type: (optional) Ontology semantic type for artifact.
         :param int rank: (optional) Search weight assigned to artifact.
-        :param int hit_count: (optional) Number of corpus documents artifact was found in.
+        :param int hit_count: (optional) Number of corpus documents artifact was
+               found in.
         :param float score: (optional) Relevance score for artifact.
-        :param list[str] surface_forms: (optional) List of artifact synonyms.
-        :param list[RelatedConceptModel] next_concepts: (optional) List of artifacts for
-        the relation.
+        :param List[str] surface_forms: (optional) List of artifact synonyms.
+        :param List[RelatedConceptModel] next_concepts: (optional) List of
+               artifacts for the relation.
         """
         self.cui = cui
         self.ontology = ontology
         self.preferred_name = preferred_name
         self.alternative_name = alternative_name
-        self.type = semtype
+        self.semantic_type = semantic_type
         self.rank = rank
         self.hit_count = hit_count
         self.score = score
@@ -4310,7 +5802,7 @@ class RelatedConceptModel(object):
         self.next_concepts = next_concepts
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict: Dict) -> 'RelatedConceptModel':
         """Initialize a RelatedConceptModel object from a json dictionary."""
         args = {}
         if 'cui' in _dict:
@@ -4321,8 +5813,8 @@ class RelatedConceptModel(object):
             args['preferred_name'] = _dict.get('preferredName')
         if 'alternativeName' in _dict:
             args['alternative_name'] = _dict.get('alternativeName')
-        if 'type' in _dict:
-            args['type'] = _dict.get('type')
+        if 'semanticType' in _dict:
+            args['semantic_type'] = _dict.get('semanticType')
         if 'rank' in _dict:
             args['rank'] = _dict.get('rank')
         if 'hitCount' in _dict:
@@ -4332,11 +5824,15 @@ class RelatedConceptModel(object):
         if 'surfaceForms' in _dict:
             args['surface_forms'] = _dict.get('surfaceForms')
         if 'nextConcepts' in _dict:
-            args['next_concepts'] = ([RelatedConceptModel._from_dict(x) for x in
-                                      _dict.get('nextConcepts')])
+            args['next_concepts'] = [RelatedConceptModel.from_dict(x) for x in _dict.get('nextConcepts')]
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a RelatedConceptModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'cui') and self.cui is not None:
@@ -4347,8 +5843,8 @@ class RelatedConceptModel(object):
             _dict['preferredName'] = self.preferred_name
         if hasattr(self, 'alternative_name') and self.alternative_name is not None:
             _dict['alternativeName'] = self.alternative_name
-        if hasattr(self, 'type') and self.type is not None:
-            _dict['type'] = self.type
+        if hasattr(self, 'semantic_type') and self.semantic_type is not None:
+            _dict['semanticType'] = self.semantic_type
         if hasattr(self, 'rank') and self.rank is not None:
             _dict['rank'] = self.rank
         if hasattr(self, 'hit_count') and self.hit_count is not None:
@@ -4358,69 +5854,164 @@ class RelatedConceptModel(object):
         if hasattr(self, 'surface_forms') and self.surface_forms is not None:
             _dict['surfaceForms'] = self.surface_forms
         if hasattr(self, 'next_concepts') and self.next_concepts is not None:
-            _dict['nextConcepts'] = [x._to_dict() for x in self.next_concepts]
+            _dict['nextConcepts'] = [x.to_dict() for x in self.next_concepts]
         return _dict
 
-    def __str__(self):
-        """Return a `str` version of this RelatedConceptModel object."""
-        return json.dumps(self._to_dict(), indent=2)
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
-    def __eq__(self, other):
+    def __str__(self) -> str:
+        """Return a `str` version of this RelatedConceptModel object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'RelatedConceptModel') -> bool:
         """Return `true` when self and other are equal, false otherwise."""
         if not isinstance(other, self.__class__):
             return False
         return self.__dict__ == other.__dict__
 
-    def __ne__(self, other):
+    def __ne__(self, other: 'RelatedConceptModel') -> bool:
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
 
 
-class RelatedConceptsModel(object):
+class RelatedConceptsModel():
     """
     Model for concept ontology relations.
 
-    :attr list[RelatedConceptModel] concepts: (optional) List of artifacts for the
-    relation.
+    :attr List[RelatedConceptModel] concepts: (optional) List of artifacts for the
+          relation.
     """
 
-    def __init__(self, concepts=None):
+    def __init__(self, *, concepts: List['RelatedConceptModel'] = None) -> None:
         """
         Initialize a RelatedConceptsModel object.
 
-        :param list[RelatedConceptModel] concepts: (optional) List of artifacts for the
-        relation.
+        :param List[RelatedConceptModel] concepts: (optional) List of artifacts for
+               the relation.
         """
         self.concepts = concepts
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict: Dict) -> 'RelatedConceptsModel':
         """Initialize a RelatedConceptsModel object from a json dictionary."""
         args = {}
         if 'concepts' in _dict:
-            args['concepts'] = [RelatedConceptModel._from_dict(x) for x in _dict.get('concepts')]
+            args['concepts'] = [RelatedConceptModel.from_dict(x) for x in _dict.get('concepts')]
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a RelatedConceptsModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'concepts') and self.concepts is not None:
-            _dict['concepts'] = [x._to_dict() for x in self.concepts]
+            _dict['concepts'] = [x.to_dict() for x in self.concepts]
         return _dict
 
-    def __str__(self):
-        """Return a `str` version of this RelatedConceptsModel object."""
-        return json.dumps(self._to_dict(), indent=2)
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
-    def __eq__(self, other):
+    def __str__(self) -> str:
+        """Return a `str` version of this RelatedConceptsModel object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'RelatedConceptsModel') -> bool:
         """Return `true` when self and other are equal, false otherwise."""
         if not isinstance(other, self.__class__):
             return False
         return self.__dict__ == other.__dict__
 
-    def __ne__(self, other):
+    def __ne__(self, other: 'RelatedConceptsModel') -> bool:
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
+
+
+class RelationModel():
+    """
+    Object representing an ontology relation.
+
+    :attr str relation_id: (optional) Relation unique identifier artifact is
+          associated with.
+    :attr str relation: (optional) Name of the realtion an artifact is associated
+          with.
+    :attr TextSpan source: (optional) Objeft representing a document text span.
+    :attr TextSpan target: (optional) Objeft representing a document text span.
+    """
+
+    def __init__(self, *, relation_id: str = None, relation: str = None, source: 'TextSpan' = None, target: 'TextSpan' = None) -> None:
+        """
+        Initialize a RelationModel object.
+
+        :param str relation_id: (optional) Relation unique identifier artifact is
+               associated with.
+        :param str relation: (optional) Name of the realtion an artifact is
+               associated with.
+        :param TextSpan source: (optional) Objeft representing a document text
+               span.
+        :param TextSpan target: (optional) Objeft representing a document text
+               span.
+        """
+        self.relation_id = relation_id
+        self.relation = relation
+        self.source = source
+        self.target = target
+
+    @classmethod
+    def from_dict(cls, _dict: Dict) -> 'RelationModel':
+        """Initialize a RelationModel object from a json dictionary."""
+        args = {}
+        if 'relationId' in _dict:
+            args['relation_id'] = _dict.get('relationId')
+        if 'relation' in _dict:
+            args['relation'] = _dict.get('relation')
+        if 'source' in _dict:
+            args['source'] = TextSpan.from_dict(_dict.get('source'))
+        if 'target' in _dict:
+            args['target'] = TextSpan.from_dict(_dict.get('target'))
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a RelationModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'relation_id') and self.relation_id is not None:
+            _dict['relationId'] = self.relation_id
+        if hasattr(self, 'relation') and self.relation is not None:
+            _dict['relation'] = self.relation
+        if hasattr(self, 'source') and self.source is not None:
+            _dict['source'] = self.source.to_dict()
+        if hasattr(self, 'target') and self.target is not None:
+            _dict['target'] = self.target.to_dict()
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __str__(self) -> str:
+        """Return a `str` version of this RelationModel object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'RelationModel') -> bool:
+        """Return `true` when self and other are equal, false otherwise."""
+        if not isinstance(other, self.__class__):
+            return False
+        return self.__dict__ == other.__dict__
+
+    def __ne__(self, other: 'RelationModel') -> bool:
+        """Return `true` when self and other are not equal, false otherwise."""
+        return not self == other
+
 
 class ReturnsModel(object):
     """
@@ -4464,7 +6055,7 @@ class ReturnsModel(object):
         self.aggregations = aggregations
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a ReturnsModel object from a json dictionary."""
         args = {}
         if 'documents' in _dict:
@@ -4491,7 +6082,12 @@ class ReturnsModel(object):
                                      _dict.get('aggregations')})
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a AggregationModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'documents') and self.documents is not None:
@@ -4516,6 +6112,10 @@ class ReturnsModel(object):
             _dict['aggregations'] = self.aggregations
         return _dict
 
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
     def __str__(self):
         """Return a `str` version of this ReturnsModel object."""
         return json.dumps(self._to_dict(), indent=2)
@@ -4529,6 +6129,7 @@ class ReturnsModel(object):
     def __ne__(self, other):
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
+
 
 class SearchableConcept(object):
     """
@@ -4562,7 +6163,7 @@ class SearchableConcept(object):
         self.includeRelated = includeRelated
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         args = {}
         if 'boolOperand' in _dict:
             args['boolOperand'] = _dict.get('boolOperand')
@@ -4580,7 +6181,12 @@ class SearchableConcept(object):
             args['includeRelated'] = _dict.get('includeRelated')
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a AggregationModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         _dict = {}
         if hasattr(self, 'boolOperand') and self.boolOperand is not None:
             _dict['boolOperand'] = self.boolOperand
@@ -4598,8 +6204,13 @@ class SearchableConcept(object):
             _dict['includeRelated'] = self.includeRelated
         return _dict
 
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
     def __str__(self):
-        return json.dumps(self._to_dict(), cls=SearchableConceptEncoder, indent=2)
+#        return json.dumps(self._to_dict(), cls=SearchableConceptEncoder, indent=2)
+        return json.dumps(self._to_dict(), indent=2)
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
@@ -4609,74 +6220,81 @@ class SearchableConcept(object):
     def __ne__(self, other):
         return not self == other
 
+
 class SearchableConceptEncoder(json.JSONEncoder):
     def default(self, o):
         return o.__dict__
 
-class SearchMatchesModel(object):
+
+class SearchMatchesModel():
     """
     Object representing a corpus search match.
 
-    :attr str external_id: (optional) Unique identifier for matched document in corpus.
-    :attr str document_id: (optional) Unique identifier for matched document in corpus.
-    :attr str parent_document_id: (optional) Unique identifier for matched document parent
-    in corpus.
+    :attr str external_id: (optional) Unique identifier for matched document in
+          corpus.
+    :attr str document_id: (optional) Unique identifier for matched document in
+          corpus.
+    :attr str parent_document_id: (optional) Unique identifier for matched document
+          parent in corpus.
     :attr str publication_name: (optional) Publication name for matched document in
-    corpus.
+          corpus.
     :attr str publication_date: (optional) Publication date for matched document in
-    corpus.
-    :attr str publication_url: (optional) Publication URL for matched document in corpus.
-    :attr list[str] authors: (optional) Authos of matched document in corpus.
+          corpus.
+    :attr str publication_url: (optional) Publication URL for matched document in
+          corpus.
+    :attr List[str] authors: (optional) Authors of matched document in corpus.
     :attr str title: (optional) Title of matched document in corpus.
-    :attr str medline_license: (optional) Usage license for matched document in corpus.
+    :attr str medline_license: (optional) Usage license for matched document in
+          corpus.
     :attr str href_pub_med: (optional) Pubmed link for matched document in corpus.
+    :attr str href_pmc: (optional)
+    :attr str href_doi: (optional)
     :attr str pdf_url: (optional) Link to PDF for matched document in corpus.
     :attr str reference_url: (optional) Link to sourc origin for matched document in
-    corpus.
-    :attr str highlighted_title: (optional)
-    :attr str highlighted_abstract: (optional)
-    :attr str highlighted_body: (optional)
-    :attr dict highlighted_sections: (optional) Matched document sections with annotation
-    tags.
+          corpus.
+    :attr StringBuilder highlighted_title: (optional)
+    :attr StringBuilder highlighted_abstract: (optional)
+    :attr StringBuilder highlighted_body: (optional)
+    :attr dict highlighted_sections: (optional) Matched document sections with
+          annotation tags.
     :attr dict passages: (optional) Matched document passages with annotation tags.
     :attr dict annotations: (optional) Matched document annotations.
     """
 
-    def __init__(self, external_id=None, document_id=None, parent_document_id=None,
-                 publication_name=None, publication_date=None, publication_url=None,
-                 authors=None, title=None, medline_license=None, href_pub_med=None,
-                 pdf_url=None, reference_url=None, highlighted_title=None,
-                 highlighted_abstract=None, highlighted_body=None, highlighted_sections=None,
-                 passages=None, annotations=None):
+    def __init__(self, *, external_id: str = None, document_id: str = None, parent_document_id: str = None, publication_name: str = None, publication_date: str = None, publication_url: str = None, authors: List[str] = None, title: str = None, medline_license: str = None, href_pub_med: str = None, href_pmc: str = None, href_doi: str = None, pdf_url: str = None, reference_url: str = None, highlighted_title: str = None, highlighted_abstract: str = None, highlighted_body: str = None, highlighted_sections: dict = None, passages: dict = None, annotations: dict = None) -> None:
         """
         Initialize a SearchMatchesModel object.
 
-        :param str external_id: (optional) Unique identifier for matched document in
-        corpus.
-        :param str document_id: (optional) Unique identifier for matched document in
-        corpus.
-        :param str parent_document_id: (optional) Unique identifier for matched document
-        parent in corpus.
-        :param str publication_name: (optional) Publication name for matched document in
-        corpus.
-        :param str publication_date: (optional) Publication date for matched document in
-        corpus.
-        :param str publication_url: (optional) Publication URL for matched document in
-        corpus.
-        :param list[str] authors: (optional) Authos of matched document in corpus.
+        :param str external_id: (optional) Unique identifier for matched document
+               in corpus.
+        :param str document_id: (optional) Unique identifier for matched document
+               in corpus.
+        :param str parent_document_id: (optional) Unique identifier for matched
+               document parent in corpus.
+        :param str publication_name: (optional) Publication name for matched
+               document in corpus.
+        :param str publication_date: (optional) Publication date for matched
+               document in corpus.
+        :param str publication_url: (optional) Publication URL for matched document
+               in corpus.
+        :param List[str] authors: (optional) Authors of matched document in corpus.
         :param str title: (optional) Title of matched document in corpus.
-        :param str medline_license: (optional) Usage license for matched document in
-        corpus.
-        :param str href_pub_med: (optional) Pubmed link for matched document in corpus.
+        :param str medline_license: (optional) Usage license for matched document
+               in corpus.
+        :param str href_pub_med: (optional) Pubmed link for matched document in
+               corpus.
+        :param str href_pmc: (optional)
+        :param str href_doi: (optional)
         :param str pdf_url: (optional) Link to PDF for matched document in corpus.
-        :param str reference_url: (optional) Link to sourc origin for matched document in
-        corpus.
-        :param str highlighted_title: (optional)
-        :param str highlighted_abstract: (optional)
-        :param str highlighted_body: (optional)
+        :param str reference_url: (optional) Link to sourc origin for matched
+               document in corpus.
+        :param StringBuilder highlighted_title: (optional)
+        :param StringBuilder highlighted_abstract: (optional)
+        :param StringBuilder highlighted_body: (optional)
         :param dict highlighted_sections: (optional) Matched document sections with
-        annotation tags.
-        :param dict passages: (optional) Matched document passages with annotation tags.
+               annotation tags.
+        :param dict passages: (optional) Matched document passages with annotation
+               tags.
         :param dict annotations: (optional) Matched document annotations.
         """
         self.external_id = external_id
@@ -4689,6 +6307,8 @@ class SearchMatchesModel(object):
         self.title = title
         self.medline_license = medline_license
         self.href_pub_med = href_pub_med
+        self.href_pmc = href_pmc
+        self.href_doi = href_doi
         self.pdf_url = pdf_url
         self.reference_url = reference_url
         self.highlighted_title = highlighted_title
@@ -4699,7 +6319,7 @@ class SearchMatchesModel(object):
         self.annotations = annotations
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict: Dict) -> 'SearchMatchesModel':
         """Initialize a SearchMatchesModel object from a json dictionary."""
         args = {}
         if 'externalId' in _dict:
@@ -4722,6 +6342,10 @@ class SearchMatchesModel(object):
             args['medline_license'] = _dict.get('medlineLicense')
         if 'hrefPubMed' in _dict:
             args['href_pub_med'] = _dict.get('hrefPubMed')
+        if 'hrefPmc' in _dict:
+            args['href_pmc'] = _dict.get('hrefPmc')
+        if 'hrefDoi' in _dict:
+            args['href_doi'] = _dict.get('hrefDoi')
         if 'pdfUrl' in _dict:
             args['pdf_url'] = _dict.get('pdfUrl')
         if 'referenceUrl' in _dict:
@@ -4733,16 +6357,19 @@ class SearchMatchesModel(object):
         if 'highlightedBody' in _dict:
             args['highlighted_body'] = _dict.get('highlightedBody')
         if 'highlightedSections' in _dict:
-            args['highlighted_sections'] = ({k : StringBuilder._from_dict(v) for k, v in
-                                             _dict.get('highlightedSections').items()})
+            args['highlighted_sections'] = {k : StringBuilder.from_dict(v) for k,v in _dict.get('highlightedSections').items()}
         if 'passages' in _dict:
             args['passages'] = _dict.get('passages')
         if 'annotations' in _dict:
-            args['annotations'] = ({k : AnnotationModel._from_dict(v) for k, v in
-                                    _dict.get('annotations').items()})
+            args['annotations'] = {k : AnnotationModel.from_dict(v) for k,v in _dict.get('annotations').items()}
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a SearchMatchesModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'external_id') and self.external_id is not None:
@@ -4765,6 +6392,10 @@ class SearchMatchesModel(object):
             _dict['medlineLicense'] = self.medline_license
         if hasattr(self, 'href_pub_med') and self.href_pub_med is not None:
             _dict['hrefPubMed'] = self.href_pub_med
+        if hasattr(self, 'href_pmc') and self.href_pmc is not None:
+            _dict['hrefPmc'] = self.href_pmc
+        if hasattr(self, 'href_doi') and self.href_doi is not None:
+            _dict['hrefDoi'] = self.href_doi
         if hasattr(self, 'pdf_url') and self.pdf_url is not None:
             _dict['pdfUrl'] = self.pdf_url
         if hasattr(self, 'reference_url') and self.reference_url is not None:
@@ -4776,30 +6407,33 @@ class SearchMatchesModel(object):
         if hasattr(self, 'highlighted_body') and self.highlighted_body is not None:
             _dict['highlightedBody'] = self.highlighted_body
         if hasattr(self, 'highlighted_sections') and self.highlighted_sections is not None:
-            _dict['highlightedSections'] = ({k : v._to_dict() for k, v in
-                                             self.highlighted_sections.items()})
+            _dict['highlightedSections'] = {k : v.to_dict() for k,v in self.highlighted_sections.items()}
         if hasattr(self, 'passages') and self.passages is not None:
             _dict['passages'] = self.passages
         if hasattr(self, 'annotations') and self.annotations is not None:
-            _dict['annotations'] = {k : v._to_dict() for k, v in self.annotations.items()}
+            _dict['annotations'] = {k : v.to_dict() for k,v in self.annotations.items()}
         return _dict
 
-    def __str__(self):
-        """Return a `str` version of this SearchMatchesModel object."""
-        return json.dumps(self._to_dict(), indent=2)
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
-    def __eq__(self, other):
+    def __str__(self) -> str:
+        """Return a `str` version of this SearchMatchesModel object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'SearchMatchesModel') -> bool:
         """Return `true` when self and other are equal, false otherwise."""
         if not isinstance(other, self.__class__):
             return False
         return self.__dict__ == other.__dict__
 
-    def __ne__(self, other):
+    def __ne__(self, other: 'SearchMatchesModel') -> bool:
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
 
 
-class SearchModel(object):
+class SearchModel():
     """
     Model for search criteria.
 
@@ -4807,66 +6441,72 @@ class SearchModel(object):
     :attr int page_number: (optional) Page number.
     :attr int get_limit: (optional) Search result limit.
     :attr int total_document_count: (optional) Total number of search matches in the
-    corpus.
-    :attr list[Concept] concepts: (optional) Ontology artifact results from search.
-    :attr list[str] types: (optional) Ontology semantic types.
-    :attr list[Attribute] attributes: (optional) Attribute artifact results from search.
-    :attr list[Concept] values: (optional) Attribute artifact value results from search.
+          corpus.
+    :attr List[Concept] concepts: (optional) Ontology artifact results from search.
+    :attr List[str] types: (optional) Ontology semantic types.
+    :attr List[Attribute] attributes: (optional) Attribute artifact results from
+          search.
+    :attr List[Concept] values: (optional) Attribute artifact value results from
+          search.
     :attr dict ranges: (optional) Attribute value range results from search.
-    :attr list[Concept] typeahead: (optional) Type-ahead suggestion results in search.
+    :attr List[Concept] typeahead: (optional) Type-ahead suggestion results in
+          search.
     :attr dict aggregations: (optional) Aggregate result targets in search.
     :attr dict date_histograms: (optional) Date range of results from search.
-    :attr list[Qualifer] qualifiers: (optional) Attribute qualifier results from search.
+    :attr List[Qualifer] qualifiers: (optional) Attribute qualifier results from
+          search.
     :attr Backend backend: (optional) Object representing repository response.
-    :attr object expanded_query: (optional) Search expression that includes all levels of
-    criteria expression.
-    :attr BooleanConcepts bool_concepts: (optional) Object representingn boolean concept
-    search criteria.
-    :attr dict concepts_exist: (optional) Whether ontolgoy artifacts were provided in
-    search conditions.
+    :attr object expanded_query: (optional) Search expression that includes all
+          levels of criteria expression.
+    :attr BooleanOperands parsed_bool_expression: (optional) Object representingn
+          boolean operands search criteria.
+    :attr dict concepts_exist: (optional) Whether ontolgoy artifacts were provided
+          in search conditions.
     :attr str cursor_id: (optional)
-    :attr list[str] vocabs: (optional)
-    :attr list[RankedDocument] documents: (optional) Documents returned from search.
-    :attr list[SearchModel] sub_queries: (optional)
+    :attr List[str] vocabs: (optional)
+    :attr dict annotations: (optional) Annotations returned for the document.
+    :attr MetadataFields metadata: (optional)
+    :attr List[RankedDocument] documents: (optional) Documents returned from search.
+    :attr List[SearchModel] sub_queries: (optional)
     """
 
-    def __init__(self, href=None, page_number=None, get_limit=None, total_document_count=None,
-                 concepts=None, types=None, attributes=None, values=None, ranges=None,
-                 typeahead=None, aggregations=None, date_histograms=None, qualifiers=None,
-                 backend=None, expanded_query=None, bool_concepts=None, concepts_exist=None,
-                 cursor_id=None, vocabs=None, documents=None, sub_queries=None):
+    def __init__(self, *, href: str = None, page_number: int = None, get_limit: int = None, total_document_count: int = None, concepts: List['Concept'] = None, types: List[str] = None, attributes: List['Attribute'] = None, values: List['Concept'] = None, ranges: dict = None, typeahead: List['Concept'] = None, aggregations: dict = None, date_histograms: dict = None, qualifiers: List['Qualifer'] = None, backend: 'Backend' = None, expanded_query: object = None, parsed_bool_expression: 'BooleanOperands' = None, concepts_exist: dict = None, cursor_id: str = None, vocabs: List[str] = None, annotations: dict = None, metadata: 'MetadataFields' = None, documents: List['RankedDocument'] = None, sub_queries: List['SearchModel'] = None) -> None:
         """
         Initialize a SearchModel object.
 
         :param str href: (optional) Link.
         :param int page_number: (optional) Page number.
         :param int get_limit: (optional) Search result limit.
-        :param int total_document_count: (optional) Total number of search matches in the
-        corpus.
-        :param list[Concept] concepts: (optional) Ontology artifact results from search.
-        :param list[str] types: (optional) Ontology semantic types.
-        :param list[Attribute] attributes: (optional) Attribute artifact results from
-        search.
-        :param list[Concept] values: (optional) Attribute artifact value results from
-        search.
+        :param int total_document_count: (optional) Total number of search matches
+               in the corpus.
+        :param List[Concept] concepts: (optional) Ontology artifact results from
+               search.
+        :param List[str] types: (optional) Ontology semantic types.
+        :param List[Attribute] attributes: (optional) Attribute artifact results
+               from search.
+        :param List[Concept] values: (optional) Attribute artifact value results
+               from search.
         :param dict ranges: (optional) Attribute value range results from search.
-        :param list[Concept] typeahead: (optional) Type-ahead suggestion results in
-        search.
+        :param List[Concept] typeahead: (optional) Type-ahead suggestion results in
+               search.
         :param dict aggregations: (optional) Aggregate result targets in search.
         :param dict date_histograms: (optional) Date range of results from search.
-        :param list[Qualifer] qualifiers: (optional) Attribute qualifier results from
-        search.
+        :param List[Qualifer] qualifiers: (optional) Attribute qualifier results
+               from search.
         :param Backend backend: (optional) Object representing repository response.
-        :param object expanded_query: (optional) Search expression that includes all
-        levels of criteria expression.
-        :param BooleanConcepts bool_concepts: (optional) Object representingn boolean
-        concept search criteria.
-        :param dict concepts_exist: (optional) Whether ontolgoy artifacts were provided in
-        search conditions.
+        :param object expanded_query: (optional) Search expression that includes
+               all levels of criteria expression.
+        :param BooleanOperands parsed_bool_expression: (optional) Object
+               representingn boolean operands search criteria.
+        :param dict concepts_exist: (optional) Whether ontolgoy artifacts were
+               provided in search conditions.
         :param str cursor_id: (optional)
-        :param list[str] vocabs: (optional)
-        :param list[RankedDocument] documents: (optional) Documents returned from search.
-        :param list[SearchModel] sub_queries: (optional)
+        :param List[str] vocabs: (optional)
+        :param dict annotations: (optional) Annotations returned for the document.
+        :param MetadataFields metadata: (optional)
+        :param List[RankedDocument] documents: (optional) Documents returned from
+               search.
+        :param List[SearchModel] sub_queries: (optional)
         """
         self.href = href
         self.page_number = page_number
@@ -4883,15 +6523,17 @@ class SearchModel(object):
         self.qualifiers = qualifiers
         self.backend = backend
         self.expanded_query = expanded_query
-        self.bool_concepts = bool_concepts
+        self.parsed_bool_expression = parsed_bool_expression
         self.concepts_exist = concepts_exist
         self.cursor_id = cursor_id
         self.vocabs = vocabs
+        self.annotations = annotations
+        self.metadata = metadata
         self.documents = documents
         self.sub_queries = sub_queries
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict: Dict) -> 'SearchModel':
         """Initialize a SearchModel object from a json dictionary."""
         args = {}
         if 'href' in _dict:
@@ -4903,42 +6545,51 @@ class SearchModel(object):
         if 'totalDocumentCount' in _dict:
             args['total_document_count'] = _dict.get('totalDocumentCount')
         if 'concepts' in _dict:
-            args['concepts'] = [Concept._from_dict(x) for x in _dict.get('concepts')]
+            args['concepts'] = [Concept.from_dict(x) for x in _dict.get('concepts')]
         if 'types' in _dict:
             args['types'] = _dict.get('types')
         if 'attributes' in _dict:
-            args['attributes'] = [Attribute._from_dict(x) for x in _dict.get('attributes')]
+            args['attributes'] = [Attribute.from_dict(x) for x in _dict.get('attributes')]
         if 'values' in _dict:
-            args['values'] = [Concept._from_dict(x) for x in _dict.get('values')]
+            args['values'] = [Concept.from_dict(x) for x in _dict.get('values')]
         if 'ranges' in _dict:
-            args['ranges'] = {k : RangeModel._from_dict(v) for k, v in _dict.get('ranges')}
+            args['ranges'] = {k : RangeModel.from_dict(v) for k,v in _dict.get('ranges').items()}
         if 'typeahead' in _dict:
-            args['typeahead'] = [Concept._from_dict(x) for x in _dict.get('typeahead')]
+            args['typeahead'] = [Concept.from_dict(x) for x in _dict.get('typeahead')]
         if 'aggregations' in _dict:
             args['aggregations'] = _dict.get('aggregations')
         if 'dateHistograms' in _dict:
             args['date_histograms'] = _dict.get('dateHistograms')
         if 'qualifiers' in _dict:
-            args['qualifiers'] = [Qualifer._from_dict(x) for x in _dict.get('qualifiers')]
+            args['qualifiers'] = [Qualifier.from_dict(x) for x in _dict.get('qualifiers')]
         if 'backend' in _dict:
-            args['backend'] = Backend._from_dict(_dict.get('backend'))
+            args['backend'] = Backend.from_dict(_dict.get('backend'))
         if 'expandedQuery' in _dict:
             args['expanded_query'] = _dict.get('expandedQuery')
-        if 'boolConcepts' in _dict:
-            args['bool_concepts'] = BooleanConcepts._from_dict(_dict.get('boolConcepts'))
+        if 'parsedBoolExpression' in _dict:
+            args['parsed_bool_expression'] = BooleanOperands.from_dict(_dict.get('parsedBoolExpression'))
         if 'conceptsExist' in _dict:
             args['concepts_exist'] = _dict.get('conceptsExist')
         if 'cursorId' in _dict:
             args['cursor_id'] = _dict.get('cursorId')
         if 'vocabs' in _dict:
             args['vocabs'] = _dict.get('vocabs')
+        if 'annotations' in _dict:
+            args['annotations'] = {k : CommonDataModel.from_dict(v) for k,v in _dict.get('annotations').items()}
+        if 'metadata' in _dict:
+            args['metadata'] = MetadataFields.from_dict(_dict.get('metadata'))
         if 'documents' in _dict:
-            args['documents'] = [RankedDocument._from_dict(x) for x in _dict.get('documents')]
+            args['documents'] = [RankedDocument.from_dict(x) for x in _dict.get('documents')]
         if 'subQueries' in _dict:
-            args['sub_queries'] = [SearchModel._from_dict(x) for x in _dict.get('subQueries')]
+            args['sub_queries'] = [SearchModel.from_dict(x) for x in _dict.get('subQueries')]
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a SearchModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'href') and self.href is not None:
@@ -4950,68 +6601,76 @@ class SearchModel(object):
         if hasattr(self, 'total_document_count') and self.total_document_count is not None:
             _dict['totalDocumentCount'] = self.total_document_count
         if hasattr(self, 'concepts') and self.concepts is not None:
-            _dict['concepts'] = [x._to_dict() for x in self.concepts]
+            _dict['concepts'] = [x.to_dict() for x in self.concepts]
         if hasattr(self, 'types') and self.types is not None:
             _dict['types'] = self.types
         if hasattr(self, 'attributes') and self.attributes is not None:
-            _dict['attributes'] = [x._to_dict() for x in self.attributes]
+            _dict['attributes'] = [x.to_dict() for x in self.attributes]
         if hasattr(self, 'values') and self.values is not None:
-            _dict['values'] = [x._to_dict() for x in self.values]
+            _dict['values'] = [x.to_dict() for x in self.values]
         if hasattr(self, 'ranges') and self.ranges is not None:
-            _dict['ranges'] = {k : v._to_dict() for k, v in self.ranges.items()}
+            _dict['ranges'] = {k : v.to_dict() for k,v in self.ranges.items()}
         if hasattr(self, 'typeahead') and self.typeahead is not None:
-            _dict['typeahead'] = [x._to_dict() for x in self.typeahead]
+            _dict['typeahead'] = [x.to_dict() for x in self.typeahead]
         if hasattr(self, 'aggregations') and self.aggregations is not None:
             _dict['aggregations'] = self.aggregations
         if hasattr(self, 'date_histograms') and self.date_histograms is not None:
             _dict['dateHistograms'] = self.date_histograms
         if hasattr(self, 'qualifiers') and self.qualifiers is not None:
-            _dict['qualifiers'] = [x._to_dict() for x in self.qualifiers]
+            _dict['qualifiers'] = [x.to_dict() for x in self.qualifiers]
         if hasattr(self, 'backend') and self.backend is not None:
-            _dict['backend'] = self.backend._to_dict()
+            _dict['backend'] = self.backend.to_dict()
         if hasattr(self, 'expanded_query') and self.expanded_query is not None:
             _dict['expandedQuery'] = self.expanded_query
-        if hasattr(self, 'bool_concepts') and self.bool_concepts is not None:
-            _dict['boolConcepts'] = self.bool_concepts._to_dict()
+        if hasattr(self, 'parsed_bool_expression') and self.parsed_bool_expression is not None:
+            _dict['parsedBoolExpression'] = self.parsed_bool_expression.to_dict()
         if hasattr(self, 'concepts_exist') and self.concepts_exist is not None:
             _dict['conceptsExist'] = self.concepts_exist
         if hasattr(self, 'cursor_id') and self.cursor_id is not None:
             _dict['cursorId'] = self.cursor_id
         if hasattr(self, 'vocabs') and self.vocabs is not None:
             _dict['vocabs'] = self.vocabs
+        if hasattr(self, 'annotations') and self.annotations is not None:
+            _dict['annotations'] = {k : v.to_dict() for k,v in self.annotations.items()}
+        if hasattr(self, 'metadata') and self.metadata is not None:
+            _dict['metadata'] = self.metadata.to_dict()
         if hasattr(self, 'documents') and self.documents is not None:
-            _dict['documents'] = [x._to_dict() for x in self.documents]
+            _dict['documents'] = [x.to_dict() for x in self.documents]
         if hasattr(self, 'sub_queries') and self.sub_queries is not None:
-            _dict['subQueries'] = [x._to_dict() for x in self.sub_queries]
+            _dict['subQueries'] = [x.to_dict() for x in self.sub_queries]
         return _dict
 
-    def __str__(self):
-        """Return a `str` version of this SearchModel object."""
-        return json.dumps(self._to_dict(), indent=2)
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
-    def __eq__(self, other):
+    def __str__(self) -> str:
+        """Return a `str` version of this SearchModel object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'SearchModel') -> bool:
         """Return `true` when self and other are equal, false otherwise."""
         if not isinstance(other, self.__class__):
             return False
         return self.__dict__ == other.__dict__
 
-    def __ne__(self, other):
+    def __ne__(self, other: 'SearchModel') -> bool:
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
 
 
-class SentenceModel(object):
+class SentenceModel():
     """
     Object representing a document sentence.
 
     :attr str document_section: (optional) Document section for sentence.
-    :attr str text: (optional)
+    :attr StringBuilder text: (optional)
     :attr int begin: (optional) Starting sentence offset.
     :attr int end: (optional) Ending sentence offset.
     :attr int timestamp: (optional) Timestamp of sentence in video transcript.
     """
 
-    def __init__(self, document_section=None, text=None, begin=None, end=None, timestamp=None):
+    def __init__(self, *, document_section: str = None, text: 'StringBuilder' = None, begin: int = None, end: int = None, timestamp: int = None) -> None:
         """
         Initialize a SentenceModel object.
 
@@ -5028,13 +6687,13 @@ class SentenceModel(object):
         self.timestamp = timestamp
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict: Dict) -> 'SentenceModel':
         """Initialize a SentenceModel object from a json dictionary."""
         args = {}
         if 'documentSection' in _dict:
             args['document_section'] = _dict.get('documentSection')
         if 'text' in _dict:
-            args['text'] = _dict.get('text')
+            args['text'] = StringBuilder.from_dict(_dict.get('text'))
         if 'begin' in _dict:
             args['begin'] = _dict.get('begin')
         if 'end' in _dict:
@@ -5043,13 +6702,18 @@ class SentenceModel(object):
             args['timestamp'] = _dict.get('timestamp')
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a SentenceModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'document_section') and self.document_section is not None:
             _dict['documentSection'] = self.document_section
         if hasattr(self, 'text') and self.text is not None:
-            _dict['text'] = self.text
+            _dict['text'] = self.text.to_dict()
         if hasattr(self, 'begin') and self.begin is not None:
             _dict['begin'] = self.begin
         if hasattr(self, 'end') and self.end is not None:
@@ -5058,41 +6722,59 @@ class SentenceModel(object):
             _dict['timestamp'] = self.timestamp
         return _dict
 
-    def __str__(self):
-        """Return a `str` version of this SentenceModel object."""
-        return json.dumps(self._to_dict(), indent=2)
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
-    def __eq__(self, other):
+    def __str__(self) -> str:
+        """Return a `str` version of this SentenceModel object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'SentenceModel') -> bool:
         """Return `true` when self and other are equal, false otherwise."""
         if not isinstance(other, self.__class__):
             return False
         return self.__dict__ == other.__dict__
 
-    def __ne__(self, other):
+    def __ne__(self, other: 'SentenceModel') -> bool:
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
 
 
-class ServiceStatus(object):
+class ServiceStatus():
     """
     Object representing service runtime status.
 
+    :attr str version: (optional) version of the service.
+    :attr str up_time: (optional) service uptime since last restart.
     :attr str service_state: (optional) scurrent service state.
     :attr str state_details: (optional) service state details.
+    :attr str host_name: (optional) service uptime since last restart.
+    :attr int request_count: (optional) total number of requests during uptime.
+    :attr int max_memory_mb: (optional) Maximum memory used during uptime.
+    :attr int commited_memory_mb: (optional) Megabytes of committed memory.
+    :attr int in_use_memory_mb: (optional) Megabytes of memory used.
+    :attr int available_processors: (optional) number of available processors.
+    :attr int concurrent_requests: (optional) number of concurrent requests.
+    :attr int max_concurrent_requests: (optional) configured maximum concurrent
+          request limit.
+    :attr int total_rejected_requests: (optional) number of rejected requests.
+    :attr int total_blocked_requests: (optional) number of blocked requests.
     """
 
-    def __init__(self, service_state=None, state_details=None):
+    def __init__(self, *, version: str = None, up_time: str = None, service_state: str = None, state_details: str = None, host_name: str = None, request_count: int = None, max_memory_mb: int = None, commited_memory_mb: int = None, in_use_memory_mb: int = None, available_processors: int = None, concurrent_requests: int = None, max_concurrent_requests: int = None, total_rejected_requests: int = None, total_blocked_requests: int = None) -> None:
         """
         Initialize a ServiceStatus object.
 
         :param str service_state: (optional) scurrent service state.
         :param str state_details: (optional) service state details.
         """
+
         self.service_state = service_state
         self.state_details = state_details
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict: Dict) -> 'ServiceStatus':
         """Initialize a ServiceStatus object from a json dictionary."""
         args = {}
         if 'serviceState' in _dict:
@@ -5101,33 +6783,75 @@ class ServiceStatus(object):
             args['state_details'] = _dict.get('stateDetails')
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a ServiceStatus object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
         """Return a json dictionary representing this model."""
         _dict = {}
+        if hasattr(self, 'version') and self.version is not None:
+            _dict['version'] = self.version
+        if hasattr(self, 'up_time') and self.up_time is not None:
+            _dict['upTime'] = self.up_time
         if hasattr(self, 'service_state') and self.service_state is not None:
             _dict['serviceState'] = self.service_state
         if hasattr(self, 'state_details') and self.state_details is not None:
             _dict['stateDetails'] = self.state_details
+        if hasattr(self, 'host_name') and self.host_name is not None:
+            _dict['hostName'] = self.host_name
+        if hasattr(self, 'request_count') and self.request_count is not None:
+            _dict['requestCount'] = self.request_count
+        if hasattr(self, 'max_memory_mb') and self.max_memory_mb is not None:
+            _dict['maxMemoryMb'] = self.max_memory_mb
+        if hasattr(self, 'commited_memory_mb') and self.commited_memory_mb is not None:
+            _dict['commitedMemoryMb'] = self.commited_memory_mb
+        if hasattr(self, 'in_use_memory_mb') and self.in_use_memory_mb is not None:
+            _dict['inUseMemoryMb'] = self.in_use_memory_mb
+        if hasattr(self, 'available_processors') and self.available_processors is not None:
+            _dict['availableProcessors'] = self.available_processors
+        if hasattr(self, 'concurrent_requests') and self.concurrent_requests is not None:
+            _dict['concurrentRequests'] = self.concurrent_requests
+        if hasattr(self, 'max_concurrent_requests') and self.max_concurrent_requests is not None:
+            _dict['maxConcurrentRequests'] = self.max_concurrent_requests
+        if hasattr(self, 'total_rejected_requests') and self.total_rejected_requests is not None:
+            _dict['totalRejectedRequests'] = self.total_rejected_requests
+        if hasattr(self, 'total_blocked_requests') and self.total_blocked_requests is not None:
+            _dict['totalBlockedRequests'] = self.total_blocked_requests
         return _dict
 
-    def __str__(self):
-        """Return a `str` version of this ServiceStatus object."""
-        return json.dumps(self._to_dict(), indent=2)
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
-    def __eq__(self, other):
+    def __str__(self) -> str:
+        """Return a `str` version of this ServiceStatus object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'ServiceStatus') -> bool:
         """Return `true` when self and other are equal, false otherwise."""
         if not isinstance(other, self.__class__):
             return False
         return self.__dict__ == other.__dict__
 
-    def __ne__(self, other):
+    def __ne__(self, other: 'ServiceStatus') -> bool:
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
+
+    
+    class ServiceStateEnum(Enum):
+        """
+        scurrent service state.
+        """
+        OK = "OK"
+        WARNING = "WARNING"
+        ERROR = "ERROR"
+
 
 class SortEntry(object):
     """
     Object representing sort preference.
-
     :attr str field: field to sort on
     :attr Order sortOrder: sort direction
     """
@@ -5135,7 +6859,6 @@ class SortEntry(object):
     def __init__(self, field, sort_order):
         """
         Initialize a SortEntry object.
-
         :param str field: field to sort on
         :param Order sortOrder: sort direction
         """
@@ -5143,7 +6866,7 @@ class SortEntry(object):
         self.sort_order = sort_order
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a ServiceStatus object from a json dictionary."""
         args = {}
         if 'field' in _dict:
@@ -5152,7 +6875,12 @@ class SortEntry(object):
             args['sort_order'] = Order._from_dict(_dict.get('sortOrder'))
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a AggregationModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'field') and self.field is not None:
@@ -5160,6 +6888,10 @@ class SortEntry(object):
         if hasattr(self, 'sort_order') and self.sort_order is not None:
             _dict['sortOrder'] = self.sort_order._to_dict()
         return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
     def __str__(self):
         """Return a `str` version of this ServiceStatus object."""
@@ -5175,84 +6907,54 @@ class SortEntry(object):
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
 
-class StringBuilder(object):
+
+class StringBuilder():
     """
     StringBuilder.
 
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Initialize a StringBuilder object.
 
         """
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict: Dict) -> 'StringBuilder':
         """Initialize a StringBuilder object from a json dictionary."""
+
         args = {}
         return cls(**args)
-
-    def _to_dict(self):
-        """Return a json dictionary representing this model."""
-        _dict = {}
-        return _dict
-
-    def __str__(self):
-        """Return a `str` version of this StringBuilder object."""
-        return json.dumps(self._to_dict(), indent=2)
-
-    def __eq__(self, other):
-        """Return `true` when self and other are equal, false otherwise."""
-        if not isinstance(other, self.__class__):
-            return False
-        return self.__dict__ == other.__dict__
-
-    def __ne__(self, other):
-        """Return `true` when self and other are not equal, false otherwise."""
-        return not self == other
-
-class Title(object):
-    """
-    Title.
-    :attr int boost: (optional)
-    """
-
-    def __init__(self, boost=None):
-        """
-        Initialize a Title object.
-        :param int boost: (optional)
-        """
-        self.boost = boost
 
     @classmethod
     def _from_dict(cls, _dict):
-        """Initialize a Title object from a json dictionary."""
-        args = {}
-        if 'boost' in _dict:
-            args['boost'] = _dict.get('boost')
-        return cls(**args)
+        """Initialize a StringBuilder object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        return _dict
 
     def _to_dict(self):
         """Return a json dictionary representing this model."""
-        _dict = {}
-        if hasattr(self, 'boost') and self.boost is not None:
-            _dict['boost'] = self.boost
-        return _dict
+        return self.to_dict()
 
-    def __str__(self):
-        """Return a `str` version of this Title object."""
-        return json.dumps(self._to_dict(), indent=2)
+    def __str__(self) -> str:
+        """Return a `str` version of this StringBuilder object."""
+        return json.dumps(self.to_dict(), indent=2)
 
-    def __eq__(self, other):
+    def __eq__(self, other: 'StringBuilder') -> bool:
         """Return `true` when self and other are equal, false otherwise."""
         if not isinstance(other, self.__class__):
             return False
         return self.__dict__ == other.__dict__
 
-    def __ne__(self, other):
+    def __ne__(self, other: 'StringBuilder') -> bool:
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
+
 
 class Supports(object):
     """
@@ -5268,19 +6970,28 @@ class Supports(object):
         self.supports = supports
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a Supports object from a json dictionary."""
         args = {}
         if 'supports' in _dict:
             args['supports'] = _dict.get('supports')
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a AggregationModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'supports') and self.supports is not None:
             _dict['supports'] = self.supports
         return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
     def __str__(self):
         """Return a `str` version of this Supports object."""
@@ -5295,6 +7006,148 @@ class Supports(object):
     def __ne__(self, other):
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
+
+
+class TextSpan():
+    """
+    Objeft representing a document text span.
+
+    :attr str section: (optional) Document section where artifact was found.
+    :attr int begin: (optional) Start of text span.
+    :attr int end: (optional) End of text span.
+    :attr str covered_text: (optional) Covered text span.
+    :attr str source: (optional) Documemnt provider.
+    :attr str type: (optional) Text span type.
+    """
+
+    def __init__(self, *, section: str = None, begin: int = None, end: int = None, covered_text: str = None, source: str = None, type: str = None) -> None:
+        """
+        Initialize a TextSpan object.
+
+        :param str section: (optional) Document section where artifact was found.
+        :param int begin: (optional) Start of text span.
+        :param int end: (optional) End of text span.
+        :param str covered_text: (optional) Covered text span.
+        :param str source: (optional) Documemnt provider.
+        :param str type: (optional) Text span type.
+        """
+        self.section = section
+        self.begin = begin
+        self.end = end
+        self.covered_text = covered_text
+        self.source = source
+        self.type = type
+
+    @classmethod
+    def from_dict(cls, _dict: Dict) -> 'TextSpan':
+        """Initialize a TextSpan object from a json dictionary."""
+        args = {}
+        if 'section' in _dict:
+            args['section'] = _dict.get('section')
+        if 'begin' in _dict:
+            args['begin'] = _dict.get('begin')
+        if 'end' in _dict:
+            args['end'] = _dict.get('end')
+        if 'coveredText' in _dict:
+            args['covered_text'] = _dict.get('coveredText')
+        if 'source' in _dict:
+            args['source'] = _dict.get('source')
+        if 'type' in _dict:
+            args['type'] = _dict.get('type')
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a TextSpan object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'section') and self.section is not None:
+            _dict['section'] = self.section
+        if hasattr(self, 'begin') and self.begin is not None:
+            _dict['begin'] = self.begin
+        if hasattr(self, 'end') and self.end is not None:
+            _dict['end'] = self.end
+        if hasattr(self, 'covered_text') and self.covered_text is not None:
+            _dict['coveredText'] = self.covered_text
+        if hasattr(self, 'source') and self.source is not None:
+            _dict['source'] = self.source
+        if hasattr(self, 'type') and self.type is not None:
+            _dict['type'] = self.type
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __str__(self) -> str:
+        """Return a `str` version of this TextSpan object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'TextSpan') -> bool:
+        """Return `true` when self and other are equal, false otherwise."""
+        if not isinstance(other, self.__class__):
+            return False
+        return self.__dict__ == other.__dict__
+
+    def __ne__(self, other: 'TextSpan') -> bool:
+        """Return `true` when self and other are not equal, false otherwise."""
+        return not self == other
+
+
+class Title(object):
+    """
+    Title.
+    :attr int boost: (optional)
+    """
+
+    def __init__(self, boost=None):
+        """
+        Initialize a Title object.
+        :param int boost: (optional)
+        """
+        self.boost = boost
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize a Title object from a json dictionary."""
+        args = {}
+        if 'boost' in _dict:
+            args['boost'] = _dict.get('boost')
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a AggregationModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'boost') and self.boost is not None:
+            _dict['boost'] = self.boost
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __str__(self):
+        """Return a `str` version of this Title object."""
+        return json.dumps(self._to_dict(), indent=2)
+
+    def __eq__(self, other):
+        """Return `true` when self and other are equal, false otherwise."""
+        if not isinstance(other, self.__class__):
+            return False
+        return self.__dict__ == other.__dict__
+
+    def __ne__(self, other):
+        """Return `true` when self and other are not equal, false otherwise."""
+        return not self == other
+
 
 class Typeahead(object):
     """
@@ -5322,7 +7175,7 @@ class Typeahead(object):
         self.no_duplicates = no_duplicates
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a Typeahead object from a json dictionary."""
         args = {}
         if 'ontology' in _dict:
@@ -5337,7 +7190,12 @@ class Typeahead(object):
             args['no_duplicates'] = _dict.get('noDuplicates')
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a AggregationModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'ontology') and self.ontology is not None:
@@ -5351,6 +7209,10 @@ class Typeahead(object):
         if hasattr(self, 'no_duplicates') and self.no_duplicates is not None:
             _dict['noDuplicates'] = self.no_duplicates
         return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
     def __str__(self):
         """Return a `str` version of this Typeahead object."""
@@ -5369,32 +7231,39 @@ class Typeahead(object):
 class TypesModel(object):
     """
     List of ontology semantic types.
-
     :attr list[str] types: (optional) List of ontology defined semantic types.
     """
 
     def __init__(self, types=None):
         """
         Initialize a TypesModel object.
-
         :param list[str] types: (optional) List of ontology defined semantic types.
         """
         self.types = types
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a TypesModel object from a json dictionary."""
         args = {}
         if 'types' in _dict:
             args['types'] = _dict.get('types')
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a AggregationModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'types') and self.types is not None:
             _dict['types'] = self.types
         return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
     def __str__(self):
         """Return a `str` version of this TypesModel object."""
@@ -5407,6 +7276,67 @@ class TypesModel(object):
         return self.__dict__ == other.__dict__
 
     def __ne__(self, other):
+        """Return `true` when self and other are not equal, false otherwise."""
+        return not self == other
+
+
+class UnstructuredModel():
+    """
+    Model representing unstructed text.
+
+    :attr str text: (optional) Text of the document.
+    :attr DataModel data: (optional) Model representing ontology artifacts.
+    """
+
+    def __init__(self, *, text: str = None, data: 'DataModel' = None) -> None:
+        """
+        Initialize a UnstructuredModel object.
+
+        :param str text: (optional) Text of the document.
+        :param DataModel data: (optional) Model representing ontology artifacts.
+        """
+        self.text = text
+        self.data = data
+
+    @classmethod
+    def from_dict(cls, _dict: Dict) -> 'UnstructuredModel':
+        """Initialize a UnstructuredModel object from a json dictionary."""
+        args = {}
+        if 'text' in _dict:
+            args['text'] = _dict.get('text')
+        if 'data' in _dict:
+            args['data'] = DataModel.from_dict(_dict.get('data'))
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a UnstructuredModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'text') and self.text is not None:
+            _dict['text'] = self.text
+        if hasattr(self, 'data') and self.data is not None:
+            _dict['data'] = self.data.to_dict()
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __str__(self) -> str:
+        """Return a `str` version of this UnstructuredModel object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'UnstructuredModel') -> bool:
+        """Return `true` when self and other are equal, false otherwise."""
+        if not isinstance(other, self.__class__):
+            return False
+        return self.__dict__ == other.__dict__
+
+    def __ne__(self, other: 'UnstructuredModel') -> bool:
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
 
@@ -5431,7 +7361,7 @@ class Values(object):
         self.scope = scope
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a Values object from a json dictionary."""
         args = {}
         if 'attributeId' in _dict:
@@ -5442,7 +7372,12 @@ class Values(object):
             args['scope'] = _dict.get('scope')
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a AggregationModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'attribute_id') and self.attribute_id is not None:
@@ -5452,6 +7387,10 @@ class Values(object):
         if hasattr(self, 'scope') and self.scope is not None:
             _dict['scope'] = self.scope
         return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
     def __str__(self):
         """Return a `str` version of this Values object."""
@@ -5485,7 +7424,7 @@ class YearAndHits(object):
         self.hits = hits
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a YearAndHits object from a json dictionary."""
         args = {}
         if 'date' in _dict:
@@ -5494,7 +7433,12 @@ class YearAndHits(object):
             args['hits'] = _dict.get('hits')
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a AggregationModel object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'date') and self.date is not None:
@@ -5502,6 +7446,10 @@ class YearAndHits(object):
         if hasattr(self, 'hits') and self.hits is not None:
             _dict['hits'] = self.hits
         return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
 
     def __str__(self):
         """Return a `str` version of this YearAndHits object."""

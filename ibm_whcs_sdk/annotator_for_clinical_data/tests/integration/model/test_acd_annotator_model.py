@@ -17,10 +17,9 @@
 import ibm_whcs_sdk.annotator_for_clinical_data as wh
 
 def test_Annotator_model():
-    annotator_data = wh.Annotator()
+    annotator_data = wh.Annotator(name='concept_value')
     flow_data = wh.Flow()
     parameter_data = []
     configurations_data = []
-    model = wh.Annotator(annotator=annotator_data, flow=flow_data, name="name", description="describe",
-                         parameters=parameter_data, configurations=configurations_data)
+    model = wh.Annotator(name='concept_value', parameters=parameter_data, configurations=configurations_data)
     assert model.__str__() is not None

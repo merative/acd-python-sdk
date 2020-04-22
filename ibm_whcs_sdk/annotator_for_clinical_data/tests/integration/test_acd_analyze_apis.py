@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import configparser
+from ibm_cloud_sdk_core.authenticators.iam_authenticator import IAMAuthenticator
 import ibm_whcs_sdk.annotator_for_clinical_data as wh
 import test_unstructured_container as tuc
 
@@ -28,7 +29,12 @@ LEVEL = CONFIG.get('settings', 'logging_level')
 DISABLE_SSL = CONFIG.get('settings', 'disable_ssl')
 FLOW = CONFIG.get('settings', 'flow')
 
-ACD = wh.AnnotatorForClinicalDataV1(BASE_URL, APIKEY, IAMURL, VERSION, LEVEL, DISABLE_SSL)
+ACD = wh.AnnotatorForClinicalDataV1(
+    authenticator=IAMAuthenticator(apikey=APIKEY, url=IAMURL, disable_ssl_verification=DISABLE_SSL),
+    version=VERSION
+    )
+ACD.set_service_url(BASE_URL)
+ACD.set_disable_ssl_verification(DISABLE_SSL)
 
 LINE1 = 'The patient has cancer and is currently taking 400 ml sisplatin chemotherapy.\n'
 LINE2 = 'HISTORY:  Patient is allergic to latex.  Patient cannot walk and needs help bathing and getting around.  '
@@ -152,7 +158,7 @@ def test_analyze_org():
     flow_entries.append(wh.FlowEntry(walking_annotator))
     flow_entries.append(wh.FlowEntry(section))
 
-    flow = wh.Flow(flow_entries, False)
+    flow = wh.Flow(elements = flow_entries, async_ = False)
     annotator_flow = wh.AnnotatorFlow(flow=flow)
 
     containers = [wh.UnstructuredContainer(text=TEXT)]
@@ -223,8 +229,7 @@ def test_analyze():
     flow_entries.append(wh.FlowEntry(toileting_annotator))
     flow_entries.append(wh.FlowEntry(walking_annotator))
     flow_entries.append(wh.FlowEntry(section))
-
-    flow = wh.Flow(flow_entries, False)
+    flow = wh.Flow(elements = flow_entries, async_ = False)
     annotator_flow = wh.AnnotatorFlow(flow)
 
     containers = [wh.UnstructuredContainer(text=TEXT)]
@@ -283,8 +288,7 @@ def test_analyze_text_array():
     flow_entries.append(wh.FlowEntry(toileting_annotator))
     flow_entries.append(wh.FlowEntry(walking_annotator))
     flow_entries.append(wh.FlowEntry(section))
-
-    flow = wh.Flow(flow_entries, False)
+    flow = wh.Flow(elements = flow_entries, async_ = False)
     annotator_flow = wh.AnnotatorFlow(flow)
 
     containers = [wh.UnstructuredContainer(text=TEXT)]

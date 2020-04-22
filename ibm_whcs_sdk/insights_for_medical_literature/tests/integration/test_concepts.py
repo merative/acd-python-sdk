@@ -15,6 +15,7 @@
 # limitations under the License.
 import configparser
 import ibm_whcs_sdk.insights_for_medical_literature as wh
+from ibm_cloud_sdk_core.authenticators.iam_authenticator import IAMAuthenticator
 
 # To access a secure environment additional parameters are needed on the constructor which are listed below
 CONFIG = configparser.RawConfigParser()
@@ -32,7 +33,11 @@ SECOND_CUI = CONFIG.get('search', 'second_cui')
 ATTRIBUTE = CONFIG.get('search', 'attribute')
 VALID_LIMIT = 10
 
-IML_TEST = wh.InsightsForMedicalLiteratureServiceV1(BASE_URL, APIKEY, IAMURL, VERSION, LEVEL, DISABLE_SSL)
+IML_TEST = wh.InsightsForMedicalLiteratureServiceV1(
+    authenticator=IAMAuthenticator(apikey=APIKEY),
+    version=VERSION
+    )
+IML_TEST.set_service_url(BASE_URL)
 
 def test_get_from_cuis():
     cuis = []

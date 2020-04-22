@@ -15,6 +15,7 @@
 # limitations under the License.
 import configparser
 import ibm_whcs_sdk.insights_for_medical_literature as wh
+from ibm_cloud_sdk_core.authenticators.iam_authenticator import IAMAuthenticator
 
 # To access a secure environment additional parameters are needed on the constructor which are listed below
 CONFIG = configparser.RawConfigParser()
@@ -30,7 +31,13 @@ CORPUS = CONFIG.get('settings', 'corpus')
 CUI = CONFIG.get('search', 'search_cui')
 ONTOLOGY = CONFIG.get('search', 'umls')
 
-IML_TEST = wh.InsightsForMedicalLiteratureServiceV1(BASE_URL, APIKEY, IAMURL, VERSION, LEVEL, DISABLE_SSL)
+IML_TEST = wh.InsightsForMedicalLiteratureServiceV1(
+    authenticator=IAMAuthenticator(apikey=APIKEY),
+    version=VERSION
+    )
+IML_TEST.set_service_url(BASE_URL)
+
+ontologies = []
 
 def test_get_similar_umls():
     response = IML_TEST.get_similar_concepts(CORPUS, name_or_id=CUI, return_ontologies=ONTOLOGY)
@@ -71,12 +78,18 @@ def test_get_similar_mesh():
 
 def test_get_similar_no_corpus():
     try:
-        IML_TEST.get_similar_concepts(None, CUI)
+        IML_TEST.get_similar_concepts(None, CUI, return_ontologies=ontologies)
     except ValueError as exp:
         assert exp is not None
 
 def test_get_similar_no_concept():
     try:
-        IML_TEST.get_similar_concepts(CORPUS, None)
+        IML_TEST.get_similar_concepts(CORPUS, None, return_ontologies=ontologies)
+    except ValueError as exp:
+        assert exp is not None
+
+def test_get_similar_no_ontologies():
+    try:
+        IML_TEST.get_similar_concepts(CORPUS, CUI, return_ontologies=None)
     except ValueError as exp:
         assert exp is not None

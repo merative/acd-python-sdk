@@ -15,6 +15,7 @@
 # limitations under the License.
 import configparser
 import ibm_whcs_sdk.insights_for_medical_literature as wh
+from ibm_cloud_sdk_core.authenticators.iam_authenticator import IAMAuthenticator
 
 
 # To access a secure environment additional parameters are needed on the constructor which are listed below
@@ -31,14 +32,18 @@ CORPUS = CONFIG.get('settings', 'corpus')
 CUI = CONFIG.get('search', 'search_cui')
 ONTOLOGY = CONFIG.get('search', 'umls')
 
-IML_TEST = wh.InsightsForMedicalLiteratureServiceV1(BASE_URL, APIKEY, IAMURL, VERSION, LEVEL, DISABLE_SSL)
+IML_TEST = wh.InsightsForMedicalLiteratureServiceV1(
+    authenticator=IAMAuthenticator(apikey=APIKEY),
+    version=VERSION
+    )
+IML_TEST.set_service_url(BASE_URL)
 
 def test_get_hit_count():
     response = IML_TEST.get_hit_count(CORPUS, CUI)
     assert response is not None
 
 def test_get_hit_count_ontology():
-    response = IML_TEST.get_hit_count(CORPUS, CUI, ONTOLOGY)
+    response = IML_TEST.get_hit_count(CORPUS, CUI, ontology=ONTOLOGY)
     assert response is not None
 
 def test_get_hit_count_no_corpus():

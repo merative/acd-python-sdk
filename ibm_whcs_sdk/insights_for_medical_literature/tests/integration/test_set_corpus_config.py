@@ -15,6 +15,7 @@
 # limitations under the License.
 import configparser
 import ibm_whcs_sdk.insights_for_medical_literature as wh
+from ibm_cloud_sdk_core.authenticators.iam_authenticator import IAMAuthenticator
 
 CONFIG = configparser.RawConfigParser()
 CONFIG.read('./ibm_whcs_sdk/insights_for_medical_literature/tests/config.ini')
@@ -29,10 +30,14 @@ ICD_URL = CONFIG.get('custom', 'icd_url')
 USERNAME = CONFIG.get('custom', 'icd_user')
 PASSWORD = CONFIG.get('custom', 'icd_pwd')
 
-IML_TEST = wh.InsightsForMedicalLiteratureServiceV1(BASE_URL, APIKEY, IAMURL, VERSION, LEVEL, DISABLE_SSL)
+IML_TEST = wh.InsightsForMedicalLiteratureServiceV1(
+    authenticator=IAMAuthenticator(apikey=APIKEY),
+    version=VERSION
+    )
+IML_TEST.set_service_url(BASE_URL)
 
-def test_delete_corpus():
+def test_configure_corpus_repository():
     try:
-        IML_TEST.set_corpus_config(USERNAME, PASSWORD, ICD_URL)
+        IML_TEST.set_corpus_config(user_name=USERNAME, password=PASSWORD, corpus_uri=ICD_URL)
     except wh.IMLException as imle:
         assert imle is not None
