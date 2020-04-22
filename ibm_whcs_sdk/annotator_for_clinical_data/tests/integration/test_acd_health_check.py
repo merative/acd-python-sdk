@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import configparser
+from ibm_cloud_sdk_core.authenticators.iam_authenticator import IAMAuthenticator
 import ibm_whcs_sdk.annotator_for_clinical_data as wh
 
 CONFIG = configparser.RawConfigParser()
@@ -25,7 +26,13 @@ IAMURL = CONFIG.get('settings', 'iam_url')
 VERSION = CONFIG.get('settings', 'version')
 LEVEL = CONFIG.get('settings', 'logging_level')
 DISABLE_SSL = CONFIG.get('settings', 'disable_ssl')
-ACD = wh.AnnotatorForClinicalDataV1(BASE_URL, APIKEY, IAMURL, VERSION, LEVEL, DISABLE_SSL)
+
+ACD = wh.AnnotatorForClinicalDataV1(
+    authenticator=IAMAuthenticator(apikey=APIKEY, url=IAMURL, disable_ssl_verification=DISABLE_SSL),
+    version=VERSION
+    )
+ACD.set_service_url(BASE_URL)
+ACD.set_disable_ssl_verification(DISABLE_SSL)
 
 def test_get_health_check():
     response = ACD.get_health_check_status()

@@ -18,6 +18,7 @@
 
 import configparser
 import ibm_whcs_sdk.insights_for_medical_literature as wh
+from ibm_cloud_sdk_core.authenticators.iam_authenticator import IAMAuthenticator
 
 # To access a secure environment additional parameters are needed on the constructor which are listed below
 CONFIG = configparser.RawConfigParser()
@@ -35,7 +36,11 @@ ONTOLGOY = CONFIG.get('search', 'umls')
 QUERY = CONFIG.get('search', 'typeahead_query')
 TYPE = CONFIG.get('search', 'typeahead_type')
 
-IML_TEST = wh.InsightsForMedicalLiteratureServiceV1(BASE_URL, APIKEY, IAMURL, VERSION, LEVEL, DISABLE_SSL)
+IML_TEST = wh.InsightsForMedicalLiteratureServiceV1(
+    authenticator=IAMAuthenticator(apikey=APIKEY),
+    version=VERSION
+    )
+IML_TEST.set_service_url(BASE_URL)
 
 # test can only be successful against a custom plan intance
 def test_search_typeahead():

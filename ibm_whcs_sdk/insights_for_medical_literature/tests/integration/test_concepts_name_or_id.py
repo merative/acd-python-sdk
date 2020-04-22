@@ -15,6 +15,7 @@
 # limitations under the License.
 import configparser
 import ibm_whcs_sdk.insights_for_medical_literature as wh
+from ibm_cloud_sdk_core.authenticators.iam_authenticator import IAMAuthenticator
 
 # To access a secure environment additional parameters are needed on the constructor which are listed below
 CONFIG = configparser.RawConfigParser()
@@ -30,7 +31,11 @@ CORPUS = CONFIG.get('settings', 'corpus')
 CUI = CONFIG.get('search', 'search_cui')
 ONTOLOGY = CONFIG.get('search', 'umls')
 
-IML_TEST = wh.InsightsForMedicalLiteratureServiceV1(BASE_URL, APIKEY, IAMURL, VERSION, LEVEL, DISABLE_SSL)
+IML_TEST = wh.InsightsForMedicalLiteratureServiceV1(
+    authenticator=IAMAuthenticator(apikey=APIKEY),
+    version=VERSION
+    )
+IML_TEST.set_service_url(BASE_URL)
 
 def test_get_from_name_identifier():
     response = IML_TEST.get_cui_info(CORPUS, CUI)
@@ -41,7 +46,7 @@ def test_get_from_name_identifier():
     assert concept_info.preferred_name is not None
 
 def test_get_with_ontology():
-    response = IML_TEST.get_cui_info(CORPUS, CUI, ONTOLOGY, 'semanticTypes')
+    response = IML_TEST.get_cui_info(CORPUS, CUI, ontology=ONTOLOGY, fields='semanticTypes')
     concept_info = wh.ConceptInfoModel._from_dict(response.get_result())
     assert concept_info is not None
     assert concept_info.cui == CUI
@@ -50,7 +55,7 @@ def test_get_with_ontology():
     assert concept_info.preferred_name is None
 
 def test_get_tree_layout():
-    response = IML_TEST.get_cui_info(CORPUS, CUI, ONTOLOGY, 'preferredName,definition', True)
+    response = IML_TEST.get_cui_info(CORPUS, CUI, ontology=ONTOLOGY, fields='preferredName,definition', tree_layout=True)
     concept_info = wh.ConceptInfoModel._from_dict(response.get_result())
     assert concept_info.cui == CUI
 

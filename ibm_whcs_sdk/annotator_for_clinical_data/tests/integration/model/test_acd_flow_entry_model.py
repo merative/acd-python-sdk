@@ -17,7 +17,6 @@
 import ibm_whcs_sdk.annotator_for_clinical_data as wh
 
 def test_FlowEntry_model():
-    annotator_data = wh.Annotator()
-    flow_data = wh.Flow()
-    model = wh.FlowEntry(annotator=annotator_data, flow=flow_data)
+    annotator_data = wh.Annotator('concept_detection')
+    model = wh.FlowEntry(annotator=annotator_data)
     assert model.__str__() is not None

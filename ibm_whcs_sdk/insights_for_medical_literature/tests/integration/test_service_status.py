@@ -15,6 +15,7 @@
 # limitations under the License.
 import configparser
 import ibm_whcs_sdk.insights_for_medical_literature as wh
+from ibm_cloud_sdk_core.authenticators.iam_authenticator import IAMAuthenticator
 
 # To access a secure environment additional parameters are needed on the constructor which are listed below
 CONFIG = configparser.RawConfigParser()
@@ -28,7 +29,11 @@ VERSION = CONFIG.get('settings', 'version')
 DISABLE_SSL = CONFIG.get('settings', 'disable_ssl')
 CORPUS = CONFIG.get('settings', 'corpus')
 
-IML_TEST = wh.InsightsForMedicalLiteratureServiceV1(BASE_URL, APIKEY, IAMURL, VERSION, LEVEL, DISABLE_SSL)
+IML_TEST = wh.InsightsForMedicalLiteratureServiceV1(
+    authenticator=IAMAuthenticator(apikey=APIKEY),
+    version=VERSION
+    )
+IML_TEST.set_service_url(BASE_URL)
 
 def test_service_health_check():
     response = IML_TEST.get_health_check_status()

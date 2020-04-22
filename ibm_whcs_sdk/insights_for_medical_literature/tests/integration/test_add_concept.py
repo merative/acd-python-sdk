@@ -18,6 +18,7 @@
 
 import configparser
 import ibm_whcs_sdk.insights_for_medical_literature as wh
+from ibm_cloud_sdk_core.authenticators.iam_authenticator import IAMAuthenticator
 
 CONFIG = configparser.RawConfigParser()
 CONFIG.read('./ibm_whcs_sdk/insights_for_medical_literature/tests/config.ini')
@@ -30,7 +31,11 @@ VERSION = CONFIG.get('settings', 'version')
 DISABLE_SSL = CONFIG.get('settings', 'disable_ssl')
 CORPUS = CONFIG.get('custom', 'custom_corpus')
 
-IML_TEST = wh.InsightsForMedicalLiteratureServiceV1(BASE_URL, APIKEY, IAMURL, VERSION, LEVEL, DISABLE_SSL)
+IML_TEST = wh.InsightsForMedicalLiteratureServiceV1(
+    authenticator=IAMAuthenticator(apikey=APIKEY),
+    version=VERSION
+    )
+IML_TEST.set_service_url(BASE_URL)
 
 # test can only be successful against a custom plan intance
 def test_add_concept():
@@ -39,7 +44,7 @@ def test_add_concept():
     entry = wh.DictionaryEntry(cui='BC001', preferred_name='test custom concept',
                                source='custom', semtypes=types)
     try:
-        IML_TEST.add_artifact(CORPUS, entry)
+        IML_TEST.add_artifact(CORPUS, dictionary_entry=entry)
     except wh.IMLException as imle:
         assert imle is not None
 
@@ -57,7 +62,7 @@ def test_add_concept_with_details():
                                  source_version=source_version, surface_forms=surface_forms,
                                  variants=variants)
     try:
-        response = IML_TEST.add_artifact(CORPUS, concept)
+        response = IML_TEST.add_artifact(CORPUS, dictionary_entry=concept)
         assert response is not None
     except wh.IMLException as imle:
         assert imle is not None
@@ -74,7 +79,7 @@ def test_add_concept_hiaerachical():
     concept = wh.DictionaryEntry(cui='HC001', preferred_name='test custom concept', source='custom',
                                  semtypes=types, children=children, parents=parents, siblings=siblings)
     try:
-        IML_TEST.add_artifact(CORPUS, concept)
+        IML_TEST.add_artifact(CORPUS, dictionary_entry=concept)
     except wh.IMLException as imle:
         assert imle is not None
 
@@ -83,7 +88,7 @@ def test_add_attribute():
     values.append('custom value')
     attribute = wh.AttributeEntry(attr_name='customAttr', doc_id='custom_attr', field_values=values)
     try:
-        response = IML_TEST.add_artifact(CORPUS, attribute)
+        response = IML_TEST.add_artifact(CORPUS, attribute_entry=attribute)
         assert response is not None
     except wh.IMLException as imle:
         assert imle is not None
@@ -99,7 +104,7 @@ def test_add_attribute_with_details():
                                   data_type='string', default_value='my value', description=description,
                                   value_type='string', possible_values=possible_values)
     try:
-        response = IML_TEST.add_artifact(CORPUS, attribute)
+        response = IML_TEST.add_artifact(CORPUS, attribute_entry=attribute)
         assert response is not None
     except wh.IMLException as imle:
         assert imle is not None
@@ -108,7 +113,7 @@ def test_add_artifact_no_corpus():
     types = []
     entry = wh.DictionaryEntry(cui='BC001', preferred_name='test custom concept', source='custom', semtypes=types)
     try:
-        response = IML_TEST.add_artifact(None, entry)
+        response = IML_TEST.add_artifact(None, dictionary_entry=entry)
         assert response is not None
     except ValueError as imle:
         assert imle is not None

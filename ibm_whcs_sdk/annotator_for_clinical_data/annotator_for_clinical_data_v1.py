@@ -1,6 +1,6 @@
 # coding: utf-8
 
-# Copyright 2018 IBM All Rights Reserved.
+# (C) Copyright IBM Corp. 2020.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,31 +15,27 @@
 # limitations under the License.
 
 """
-Natural Language Processing (NLP) service featuring a set of medical domain annotators for use in deriving entities
-and medical concepts from unstructured data. Multiple annotators may be invoked from a single request.
+Natural Language Processing (NLP) service featuring a set of medical domain annotators for
+use in detecting entities and medical concepts from unstructured data. Multiple annotators
+may be invoked from a single request.
 """
 
+from enum import Enum
+from typing import BinaryIO, Dict, List, TextIO, Union
 import json
-import logging
-import urllib3
-from ibm_cloud_sdk_core import BaseService
-from ibm_cloud_sdk_core import ApiException
-from ibm_cloud_sdk_core.authenticators import NoAuthAuthenticator
-from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
-from ibm_cloud_sdk_core.authenticators import BasicAuthenticator
-from ibm_whcs_sdk.common import get_sdk_headers
-urllib3.disable_warnings()
 
-SERVICE_NAME = 'AnnotatorForClinicalData'
-LOGGER = logging.getLogger(SERVICE_NAME)
+from ibm_cloud_sdk_core import BaseService, DetailedResponse, ApiException
+from ibm_cloud_sdk_core.authenticators.authenticator import Authenticator
+from ibm_cloud_sdk_core.get_authenticator import get_authenticator_from_environment
+from ibm_cloud_sdk_core.utils import convert_model
+from ibm_whcs_sdk.common import get_sdk_headers
 
 ##############################################################################
 # Exception Handling
 ##############################################################################
-class ACDException(Exception):
+class ACDException(ApiException):
     """
     Custom exception class for errors returned from ACD APIs.
-
     :param int code: The HTTP status code returned.
     :param str message: A message describing the error.
     :param str correlationId: A code to associate to the ACD error
@@ -53,81 +49,63 @@ class ACDException(Exception):
     def __str__(self):
         msg = ('Error: ' + str(self.message) + ', Code: ' + str(self.code)
                + ', CorrelationId: ' + str(self.correlation_id))
-        LOGGER.error(msg)
         return msg
 
 ##############################################################################
-# ACD Client
+# Service
 ##############################################################################
-class AnnotatorForClinicalDataV1(BaseService):
-    """
-    Client for the Annotator for Clinical Data service.
-    """
 
-    default_url = ''
-    latest_version = '2018-05-01'
+class AnnotatorForClinicalDataV1(BaseService):
+    """The Annotator for Clinical Data (ACD) V1 service."""
+
+    DEFAULT_SERVICE_URL = 'https://annotator-for-clinical-data-acd.cloud.ibm.com/services/clinical_data_annotator/api'
+    DEFAULT_SERVICE_NAME = 'annotator_for_clinical_data_acd'
+
+    @classmethod
+    def new_instance(cls,
+                     version: str,
+                     service_name: str = DEFAULT_SERVICE_NAME,
+                    ) -> 'AnnotatorForClinicalDataAcdV1':
+        """
+        Return a new client for the Annotator for Clinical Data (ACD) service using
+               the specified parameters and external configuration.
+
+        :param str version: The release date of the version of the API you want to
+               use. Specify dates in YYYY-MM-DD format.
+        """
+        if version is None:
+            raise ValueError('version must be provided')
+
+        authenticator = get_authenticator_from_environment(service_name)
+        service = cls(
+            version,
+            authenticator
+            )
+        service.configure_service(service_name)
+        return service
 
     def __init__(self,
-                 url=default_url,
-                 iam_apikey=None,
-                 iam_url=None,
-                 version=latest_version,
-                 logging_level=None,
-                 disable_ssl_verification=False):
+                 version: str,
+                 authenticator: Authenticator = None,
+                ) -> None:
         """
-        Construct a new client for the Annotator for Clinical Data service.
+        Construct a new client for the Annotator for Clinical Data (ACD) service.
 
-        :param str version: The API version date to use with the service, in
-               "YYYY-MM-DD" format.
-               The service uses the API version for the date you specify, or
-               the most recent version before that date. Note that you should
-               not programmatically specify the current date at runtime, in
-               case the API has been updated since your application's release.
-               Instead, specify a version date that is compatible with your
-               application, and don't change it until your application is
-               ready for a later version.
+        :param str version: The release date of the version of the API you want to
+               use. Specify dates in YYYY-MM-DD format.
 
-        :param str url: The base url to use when contacting the service (e.g.
-               "https://us-south.wh-acd.cloud.ibm.com/wh-acd/api/").
-        :param str iam_apikey: IAM key for service instance
-        :param str iam_url: URL for IAM instance authentication.
-        :param str logging_level: (optional)  Level of service API logging.  By default
-                all error messages are logged.  Valid values are CRITICAL, ERROR, WARNING,
-                INFO, DEBUG, and NOTSET
-        :param bool disable_ssl_verification: (optional) Determines whethher SSL verification
-                should be performed during service calls.  Default is False.  Setting to
-                True is not recommend for production environments.
+        :param Authenticator authenticator: The authenticator specifies the authentication mechanism.
+               Get up to date information from https://github.com/IBM/python-sdk-core/blob/master/README.md
+               about initializing the authenticator of your choice.
         """
+        if version is None:
+            raise ValueError('version must be provided')
 
-        if logging_level is not None:
-            LOGGING_LEVEL = logging_level
-        else:
-            LOGGING_LEVEL = logging.ERROR
-        logging.basicConfig(filename='acd_sdk.log', level=LOGGING_LEVEL, format='%(asctime)s %(message)s')
-
-        if iam_apikey is None or len(iam_apikey) == 0:
-            auth = NoAuthAuthenticator()
-            disable_ssl_verification = True
-        else:
-            if iam_url is None or len(iam_url) == 0:
-                LOGGER.debug('SSL disabled : ' + str(disable_ssl_verification))
-                auth = IAMAuthenticator(iam_apikey, disable_ssl_verification=disable_ssl_verification)
-            else:
-                LOGGER.debug('Custom IAM service being used : ' + iam_url)
-                LOGGER.debug('SSL disabled : ' + str(disable_ssl_verification))
-                auth = IAMAuthenticator(apikey=iam_apikey, url=iam_url, disable_ssl_verification=disable_ssl_verification)
-
-        if not url.endswith('/'):
-            url = url + '/'
-
-        super(AnnotatorForClinicalDataV1, self).__init__(
-            service_url=url,
-            authenticator=auth,
-            disable_ssl_verification=disable_ssl_verification
-        )
-
+        BaseService.__init__(self,
+                             service_url=self.DEFAULT_SERVICE_URL,
+                             authenticator=authenticator)
         self.version = version
-        self.url = url
+
 
     #########################
     # Request ACD
@@ -162,11 +140,641 @@ class AnnotatorForClinicalDataV1(BaseService):
 
         return final
 
-    # Name modified manually from analyze to analyze_org
+    #########################
+    # Profiles
+    #########################
+
+
+    def get_profiles(self, **kwargs) -> DetailedResponse:
+        """
+        Get list of available persisted profiles.
+
+        Returns a summary including ID and description of the available persisted
+        profiles.
+
+        :param dict headers: A `dict` containing the request headers
+        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
+        :rtype: DetailedResponse with `dict` result representing a `ListStringWrapper` object
+        """
+
+        headers = {}
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='get_profiles')
+        headers.update(sdk_headers)
+
+        params = {
+            'version': self.version
+        }
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
+        url = '/v1/profiles'
+        request = self.prepare_request(method='GET',
+                                       url=url,
+                                       headers=headers,
+                                       params=params)
+
+        response = self.request_acd(request)
+        return response
+
+
+    def create_profile(self, *, new_id: str = None, new_name: str = None, new_description: str = None, new_published_date: str = None, new_publish: bool = None, new_version: str = None, new_cartridge_id: str = None, new_annotators: List['Annotator'] = None, **kwargs) -> DetailedResponse:
+        """
+        Persist a new profile.
+
+        This API persists a new profile.  A profile is identified by an ID.  This ID can
+        optionally be specified as part of the request body when invoking <b>POST
+        /v1/analyze</b> API.  A profile contains annotator configuration information that
+        will be applied to the annotators specified in the annotator flow.<p>If a caller
+        would choose to have the ID of the new profile generated on their behalf, then in
+        the request body the "id" field of the profile definition should be an empty
+        string ("").  The auto-generated ID would be a normalized form of the "name" field
+        from the profile definition.<p><b>Sample Profile #1</b><br>A profile definition
+        that configures the 'concept_detection' annotator to use the UMLS umls.latest
+        library.<br><pre>{<br>  "id": "acd_profile_cd_umls_latest",<br>  "name": "Profile
+        for the latest Concept Detection UMLS Library",<br>  "description": "Provides
+        configurations for running Concept Detection with the latest UMLS library",<br>
+        "annotators": [<br>    {<br>      "name": "concept_detection",<br>
+        "parameters": {<br>         "libraries": ["umls.latest"]<br>       }<br>    }<br>
+        ]<br>}</pre><p><b>Sample Profile #2</b><br>A profile definition that configures
+        the 'concept_detection' annotator to exclude any annotations where the semantic
+        type does not equal 'neop'.<br><pre>{<br>  "id": "acd_profile_cd_neop_only",<br>
+        "name": "Profile for Concept Detection neop Semantic Type",<br>  "description":
+        "Concept Detection configuration fitler to exclude annotations where semantic type
+        does not equal 'neop'.",<br>  "annotators": [<br>    {<br>       "name":
+        "concept_detection",<br>       "configurations": [<br>         {<br>
+        "filter": {<br>             "target": "unstructured.data.concepts",<br>
+         "condition": {<br>                "type": "match",<br>                "field":
+        "semanticType",<br>                "values": [<br>                   "neop"<br>
+                     ],<br>                "not": false,<br>
+        "caseInsensitive": false,<br>                "operator": "equals"<br>
+        }<br>            }<br>         }<br>       ]<br>    }<br>  ]<br>}</pre>.
+
+        :param str new_id: (optional)
+        :param str new_name: (optional)
+        :param str new_description: (optional)
+        :param str new_published_date: (optional)
+        :param bool new_publish: (optional)
+        :param str new_version: (optional)
+        :param str new_cartridge_id: (optional)
+        :param List[Annotator] new_annotators: (optional)
+        :param dict headers: A `dict` containing the request headers
+        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
+        :rtype: DetailedResponse
+        """
+
+        if new_annotators is not None:
+            new_annotators = [ convert_model(x) for x in new_annotators ]
+        headers = {}
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='create_profile')
+        headers.update(sdk_headers)
+
+        params = {
+            'version': self.version
+        }
+
+        data = {
+            'id': new_id,
+            'name': new_name,
+            'description': new_description,
+            'publishedDate': new_published_date,
+            'publish': new_publish,
+            'version': new_version,
+            'cartridgeId': new_cartridge_id,
+            'annotators': new_annotators
+        }
+        data = {k: v for (k, v) in data.items() if v is not None}
+        data = json.dumps(data)
+        headers['content-type'] = 'application/json'
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
+        url = '/v1/profiles'
+        request = self.prepare_request(method='POST',
+                                       url=url,
+                                       headers=headers,
+                                       params=params,
+                                       data=data)
+
+        response = self.request_acd(request)
+        return response
+
+
+    def get_profile(self, id: str, **kwargs) -> DetailedResponse:
+        """
+        Get details of a specific profile.
+
+        Using the specified profile ID, retrieves the profile definition.
+
+        :param str id: Profile ID.
+        :param dict headers: A `dict` containing the request headers
+        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
+        :rtype: DetailedResponse with `dict` result representing a `AcdProfile` object
+        """
+
+        if id is None:
+            raise ValueError('id must be provided')
+        headers = {}
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='get_profile')
+        headers.update(sdk_headers)
+
+        params = {
+            'version': self.version
+        }
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
+        url = '/v1/profiles/{0}'.format(*self.encode_path_vars(id))
+        request = self.prepare_request(method='GET',
+                                       url=url,
+                                       headers=headers,
+                                       params=params)
+
+        response = self.request_acd(request)
+        return response
+
+
+    def update_profile(self, id: str, *, new_id: str = None, new_name: str = None, new_description: str = None, new_published_date: str = None, new_publish: bool = None, new_version: str = None, new_cartridge_id: str = None, new_annotators: List['Annotator'] = None, **kwargs) -> DetailedResponse:
+        """
+        Update a persisted profile definition.
+
+        Using the specified Profile ID, updates the profile definition.  This is a
+        complete replacement of the existing profile definition using the JSON object
+        provided in the request body.
+
+        :param str id: Profile ID.
+        :param str new_id: (optional)
+        :param str new_name: (optional)
+        :param str new_description: (optional)
+        :param str new_published_date: (optional)
+        :param bool new_publish: (optional)
+        :param str new_version: (optional)
+        :param str new_cartridge_id: (optional)
+        :param List[Annotator] new_annotators: (optional)
+        :param dict headers: A `dict` containing the request headers
+        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
+        :rtype: DetailedResponse
+        """
+
+        if id is None:
+            raise ValueError('id must be provided')
+        if new_annotators is not None:
+            new_annotators = [ convert_model(x) for x in new_annotators ]
+        headers = {}
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='update_profile')
+        headers.update(sdk_headers)
+
+        params = {
+            'version': self.version
+        }
+
+        data = {
+            'id': new_id,
+            'name': new_name,
+            'description': new_description,
+            'publishedDate': new_published_date,
+            'publish': new_publish,
+            'version': new_version,
+            'cartridgeId': new_cartridge_id,
+            'annotators': new_annotators
+        }
+        data = {k: v for (k, v) in data.items() if v is not None}
+        data = json.dumps(data)
+        headers['content-type'] = 'application/json'
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
+        url = '/v1/profiles/{0}'.format(*self.encode_path_vars(id))
+        request = self.prepare_request(method='PUT',
+                                       url=url,
+                                       headers=headers,
+                                       params=params,
+                                       data=data)
+
+        response = self.request_acd(request)
+        return response
+
+
+    def delete_profile(self, id: str, **kwargs) -> DetailedResponse:
+        """
+        Delete a persisted profile.
+
+        Using the specified profile ID, deletes the profile from the list of persisted
+        profiles.
+
+        :param str id: Profile ID.
+        :param dict headers: A `dict` containing the request headers
+        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
+        :rtype: DetailedResponse
+        """
+
+        if id is None:
+            raise ValueError('id must be provided')
+        headers = {}
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='delete_profile')
+        headers.update(sdk_headers)
+
+        params = {
+            'version': self.version
+        }
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
+        url = '/v1/profiles/{0}'.format(*self.encode_path_vars(id))
+        request = self.prepare_request(method='DELETE',
+                                       url=url,
+                                       headers=headers,
+                                       params=params)
+
+        response = self.request_acd(request)
+        return response
+
+    #########################
+    # Flows
+    #########################
+
+
+    def get_flows(self, **kwargs) -> DetailedResponse:
+        """
+        Get list of available persisted flows.
+
+        Returns a summary including ID and description of the available persisted flows.
+
+        :param dict headers: A `dict` containing the request headers
+        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
+        :rtype: DetailedResponse with `dict` result representing a `ListStringWrapper` object
+        """
+
+        headers = {}
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='get_flows')
+        headers.update(sdk_headers)
+
+        params = {
+            'version': self.version
+        }
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
+        url = '/v1/flows'
+        request = self.prepare_request(method='GET',
+                                       url=url,
+                                       headers=headers,
+                                       params=params)
+
+        response = self.request_acd(request)
+        return response
+
+
+    def create_flows(self, *, new_id: str = None, new_name: str = None, new_description: str = None, new_published_date: str = None, new_publish: bool = None, new_version: str = None, new_cartridge_id: str = None, new_annotator_flows: List['AnnotatorFlow'] = None, **kwargs) -> DetailedResponse:
+        """
+        Persist a new flow definition.
+
+        This API persists a new flow.  A flow is identified by an ID.  This ID can
+        optionally be specified as part of the request body when invoking <b>POST
+        /v1/analyze</b> API.  A flow definition contains a list one or more annotators,
+        and optionally can include annotator configuration, a flow ID, and/or flow
+        sequence.<p>If a caller would choose to have the ID of the new flow generated on
+        their behalf, then in the request body the "id" field of the flow definition
+        should be an empty string ("").  The auto-generated ID would be a normalized form
+        of the "name" field from the flow definition.<p><p><b>Sample Flow #1</b><br>A flow
+        definition that includes two annotators.<br><pre>{<br>  "id": "flow_simple",<br>
+        "name": "flow simple",<br>  "description": "A simple flow with two
+        annotators",<br>  "annotatorFlows": [<br>      {<br>       "flow": {<br>
+        "elements": [<br>             {<br>               "annotator": {<br>
+            "name": "concept_detection"<br>                }<br>             },<br>
+             {<br>               "annotator": {<br>                   "name":
+        "symptom_disease"<br>                }<br>             }<br>           ],<br>
+         "async": false<br>        }<br>      }<br>   ]<br>}</pre><p><b>Sample Flow
+        #2</b><br>A flow definition that includes the 'concept_detection' annotator and
+        configuration details for the 'concept_detection' annotator.<br><pre>{<br>  "id":
+        "flow_concept_detection_exclude_non_neop",<br>  "name": "flow concept detection
+        exclude non neop",<br>  "description": "A flow excluding detected concepts that do
+        not have 'neop' semantic type",<br>  "annotatorFlows": [<br>      {<br>
+        "flow": {<br>          "elements": [<br>             {<br>
+        "annotator": {<br>                   "name": "concept_detection",<br>
+             "configurations": [<br>                      {<br>
+        "filter": {<br>                           "target":
+        "unstructured.data.concepts",<br>                           "condition": {<br>
+                                 "type": "match",<br>
+        "field": "semanticType",<br>                              "values": [<br>
+                               "neop"<br>                                ],<br>
+                          "not": false,<br>
+        "caseInsensitive": false,<br>                              "operator":
+        "equals"<br>                            }<br>                         }<br>
+                      }<br>                    ]<br>                 }<br>
+        }<br>         ],<br>       "async": false<br>        }<br>      }<br>
+        ]<br>}</pre>.
+
+        :param str new_id: (optional)
+        :param str new_name: (optional)
+        :param str new_description: (optional)
+        :param str new_published_date: (optional)
+        :param bool new_publish: (optional)
+        :param str new_version: (optional)
+        :param str new_cartridge_id: (optional)
+        :param List[AnnotatorFlow] new_annotator_flows: (optional)
+        :param dict headers: A `dict` containing the request headers
+        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
+        :rtype: DetailedResponse
+        """
+
+        if new_annotator_flows is not None:
+            new_annotator_flows = [ convert_model(x) for x in new_annotator_flows ]
+        headers = {}
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='create_flows')
+        headers.update(sdk_headers)
+
+        params = {
+            'version': self.version
+        }
+
+        data = {
+            'id': new_id,
+            'name': new_name,
+            'description': new_description,
+            'publishedDate': new_published_date,
+            'publish': new_publish,
+            'version': new_version,
+            'cartridgeId': new_cartridge_id,
+            'annotatorFlows': new_annotator_flows
+        }
+        data = {k: v for (k, v) in data.items() if v is not None}
+        data = json.dumps(data, cls=AnnotatorEncoder)
+        headers['content-type'] = 'application/json'
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
+        url = '/v1/flows'
+        request = self.prepare_request(method='POST',
+                                       url=url,
+                                       headers=headers,
+                                       params=params,
+                                       data=data)
+
+        response = self.request_acd(request)
+        return response
+
+
+    def get_flows_by_id(self, id: str, **kwargs) -> DetailedResponse:
+        """
+        Get details of a specific flow.
+
+        Using the specified Flow ID, retrieves the flow definition.
+
+        :param str id: Flow ID.
+        :param dict headers: A `dict` containing the request headers
+        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
+        :rtype: DetailedResponse with `dict` result representing a `AcdFlow` object
+        """
+
+        if id is None:
+            raise ValueError('id must be provided')
+        headers = {}
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='get_flows_by_id')
+        headers.update(sdk_headers)
+
+        params = {
+            'version': self.version
+        }
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
+        url = '/v1/flows/{0}'.format(*self.encode_path_vars(id))
+        request = self.prepare_request(method='GET',
+                                       url=url,
+                                       headers=headers,
+                                       params=params)
+
+        response = self.request_acd(request)
+        return response
+
+
+    def update_flows(self, id: str, *, new_id: str = None, new_name: str = None, new_description: str = None, new_published_date: str = None, new_publish: bool = None, new_version: str = None, new_cartridge_id: str = None, new_annotator_flows: List['AnnotatorFlow'] = None, **kwargs) -> DetailedResponse:
+        """
+        Update a persisted flow definition.
+
+        Using the specified Flow ID, updates the persisted flow definition.  This is a
+        complete replacement of the existing flow definition using the JSON object
+        provided in the request body.
+
+        :param str id: Flow ID.
+        :param str new_id: (optional)
+        :param str new_name: (optional)
+        :param str new_description: (optional)
+        :param str new_published_date: (optional)
+        :param bool new_publish: (optional)
+        :param str new_version: (optional)
+        :param str new_cartridge_id: (optional)
+        :param List[AnnotatorFlow] new_annotator_flows: (optional)
+        :param dict headers: A `dict` containing the request headers
+        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
+        :rtype: DetailedResponse
+        """
+
+        if id is None:
+            raise ValueError('id must be provided')
+        if new_annotator_flows is not None:
+            new_annotator_flows = [ convert_model(x) for x in new_annotator_flows ]
+        headers = {}
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='update_flows')
+        headers.update(sdk_headers)
+
+        params = {
+            'version': self.version
+        }
+
+        data = {
+            'id': new_id,
+            'name': new_name,
+            'description': new_description,
+            'publishedDate': new_published_date,
+            'publish': new_publish,
+            'version': new_version,
+            'cartridgeId': new_cartridge_id,
+            'annotatorFlows': new_annotator_flows
+        }
+        data = {k: v for (k, v) in data.items() if v is not None}
+        data = json.dumps(data, cls=AnnotatorEncoder)
+        headers['content-type'] = 'application/json'
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
+        url = '/v1/flows/{0}'.format(*self.encode_path_vars(id))
+        request = self.prepare_request(method='PUT',
+                                       url=url,
+                                       headers=headers,
+                                       params=params,
+                                       data=data)
+
+        response = self.request_acd(request)
+        return response
+
+
+    def delete_flows(self, id: str, **kwargs) -> DetailedResponse:
+        """
+        Delete a persisted flow.
+
+        Using the specified Flow ID, deletes the flow from the list of persisted flows.
+
+        :param str id: Flow ID.
+        :param dict headers: A `dict` containing the request headers
+        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
+        :rtype: DetailedResponse
+        """
+
+        if id is None:
+            raise ValueError('id must be provided')
+        headers = {}
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='delete_flows')
+        headers.update(sdk_headers)
+
+        params = {
+            'version': self.version
+        }
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
+        url = '/v1/flows/{0}'.format(*self.encode_path_vars(id))
+        request = self.prepare_request(method='DELETE',
+                                       url=url,
+                                       headers=headers,
+                                       params=params)
+
+        response = self.request_acd(request)
+        return response
+
+    #########################
+    # ACD
+    #########################
+
+
+    def run_pipeline(self, *, unstructured: List['UnstructuredContainer'] = None, annotator_flows: List['AnnotatorFlow'] = None, debug_text_restore: bool = None, return_analyzed_text: bool = None, **kwargs) -> DetailedResponse:
+        """
+        Detect entities & relations from unstructured data.
+
+        <p>This API accepts a JSON request model featuring both the unstructured data to
+        be analyzed as well as the desired annotator flow.<p/><p><b>Annotator
+        Chaining</b><br/>Sample request invoking both the concept_detection and
+        symptom_disease annotators asynchronously. This sample request references
+        configurations via a profile id. Profiles define configurations that can be
+        referenced within a request. Profile is optional. A default profile is used if no
+        profile id is available in the annotator flow. The default profile contains the
+        parameters for the concept detection and the attribute detection. An empty profile
+        can be used if absolutely no parameters are attached to any annotators. See <a
+        href=".." target="_blank">documentation</a> for more information. </p><pre>{<br/>
+        "annotatorFlows": [<br/>    {<br/>      "profile" : "default_profile_v1.0", <br/>
+            "flow": {<br/>        "elements": [<br/>          {<br/>
+        "annotator": {<br/>              "name": "concept_detection"<br/>
+        }<br/>          },<br/>          {<br/>            "annotator": {<br/>
+         "name": "symptom_disease"<br/>             }<br/>          }<br/>        ],<br/>
+              "async": false<br/>      }<br/>    }<br/>  ],<br/>  "unstructured": [<br/>
+         {<br/>      "text": "Patient has lung cancer, but did not smoke. She may consider
+        chemotherapy as part of a treatment plan."<br/>    }<br/>
+        ]<br/>}<br/></pre><p><b>Annotation Filtering</b><br/>Sample request invoking
+        concept_detection with a filter defined to exclude any annotations detected from
+        concept_detection where the semanticType field does not equal
+        "neop".</p><pre>{<br/>  "annotatorFlows": [<br/>    {<br/>      "flow": {<br/>
+           "elements": [<br/>          {<br/>            "annotator": {<br/>
+        "name": "concept_detection",<br/>              "configurations": [<br/>
+            {<br/>                  "filter": {<br/>                     "target":
+        "unstructured.data.concepts",<br/>                     "condition": {<br/>
+                       "type": "match",<br/>                        "field":
+        "semanticType",<br/>                        "values": [<br/>
+            "neop"<br/>                         ],<br/>                        "not":
+        false,<br/>                        "caseInsensitive": false,<br/>
+              "operator": "equals"<br/>                     }<br/>                  }<br/>
+                       }<br/>              ]<br/>            }<br/>          }<br/>
+        ],<br/>       "async": false<br/>      }<br/>    }<br/>  ],<br/>  "unstructured":
+        [<br/>    {<br/>      "text": "Patient has lung cancer, but did not smoke. She may
+        consider chemotherapy as part of a treatment plan."<br/>    }<br/>
+        ]<br/>}<br/></pre><p><b>Annotators that support annotation filtering:</b> allergy,
+        bathing_assistance, cancer, concept_detection, dressing_assistance,
+        eating_assistance, ejection_fraction, lab_value, medication, named_entities,
+        procedure, seeing_assistance, smoking, symptom_disease, toileting_assistance,
+        walking_assistance.</p><hr/><p><b>Annotation Augmentation</b><br/>Sample request
+        invoking the cancer annotator and providing a whitelist entry for a new custom
+        surface form: "lungcancer".</p><pre>{<br/> "annotatorFlows": [<br/>    {<br/>
+        "flow": {<br/>       "elements": [<br/>          {<br/>           "annotator":
+        {<br/>             "name": "cancer",<br/>             "configurations": [<br/>
+                   {<br/>                 "whitelist": {<br/>                   "name":
+        "cancer",<br/>                   "entries": [<br/>                      {<br/>
+                     "surfaceForms": [<br/>                   "lungcancer"<br/>
+            ],<br/>               "features": {<br/>                   "normalizedName":
+        "lung cancer",<br/>                   "hccCode": "9",<br/>
+        "icd10Code": "C34.9",<br/>                   "ccsCode": "19",<br/>
+          "icd9Code": "162.9",<br/>                   "conceptId": "93880001"<br/>
+               }<br/>                      }<br/>                    ]<br/>
+          }<br/>                }<br/>              ]<br/>            }<br/>
+        }<br/>        ],<br/>       "async": false<br/>      }<br/>    }<br/>  ],<br/>
+        "unstructured": [<br/>    {<br/>     "text": "The patient was diagnosed with
+        lungcancer, on Dec 23, 2011."<br/>    }<br/>  ]<br/>}<br/></pre><b>Annotators that
+        support annotation augmentation:</b> allergy, bathing_assistance, cancer,
+        dressing_assistance, eating_assistance, ejection_fraction, lab_value, medication,
+        named_entities, procedure, seeing_assistance, smoking, symptom_disease,
+        toileting_assistance, walking_assistance.<br/>.
+
+        :param List[UnstructuredContainer] unstructured: (optional)
+        :param List[AnnotatorFlow] annotator_flows: (optional)
+        :param bool debug_text_restore: (optional) If true, any ReplaceTextChange
+               annotations will be left in the container and the modified text before
+               restoring to original form will stored in the metadata that is returned.
+               Otherwise, these annotations and modified text will be removed from the
+               container.
+        :param bool return_analyzed_text: (optional) Set this to true to show the
+               analyzed text in the response.
+        :param dict headers: A `dict` containing the request headers
+        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
+        :rtype: DetailedResponse
+        """
+
+        if unstructured is not None:
+            unstructured = [ convert_model(x) for x in unstructured ]
+        if annotator_flows is not None:
+            annotator_flows = [ convert_model(x) for x in annotator_flows ]
+        headers = {}
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='run_pipeline')
+        headers.update(sdk_headers)
+
+        params = {
+            'version': self.version,
+            'debug_text_restore': debug_text_restore,
+            'return_analyzed_text': return_analyzed_text
+        }
+
+        data = {
+            'unstructured': unstructured,
+            'annotatorFlows': annotator_flows
+        }
+        data = {k: v for (k, v) in data.items() if v is not None}
+        data = json.dumps(data)
+        headers['content-type'] = 'application/json'
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
+        url = '/v1/analyze'
+        request = self.prepare_request(method='POST',
+                                       url=url,
+                                       headers=headers,
+                                       params=params,
+                                       data=data)
+
+        response = self.request_acd(request)
+        return response
+
+
     def analyze_org(self, unstructured=None, annotator_flows=None, **kwargs):
         """
         Detect entities & relations from unstructured data and return as 'dict'.
-
         <p>This API accepts a JSON request model featuring both the unstructured data to be analyzed as well as
         the desired annotator flow.<p/><p><b>Annotator Chaining</b><br/>Sample request invoking both the
         concept_detection and symptom_disease annotators asynchronously.</p><pre>{<br/>  \"annotatorFlows\":
@@ -215,7 +823,6 @@ class AnnotatorForClinicalDataV1(BaseService):
                     bathing_assistance, cancer, dressing_assistance, eating_assistance, ejection_fraction,
                     lab_value, medication, named_entities, procedure, seeing_assistance, smoking, symptom_disease,
                     toileting_assistance, walking_assistance.<br/>.
-
         :param list[UnstructuredContainer] unstructured:
         :param list[AnnotatorFlow] annotator_flows:
         :return: A `DetailedResponse` containing the result, headers and HTTP status code
@@ -227,7 +834,7 @@ class AnnotatorForClinicalDataV1(BaseService):
             annotator_flows = [x._to_dict() if hasattr(x, "_to_dict") else x for x in annotator_flows]
 
         headers = {'content-type': 'application/json'}
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='analyze_org')
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V2', operation_id='analyze_org')
         headers.update(sdk_headers)
 
         if 'headers' in kwargs:
@@ -240,8 +847,8 @@ class AnnotatorForClinicalDataV1(BaseService):
             'unstructured': unstructured,
             'annotatorFlows': annotator_flows
         }
-        url = 'v1/analyze'
-        data = json.dumps(data)
+        url = '/v1/analyze'
+        data = json.dumps(data, cls=AnnotatorEncoder)
         request = self.prepare_request(method='POST', url=url, headers=headers, params=params, data=data)
         response = self.request_acd(request)
 
@@ -251,7 +858,6 @@ class AnnotatorForClinicalDataV1(BaseService):
     def analyze(self, text, flow, **kwargs):
         """
         Detect entities & relations from unstructured data and return as 'ContainerGroup'.
-
         :param str or list[str] text: Text to be analyzed.
         :param Flow flow: The annotator flow definition.
         :return: A 'ContainerGroup' object
@@ -276,11 +882,89 @@ class AnnotatorForClinicalDataV1(BaseService):
 
         return result
 
-    # Name modified manually from analyze_with_flow to analyze_with_flow_org
+
+    def run_pipeline_with_flow(self, flow_id: str, return_analyzed_text: bool, analytic_flow_bean_input: Union['AnalyticFlowBeanInput', str, TextIO], *, content_type: str = None, debug_text_restore: bool = None, **kwargs) -> DetailedResponse:
+        """
+        analyze with a pre-specified flow.
+
+        <p>This API accepts a flow identifier as well as a <emph>TEXT</emph> or a
+        <emph>JSON</emph> request model featuring the unstructured text to be analyzed.
+        <p/><p><b>JSON request model with unstructured text </b></p><pre>{<br/>
+        "unstructured": [<br/>    {<br/>      "text": "Patient has lung cancer, but did
+        not smoke. She may consider chemotherapy as part of a treatment plan."<br/>
+        }<br/>  ]<br/>}<br/></pre><p><b>JSON request model with existing annotations
+        </b><br/></p><pre>{<br> "unstructured": [<br>    {<br>      "text": "Patient will
+        not start on cisplatin 80mg on 1/1/2018. Patient is also diabetic.",<br>
+        "data": {<br>        "concepts": [<br>          {<br>            "cui":
+        "C0030705",<br>            "preferredName": "Patients",<br>
+        "semanticType": "podg",<br>            "source": "umls",<br>
+        "sourceVersion": "2017AA",<br>            "type":
+        "umls.PatientOrDisabledGroup",<br>            "begin": 0,<br>            "end":
+        7,<br>            "coveredText": "Patient"<br>          }<br> ]<br>      }  <br>
+         } <br> ]<br>}<br></pre>.
+
+        :param str flow_id: flow identifier .
+        :param bool return_analyzed_text: Set this to true to show the analyzed
+               text in the response.
+        :param AnalyticFlowBeanInput analytic_flow_bean_input: Input request data
+               in TEXT or JSON format .
+        :param str content_type: (optional) The type of the input. A character
+               encoding can be specified by including a `charset` parameter. For example,
+               'text/plain;charset=utf-8'.
+        :param bool debug_text_restore: (optional) If true, any ReplaceTextChange
+               annotations will be left in the container and the modified text before
+               restoring to original form will be returned in the metadata.  Otherwise,
+               these annotations and modified text will be removed from the container.
+        :param dict headers: A `dict` containing the request headers
+        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
+        :rtype: DetailedResponse
+        """
+
+        if flow_id is None:
+            raise ValueError('flow_id must be provided')
+        if return_analyzed_text is None:
+            raise ValueError('return_analyzed_text must be provided')
+        if analytic_flow_bean_input is None:
+            raise ValueError('analytic_flow_bean_input must be provided')
+        if isinstance(analytic_flow_bean_input, AnalyticFlowBeanInput):
+            analytic_flow_bean_input = convert_model(analytic_flow_bean_input)
+            content_type = content_type or 'application/json'
+        headers = {
+            'Content-Type': content_type
+        }
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='run_pipeline_with_flow')
+        headers.update(sdk_headers)
+
+        params = {
+            'version': self.version,
+            'return_analyzed_text': return_analyzed_text,
+            'debug_text_restore': debug_text_restore
+        }
+
+        if isinstance(analytic_flow_bean_input, dict):
+            data = json.dumps(analytic_flow_bean_input)
+            if content_type is None:
+                headers['content-type'] = 'application/json'
+        else:
+            data = analytic_flow_bean_input
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
+        url = '/v1/analyze/{0}'.format(*self.encode_path_vars(flow_id))
+        request = self.prepare_request(method='POST',
+                                       url=url,
+                                       headers=headers,
+                                       params=params,
+                                       data=data)
+
+        response = self.request_acd(request)
+        return response
+
+
     def analyze_with_flow_org(self, flow_id, request, content_type='text/plain', **kwargs):
         """
         Analyze with a persisted flow and return as a 'dict'.
-
         <p>This API accepts a flow identifier as well as a <emph>TEXT</emph> or a <emph>JSON</emph> request model
         featuring the unstructured text to be analyzed. <p/><p><b>JSON request model with unstructured text
         </b></p><pre>{<br/>  \"unstructured\": [<br/>    {<br/>      \"text\": \"Patient has lung cancer,
@@ -292,7 +976,6 @@ class AnnotatorForClinicalDataV1(BaseService):
         <br>            \"source\": \"umls\",<br>            \"sourceVersion\": \"2017AA\",<br>            \"type\":
         \"umls.PatientOrDisabledGroup\",<br>            \"begin\": 0,<br>            \"end\": 7,<br>
         \"coveredText\": \"Patient\"<br>          }<br> ]<br>      }  <br>    } <br> ]<br>}<br></pre>.
-
         :param str flow_id: flow identifier .
         :param RequestContainer request: Input request data in TEXT or JSON format .
         :param str content_type: The type of the input: text/plain or application/json. A character encoding can be
@@ -304,7 +987,7 @@ class AnnotatorForClinicalDataV1(BaseService):
             'content-type': content_type
         }
 
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='analyze_with_flow_org')
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V2', operation_id='analyze_with_flow_org')
         headers.update(sdk_headers)
 
         if 'headers' in kwargs:
@@ -317,7 +1000,7 @@ class AnnotatorForClinicalDataV1(BaseService):
             data = json.dumps(request)
         else:
             data = request
-        url = 'v1/analyze/{0}'.format(flow_id)
+        url = '/v1/analyze/{0}'.format(flow_id)
         request = self.prepare_request(method='POST', url=url, headers=headers, params=params, data=data)
         response = self.request_acd(request)
 
@@ -327,7 +1010,6 @@ class AnnotatorForClinicalDataV1(BaseService):
     def analyze_with_flow(self, flow_id, text, **kwargs):
         """
         Analyze with a persisted flow and return as a 'ContainerGroup'.
-
         :param str flow_id: The ID of a persisted flow.
         :param str or UnstructuredContainer or list[UnstructuredContainer] text: Text to be analyzed.
         :return: A 'ContainerGroup' object
@@ -352,538 +1034,596 @@ class AnnotatorForClinicalDataV1(BaseService):
 
         return result
 
-    def get_annotator(self, id, **kwargs):
-        """
-        Get details of a specific annotator.
 
-        Get details of an annotator that can be used to derive information from unstructured data.
-
-        :param str id: The ID the Service API was registered under.
-        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
-        :rtype: DetailedReponse with 'dict' representing an Annotator object.
-        """
-        headers = {}
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='get_annotator')
-        headers.update(sdk_headers)
-
-        if 'headers' in kwargs:
-            headers.update(kwargs.get('headers'))
-
-        params = {
-            'version': self.version
-        }
-        url = 'v1/annotators/{0}'.format(id)
-        request = self.prepare_request(method='GET', url=url, params=params)
-        response = self.request_acd(request)
-
-        return response
-
-    def list_annotators(self, **kwargs):
+    def get_annotators(self, **kwargs) -> DetailedResponse:
         """
         Get list of available annotators.
 
-        Get list of available annotators that can be leveraged to detect information from unstructured data.
-        One or more annnotators can be leveraged within a single request to the service.
-
-        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
-        :rtype: DetailedReponse with 'dict'.
-        """
-        headers = {}
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='list_annotators')
-        headers.update(sdk_headers)
-
-        if 'headers' in kwargs:
-            headers.update(kwargs.get('headers'))
-
-        params = {
-            'version': self.version
-        }
-        url = 'v1/annotators'
-        request = self.prepare_request(method='GET', url=url, params=params)
-        response = self.request_acd(request)
-
-        return response
-
-    #########################
-    # Flows
-    #########################
-
-    def create_persisted_flow(self, new_id=None, new_name=None, new_description=None, new_annotator_flows=None, **kwargs):
-        """
-        Persist a new flow definition.
-
-        This API persists a new flow.  A flow is identified by an ID.  This ID can optionally be specified as part
-        of the request body when invoking <b>POST /v1/analyze</b> API.  A flow definition contains a list one or
-        more annotators, and optionally can include annotator configuration, a profile ID, and/or flow sequence.
-        <p>If a caller would choose to have the ID of the new flow generated on their behalf, then in the request
-        body the \"id\" field of the flow definition should be an empty string (\"\").  The auto-generated ID
-        would be a normalized form of the \"name\" field from the flow definition.<p><p><b>Sample Flow #1</b><br>
-        A flow definition that includes two annotators.<br><pre>{<br>  \"id\": \"flow_simple\",<br>  \"name\":
-        \"flow simple\",<br>  \"description\": \"A simple flow with two annotators\",<br>  \"annotatorFlows\":
-        [<br>      {<br>       \"flow\": {<br>          \"elements\": [<br>             {<br>
-        \"annotator\": {<br>                   \"name\": \"concept_detection\"<br>                }<br>
-        },<br>             {<br>               \"annotator\": {<br>                   \"name\": \"symptom_disease\"
-        <br>                }<br>             }<br>           ],<br>       \"async\": false<br>        }<br>
-        }<br>   ]<br>}</pre><p><b>Sample Flow #2</b><br>A flow definition that includes the 'concept_detection'
-        annotator and configuration details for the 'concept_detection' annotator.<br><pre>{<br>
-        \"id\": \"flow_concept_detection_exclude_non_neop\",<br>  \"name\": \"flow concept detection exclude
-        non neop\",<br>  \"description\": \"A flow excluding detected concepts that do not have 'neop' semantic
-        type\",<br>  \"annotatorFlows\": [<br>      {<br>       \"flow\": {<br>          \"elements\": [<br>
-        {<br>               \"annotator\": {<br>                   \"name\": \"concept_detection\",<br>
-        \"configurations\": [<br>                      {<br>                        \"filter\": {<br>
-        \"target\": \"unstructured.data.concepts\",<br>                           \"condition\": {<br>
-        \"type\": \"match\",<br>                              \"field\": \"semanticType\",<br>
-        \"values\": [<br>                                 \"neop\"<br>                                ],<br>
-        \"not\": false,<br>                              \"caseInsensitive\": false,<br>
-        \"operator\": \"equals\"<br>                            }<br>                         }<br>
-        }<br>                    ]<br>                 }<br>              }<br>         ],<br>
-        \"async\": false<br>        }<br>      }<br>   ]<br>}</pre>.
-
-        :param str new_id:
-        :param str new_name:
-        :param str new_description:
-        :param list[AnnotatorFlow] new_annotator_flows:
-        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
-        :rtype: DetaileddReponse with 'dict'.
-        """
-        if new_annotator_flows is not None:
-            new_annotator_flows = [x._to_dict() if hasattr(x, "_to_dict") else x for x in new_annotator_flows]
-
-        headers = {'content-type': 'application/json'}
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='create_persisted_flow')
-        headers.update(sdk_headers)
-
-        if 'headers' in kwargs:
-            headers.update(kwargs.get('headers'))
-
-        params = {
-            'version': self.version
-        }
-        data = {
-            'id': new_id,
-            'name': new_name,
-            'description': new_description,
-            'annotatorFlows': new_annotator_flows
-        }
-        json_string = json.dumps(data)
-        url = 'v1/flows'
-        request = self.prepare_request(method='POST', url=url, headers=headers, params=params, data=json_string)
-        response = self.request_acd(request)
-
-        return response
-
-    def delete_persisted_flow(self, id, **kwargs):
-        """
-        Delete a persisted flow.
-
-        Using the specified Flow ID, deletes the flow from the list of persisted flows.
-
-        :param str id: Flow ID.
-        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
-        :rtype: DetaileddReponse with 'dict'.
-        """
-
-        headers = {}
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='delete_persisted_flow')
-        headers.update(sdk_headers)
-
-        if 'headers' in kwargs:
-            headers.update(kwargs.get('headers'))
-
-        params = {
-            'version': self.version
-        }
-        url = 'v1/flows/{0}'.format(id)
-        request = self.prepare_request(method='DELETE', url=url, params=params, headers=headers)
-        response = self.request_acd(request)
-
-        return response
-
-    def get_flow(self, id, **kwargs):
-        """
-        Get details of a specific flow.
-
-        Using the specified Flow ID, retrieves the flow definition.
-
-        :param str id: Flow ID.
-        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
-        :rtype: DetaileddReponse with 'dict' representing an AcdFlow object.
-        """
-
-        headers = {}
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='get_flow')
-        headers.update(sdk_headers)
-
-        if 'headers' in kwargs:
-            headers.update(kwargs.get('headers'))
-
-        params = {
-            'version': self.version
-        }
-        url = 'v1/flows/{0}'.format(id)
-        request = self.prepare_request(method='GET', url=url, params=params, headers=headers)
-        response = self.request_acd(request)
-
-        return response
-
-
-    def get_flows(self, **kwargs):
-        """
-        Get list of available persisted flows.
-
-        Returns a summary including ID and description of the available persisted flows.
-
-        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
-        :rtype: DetaileddReponse with 'dict'.
-        """
-
-        headers = {}
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='get_flows')
-        headers.update(sdk_headers)
-
-        if 'headers' in kwargs:
-            headers.update(kwargs.get('headers'))
-
-        params = {
-            'version': self.version
-        }
-        url = 'v1/flows'
-        request = self.prepare_request(method='GET', url=url, params=params, headers=headers)
-        response = self.request_acd(request)
-
-        return response
-
-
-    def update_persisted_flow(self, flow_id=None, new_name=None, new_description=None, new_annotator_flows=None, **kwargs):
-        """
-        Update a persisted flow definition.
-
-        Using the specified Flow ID, updates the persisted flow definition.  This is a complete replacement
-        of the existing flow definition using the JSON object provided in the request body.
-
-        :param str flow_id: Flow ID.
-        :param str new_id:
-        :param str new_name:
-        :param str new_description:
-        :param list[AnnotatorFlow] new_annotator_flows:
-        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
-        :rtype: DetaileddReponse with 'dict'.
-        """
-        if new_annotator_flows is not None:
-            new_annotator_flows = [x._to_dict() if hasattr(x, "_to_dict") else x for x in new_annotator_flows]
-
-        headers = {'content-type': 'application/json'}
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='update_persisted_flow')
-        headers.update(sdk_headers)
-
-        if 'headers' in kwargs:
-            headers.update(kwargs.get('headers'))
-
-        params = {
-            'version': self.version
-        }
-        data = {
-            'id': flow_id,
-            'name': new_name,
-            'description': new_description,
-            'annotatorFlows': new_annotator_flows
-        }
-        json_string = json.dumps(data)
-        url = 'v1/flows/{0}'.format(flow_id)
-        request = self.prepare_request(method='PUT', url=url, headers=headers, params=params, data=json_string)
-        response = self.request_acd(request)
-
-        return response
-
-
-    #########################
-    # Profiles
-    #########################
-
-    def create_profile(self, new_id=None, new_name=None, new_description=None, new_annotators=None, **kwargs):
-        """
-        Persist a new profile.
-
-        This API persists a new profile.  A profile is identified by an ID.  This ID can optionally be specified
-        as part of the request body when invoking <b>POST /v1/analyze</b> API.  A profile contains annotator
-        configuration information that will be applied to the annotators specified in the annotator flow.
-        <p>If a caller would choose to have the ID of the new profile generated on their behalf, then in the request
-        body the \"id\" field of the profile definition should be an empty string (\"\").  The auto-generated ID would
-        be a normalized form of the \"name\" field from the profile definition.<p><b>Sample Profile #1</b><br>A profile
-        definition that configures the 'concept_detection' annotator to use UMLS 2015AA library.<br><pre>{<br>
-        \"id\": \"acd_profile_cd_umls2015\",<br>  \"name\": \"Profile for Concept Detection UMLS 2015 Library\",<br>
-        \"description\": \"Provides configurations for running Concept Detection with the UMLS 2015 library\",<br>
-        \"annotators\": [<br>    {<br>      \"name\": \"concept_detection\",<br>      \"parameters\": {<br>
-        \"libraries\": [\"umls.2015AA\"]<br>       }<br>    }<br>  ]<br>}</pre><p><b>Sample Profile #2</b><br>
-        A profile definition that configures the 'concept_detection' annotator to exclude any annotations where
-        the semantic type does not equal 'neop'.<br><pre>{<br>  \"id\": \"acd_profile_cd_neop_only\",<br>
-        \"name\": \"Profile for Concept Detection neop Semantic Type\",<br>  \"description\": \"Concept Detection
-        configuration fitler to exclude annotations where semantic type does not equal 'neop'.\",<br>  \"annotators\":
-        [<br>    {<br>       \"name\": \"concept_detection\",<br>       \"configurations\": [<br>         {<br>
-        \"filter\": {<br>             \"target\": \"unstructured.data.concepts\",<br>             \"condition\":
-        {<br>                \"type\": \"match\",<br>                \"field\": \"semanticType\",<br>
-        \"values\": [<br>                   \"neop\"<br>                 ],<br>                \"not\": false,<br>
-        \"caseInsensitive\": false,<br>                \"operator\": \"equals\"<br>              }<br>            }
-        <br>         }<br>       ]<br>    }<br>  ]<br>}</pre>.
-
-        :param str new_id:
-        :param str new_name:
-        :param str new_description:
-        :param list[Annotator] new_annotators:
-        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
-        :rtype: DetaileddReponse with 'dict'.
-        """
-        if new_annotators is not None:
-            new_annotators = [x._to_dict() if hasattr(x, "_to_dict") else x for x in new_annotators]
-
-        headers = {'content-type': 'application/json'}
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='create_profile')
-        headers.update(sdk_headers)
-
-        if 'headers' in kwargs:
-            headers.update(kwargs.get('headers'))
-        params = {
-            'version': self.version
-        }
-        data = {
-            'id': new_id,
-            'name': new_name,
-            'description': new_description,
-            'annotators': new_annotators
-        }
-        data = json.dumps(data)
-        url = 'v1/profiles'
-        request = self.prepare_request(method='POST', url=url, headers=headers, params=params, data=data)
-        response = self.request_acd(request)
-
-        return response
-
-
-    def delete_profile(self, id, **kwargs):
-        """
-        Delete a persisted profile.
-
-        Using the specified profile ID, deletes the profile from the list of persisted profiles.
-
-        :param str id: Profile ID.
-        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
-        :rtype: DetaileddReponse with 'dict'.
-        """
-        headers = {}
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='delete_profile')
-        headers.update(sdk_headers)
-
-        if 'headers' in kwargs:
-            headers.update(kwargs.get('headers'))
-        params = {
-            'version': self.version
-        }
-        url = 'v1/profiles/{0}'.format(id)
-        request = self.prepare_request(method='DELETE', url=url, params=params, headers=headers)
-        response = self.request_acd(request)
-
-        return response
-
-
-    def get_profile(self, id, **kwargs):
-        """
-        Get details of a specific profile.
-
-        Using the specified profile ID, retrieves the profile definition.
-
-        :param str id: Profile ID.
-        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
-        :rtype: DetaileddReponse with 'dict' representing an AcdProfile object.
-        """
-        headers = {}
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='get_profile')
-        headers.update(sdk_headers)
-
-        if 'headers' in kwargs:
-            headers.update(kwargs.get('headers'))
-        params = {
-            'version': self.version
-        }
-        url = 'v1/profiles/{0}'.format(id)
-        request = self.prepare_request(method='GET', url=url, params=params, headers=headers)
-        response = self.request_acd(request)
-
-        return response
-
-
-    def get_profiles(self, **kwargs):
-        """
-        Get list of available persisted profiles.
-
-        Returns a summary including ID and description of the available persisted profiles.
-
-        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
-        :rtype: DetaileddReponse with 'dict'.
-        """
-        headers = {}
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='get_profiles')
-        headers.update(sdk_headers)
-
-        if 'headers' in kwargs:
-            headers.update(kwargs.get('headers'))
-        params = {
-            'version': self.version
-        }
-        url = 'v1/profiles'
-        request = self.prepare_request(method='GET', url=url, params=params, headers=headers)
-        response = self.request_acd(request)
-
-        return response
-
-
-    def update_profile(self, id=None, new_name=None, new_description=None, new_annotators=None, **kwargs):
-        """
-        Update a persisted profile definition.
-
-        Using the specified Profile ID, updates the profile definition.  This is a complete replacement of the
-        existing profile definition using the JSON object provided in the request body.
-
-        :param str id: Profile ID.
-        :param str id:
-        :param str new_name:
-        :param str new_description:
-        :param list[Annotator] new_annotators:
-        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
-        :rtype: DetaileddReponse with 'dict'.
-        """
-        if new_annotators is not None:
-            new_annotators = [x._to_dict() if hasattr(x, "_to_dict") else x for x in new_annotators]
-
-        headers = {'content-type': 'application/json'}
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='analyze_org')
-        headers.update(sdk_headers)
-
-        if 'headers' in kwargs:
-            headers.update(kwargs.get('headers'))
-        params = {
-            'version': self.version
-        }
-
-        data = {
-            'id': id,
-            'name': new_name,
-            'description': new_description,
-            'annotators': new_annotators
-        }
-        data = json.dumps(data)
-        url = 'v1/profiles/{0}'.format(id)
-        request = self.prepare_request(method='PUT', url=url, headers=headers, params=params, data=data)
-        response = self.request_acd(request)
-
-        return response
-
-
-    def delete_user_data(self, **kwargs):
-        """
-        The ACD service enables you to delete all data that is associated to a specific tenant.
-        Every ACD request is, by default, associated with a tenant ID. A default tenant id is assigned
-        if no tenant id is supplied in a request.
-
-        The method has no effect if no data is associated with the tenant ID. This deletion operation is only
-        allowed for a specific tenant id and is not permitted for a default tenant.
-
-        :return nothing is returned if successful
-        """
-        headers = {}
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='analyze_org')
-        headers.update(sdk_headers)
-
-        if 'headers' in kwargs:
-            headers.update(kwargs.get('headers'))
-        params = {
-            'version': self.version
-        }
-
-        url = 'v1/user_data'
-        request = self.prepare_request(method='DELETE', url=url, params=params, headers=headers)
-        response = self.request_acd(request)
-
-        return response
-
-    #########################
-    # Status
-    #########################
-    def get_health_check_status(self, accept=None, apikey=None, format=None, **kwargs):
-        """
-        Determine if service is running correctly.
-        This resource differs from /status in that it will will always return a 500 error
-        if the service state is not OK.  This makes it simpler for service front ends
-        to detect a failed service.
-        :param str accept: The type of the response: application/json or application/xml.
-        :param str apikey: access key.
-        :param str format: Override response format.
+        Get list of available annotators that can be leveraged to detect information from
+        unstructured data. One or more annnotators can be leveraged within a single
+        request to the service.
+
+        :param dict headers: A `dict` containing the request headers
         :return: A `DetailedResponse` containing the result, headers and HTTP status code.
         :rtype: DetailedResponse
         """
 
+        headers = {}
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='get_annotators')
+        headers.update(sdk_headers)
+
+        params = {
+            'version': self.version
+        }
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
+        url = '/v1/annotators'
+        request = self.prepare_request(method='GET',
+                                       url=url,
+                                       headers=headers,
+                                       params=params)
+
+        response = self.request_acd(request)
+        return response
+
+
+    def get_annotators_by_id(self, id: str, **kwargs) -> DetailedResponse:
+        """
+        Get details of a specific annotator.
+
+        Get details of an annotator that can be used to detect information from
+        unstructured data.
+
+        :param str id: The ID the Service API was registered under.
+        :param dict headers: A `dict` containing the request headers
+        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
+        :rtype: DetailedResponse
+        """
+
+        if id is None:
+            raise ValueError('id must be provided')
+        headers = {}
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='get_annotators_by_id')
+        headers.update(sdk_headers)
+
+        params = {
+            'version': self.version
+        }
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
+        url = '/v1/annotators/{0}'.format(*self.encode_path_vars(id))
+        request = self.prepare_request(method='GET',
+                                       url=url,
+                                       headers=headers,
+                                       params=params)
+
+        response = self.request_acd(request)
+        return response
+
+
+    def delete_user_specific_artifacts(self, **kwargs) -> DetailedResponse:
+        """
+        Delete tenant specific artifacts.
+
+        Delete tenant specific artifacts.
+
+        :param dict headers: A `dict` containing the request headers
+        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
+        :rtype: DetailedResponse
+        """
+
+        headers = {}
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='delete_user_specific_artifacts')
+        headers.update(sdk_headers)
+
+        params = {
+            'version': self.version
+        }
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
+        url = '/v1/user_data'
+        request = self.prepare_request(method='DELETE',
+                                       url=url,
+                                       headers=headers,
+                                       params=params)
+
+        response = self.request_acd(request)
+        return response
+
+    #########################
+    # Cartridges
+    #########################
+
+
+    def cartridges_get(self, **kwargs) -> DetailedResponse:
+        """
+        Get list of available deployment status.
+
+        Returns a summary including ID and status of the available deployments.
+
+        :param dict headers: A `dict` containing the request headers
+        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
+        :rtype: DetailedResponse with `dict` result representing a `ListStringWrapper` object
+        """
+
+        headers = {}
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='cartridges_get')
+        headers.update(sdk_headers)
+
+        params = {
+            'version': self.version
+        }
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
+        url = '/v1/cartridges'
+        request = self.prepare_request(method='GET',
+                                       url=url,
+                                       headers=headers,
+                                       params=params)
+
+        response = self.request_acd(request)
+        return response
+
+
+    def cartridges_post_multipart(self, *, archive_file: BinaryIO = None, archive_file_content_type: str = None, **kwargs) -> DetailedResponse:
+        """
+        Create a cartridge deployment.
+
+        Create a cartridge deployment from a cartridge archive file.
+
+        :param BinaryIO archive_file: (optional) Cartridge archive file.
+        :param str archive_file_content_type: (optional) The content type of
+               archive_file.
+        :param dict headers: A `dict` containing the request headers
+        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
+        :rtype: DetailedResponse with `dict` result representing a `DeployCartridgeResponse` object
+        """
+
+        headers = {}
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='cartridges_post_multipart')
+        headers.update(sdk_headers)
+
+        params = {
+            'version': self.version
+        }
+
+        form_data = []
+        if archive_file:
+            form_data.append(('archive_file', (None, archive_file, archive_file_content_type or 'application/octet-stream')))
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
+        url = '/v1/cartridges'
+        request = self.prepare_request(method='POST',
+                                       url=url,
+                                       headers=headers,
+                                       params=params,
+                                       files=form_data)
+
+        response = self.request_acd(request)
+        return response
+
+
+    def cartridges_put_multipart(self, *, archive_file: BinaryIO = None, archive_file_content_type: str = None, **kwargs) -> DetailedResponse:
+        """
+        Create a cartridge deployment.
+
+        Update a cartridge deployment from a cartridge archive file.
+
+        :param BinaryIO archive_file: (optional) Cartridge archive file.
+        :param str archive_file_content_type: (optional) The content type of
+               archive_file.
+        :param dict headers: A `dict` containing the request headers
+        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
+        :rtype: DetailedResponse with `dict` result representing a `DeployCartridgeResponse` object
+        """
+
+        headers = {}
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='cartridges_put_multipart')
+        headers.update(sdk_headers)
+
+        params = {
+            'version': self.version
+        }
+
+        form_data = []
+        if archive_file:
+            form_data.append(('archive_file', (None, archive_file, archive_file_content_type or 'application/octet-stream')))
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
+        url = '/v1/cartridges'
+        request = self.prepare_request(method='PUT',
+                                       url=url,
+                                       headers=headers,
+                                       params=params,
+                                       files=form_data)
+
+        response = self.request_acd(request)
+        return response
+
+
+    def cartridges_get_id(self, id: str, **kwargs) -> DetailedResponse:
+        """
+        Get details of a specific deployment.
+
+        Using the specified Catridge ID, retrieves the deployment status.
+
+        :param str id: Cartridge ID.
+        :param dict headers: A `dict` containing the request headers
+        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
+        :rtype: DetailedResponse with `dict` result representing a `AcdCartridges` object
+        """
+
+        if id is None:
+            raise ValueError('id must be provided')
+        headers = {}
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='cartridges_get_id')
+        headers.update(sdk_headers)
+
+        params = {
+            'version': self.version
+        }
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
+        url = '/v1/cartridges/{0}'.format(*self.encode_path_vars(id))
+        request = self.prepare_request(method='GET',
+                                       url=url,
+                                       headers=headers,
+                                       params=params)
+
+        response = self.request_acd(request)
+        return response
+
+
+    def deploy_cartridge(self, *, archive_file: BinaryIO = None, archive_file_content_type: str = None, update: bool = None, **kwargs) -> DetailedResponse:
+        """
+        Deploy a cartridge.
+
+        Deploy a cartridge from a cartridge archive file.
+
+        :param BinaryIO archive_file: (optional) Cartridge archive file.
+        :param str archive_file_content_type: (optional) The content type of
+               archive_file.
+        :param bool update: (optional) Update resources if they already exist.
+        :param dict headers: A `dict` containing the request headers
+        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
+        :rtype: DetailedResponse with `dict` result representing a `DeployCartridgeResponse` object
+        """
+
+        headers = {}
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='deploy_cartridge')
+        headers.update(sdk_headers)
+
+        params = {
+            'version': self.version,
+            'update': update
+        }
+
+        form_data = []
+        if archive_file:
+            form_data.append(('archive_file', (None, archive_file, archive_file_content_type or 'application/octet-stream')))
+
+        if 'headers' in kwargs:
+            headers.update(kwargs.get('headers'))
+
+        url = '/v1/deploy'
+        request = self.prepare_request(method='POST',
+                                       url=url,
+                                       headers=headers,
+                                       params=params,
+                                       files=form_data)
+
+        response = self.request_acd(request)
+        return response
+
+    #########################
+    # status
+    #########################
+
+
+    def get_health_check_status(self, *, accept: str = None, format: str = None, **kwargs) -> DetailedResponse:
+        """
+        Determine if service is running correctly.
+
+        This resource differs from /status in that it will will always return a 500 error
+        if the service state is not OK.  This makes it simpler for service front ends
+        (such as Datapower) to detect a failed service.
+
+        :param str accept: (optional) The type of the response: application/json or
+               application/xml.
+        :param str format: (optional) Override response format.
+        :param dict headers: A `dict` containing the request headers
+        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
+        :rtype: DetailedResponse with `dict` result representing a `ServiceStatus` object
+        """
 
         headers = {
             'Accept': accept
         }
-        sdk_headers = get_sdk_headers(service_name=SERVICE_NAME, service_version='V2', operation_id='analyze_org')
+        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='get_health_check_status')
         headers.update(sdk_headers)
+
+        params = {
+            'format': format
+        }
 
         if 'headers' in kwargs:
             headers.update(kwargs.get('headers'))
-        params = {
-            'version': self.version,
-            'apikey': apikey,
-            'format': format
-        }
+
         url = '/v1/status/health_check'
-        request = self.prepare_request(method='GET', url=url, headers=headers, params=params)
+        request = self.prepare_request(method='GET',
+                                       url=url,
+                                       headers=headers,
+                                       params=params)
+
         response = self.request_acd(request)
         return response
+
+
+class RunPipelineWithFlowEnums:
+    """
+    Enums for run_pipeline_with_flow parameters.
+    """
+
+    class ContentType(Enum):
+        """
+        The type of the input. A character encoding can be specified by including a
+        `charset` parameter. For example, 'text/plain;charset=utf-8'.
+        """
+        APPLICATION_JSON = 'application/json'
+        TEXT_PLAIN = 'text/plain'
+
+
+class GetServiceStatusEnums:
+    """
+    Enums for get_service_status parameters.
+    """
+
+    class Accept(Enum):
+        """
+        The type of the response: application/json or application/xml.
+        """
+        APPLICATION_JSON = 'application/json'
+        APPLICATION_XML = 'application/xml'
+    class Format(Enum):
+        """
+        Override response format.
+        """
+        JSON = 'json'
+        XML = 'xml'
+    class LivenessCheck(Enum):
+        """
+        Perform a shallow liveness check.
+        """
+        TRUE = 'true'
+        FALSE = 'false'
+
+
+class GetHealthCheckStatusEnums:
+    """
+    Enums for get_health_check_status parameters.
+    """
+
+    class Accept(Enum):
+        """
+        The type of the response: application/json or application/xml.
+        """
+        APPLICATION_JSON = 'application/json'
+        APPLICATION_XML = 'application/xml'
+    class Format(Enum):
+        """
+        Override response format.
+        """
+        JSON = 'json'
+        XML = 'xml'
+
 
 ##############################################################################
 # Models
 ##############################################################################
 
 
-class AcdFlow(object):
+class AcdCartridges():
+    """
+    AcdCartridges.
+
+    :attr str id: (optional)
+    :attr str name: (optional)
+    :attr str status: (optional)
+    :attr int status_code: (optional)
+    :attr str status_location: (optional)
+    :attr str start_time: (optional)
+    :attr str end_time: (optional)
+    :attr str duration: (optional)
+    :attr str correlation_id: (optional)
+    :attr int artifact_response_code: (optional)
+    :attr List[ServiceError] artifact_response: (optional)
+    """
+
+    def __init__(self, *, id: str = None, name: str = None, status: str = None, status_code: int = None, status_location: str = None, start_time: str = None, end_time: str = None, duration: str = None, correlation_id: str = None, artifact_response_code: int = None, artifact_response: List['ServiceError'] = None) -> None:
+        """
+        Initialize a AcdCartridges object.
+
+        :param str id: (optional)
+        :param str name: (optional)
+        :param str status: (optional)
+        :param int status_code: (optional)
+        :param str status_location: (optional)
+        :param str start_time: (optional)
+        :param str end_time: (optional)
+        :param str duration: (optional)
+        :param str correlation_id: (optional)
+        :param int artifact_response_code: (optional)
+        :param List[ServiceError] artifact_response: (optional)
+        """
+        self.id = id
+        self.name = name
+        self.status = status
+        self.status_code = status_code
+        self.status_location = status_location
+        self.start_time = start_time
+        self.end_time = end_time
+        self.duration = duration
+        self.correlation_id = correlation_id
+        self.artifact_response_code = artifact_response_code
+        self.artifact_response = artifact_response
+
+    @classmethod
+    def from_dict(cls, _dict: Dict) -> 'AcdCartridges':
+        """Initialize a AcdCartridges object from a json dictionary."""
+        args = {}
+        if 'id' in _dict:
+            args['id'] = _dict.get('id')
+        if 'name' in _dict:
+            args['name'] = _dict.get('name')
+        if 'status' in _dict:
+            args['status'] = _dict.get('status')
+        if 'statusCode' in _dict:
+            args['status_code'] = _dict.get('statusCode')
+        if 'statusLocation' in _dict:
+            args['status_location'] = _dict.get('statusLocation')
+        if 'startTime' in _dict:
+            args['start_time'] = _dict.get('startTime')
+        if 'endTime' in _dict:
+            args['end_time'] = _dict.get('endTime')
+        if 'duration' in _dict:
+            args['duration'] = _dict.get('duration')
+        if 'correlationId' in _dict:
+            args['correlation_id'] = _dict.get('correlationId')
+        if 'artifactResponseCode' in _dict:
+            args['artifact_response_code'] = _dict.get('artifactResponseCode')
+        if 'artifactResponse' in _dict:
+            args['artifact_response'] = [ServiceError.from_dict(x) for x in _dict.get('artifactResponse')]
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a AcdCartridges object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'id') and self.id is not None:
+            _dict['id'] = self.id
+        if hasattr(self, 'name') and self.name is not None:
+            _dict['name'] = self.name
+        if hasattr(self, 'status') and self.status is not None:
+            _dict['status'] = self.status
+        if hasattr(self, 'status_code') and self.status_code is not None:
+            _dict['statusCode'] = self.status_code
+        if hasattr(self, 'status_location') and self.status_location is not None:
+            _dict['statusLocation'] = self.status_location
+        if hasattr(self, 'start_time') and self.start_time is not None:
+            _dict['startTime'] = self.start_time
+        if hasattr(self, 'end_time') and self.end_time is not None:
+            _dict['endTime'] = self.end_time
+        if hasattr(self, 'duration') and self.duration is not None:
+            _dict['duration'] = self.duration
+        if hasattr(self, 'correlation_id') and self.correlation_id is not None:
+            _dict['correlationId'] = self.correlation_id
+        if hasattr(self, 'artifact_response_code') and self.artifact_response_code is not None:
+            _dict['artifactResponseCode'] = self.artifact_response_code
+        if hasattr(self, 'artifact_response') and self.artifact_response is not None:
+            _dict['artifactResponse'] = [x.to_dict() for x in self.artifact_response]
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __str__(self) -> str:
+        """Return a `str` version of this AcdCartridges object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'AcdCartridges') -> bool:
+        """Return `true` when self and other are equal, false otherwise."""
+        if not isinstance(other, self.__class__):
+            return False
+        return self.__dict__ == other.__dict__
+
+    def __ne__(self, other: 'AcdCartridges') -> bool:
+        """Return `true` when self and other are not equal, false otherwise."""
+        return not self == other
+
+
+class AcdFlow():
     """
     AcdFlow.
 
     :attr str id: (optional)
     :attr str name: (optional)
     :attr str description: (optional)
-    :attr list[AnnotatorFlow] annotator_flows: (optional)
+    :attr str published_date: (optional)
+    :attr bool publish: (optional)
+    :attr str version: (optional)
+    :attr str cartridge_id: (optional)
+    :attr List[AnnotatorFlow] annotator_flows: (optional)
     """
 
-    def __init__(self, id=None, name=None, description=None, annotator_flows=None):
+    def __init__(self, *, id: str = None, name: str = None, description: str = None, published_date: str = None, publish: bool = None, version: str = None, cartridge_id: str = None, annotator_flows: List['AnnotatorFlow'] = None) -> None:
         """
         Initialize a AcdFlow object.
 
         :param str id: (optional)
         :param str name: (optional)
         :param str description: (optional)
-        :param list[AnnotatorFlow] annotator_flows: (optional)
+        :param str published_date: (optional)
+        :param bool publish: (optional)
+        :param str version: (optional)
+        :param str cartridge_id: (optional)
+        :param List[AnnotatorFlow] annotator_flows: (optional)
         """
         self.id = id
         self.name = name
         self.description = description
+        self.published_date = published_date
+        self.publish = publish
+        self.version = version
+        self.cartridge_id = cartridge_id
         self.annotator_flows = annotator_flows
+
+    @classmethod
+    def from_dict(cls, _dict: Dict) -> 'AcdFlow':
+        """Initialize a AcdFlow object from a json dictionary."""
+        args = {}
+        if 'id' in _dict:
+            args['id'] = _dict.get('id')
+        if 'name' in _dict:
+            args['name'] = _dict.get('name')
+        if 'description' in _dict:
+            args['description'] = _dict.get('description')
+        if 'publishedDate' in _dict:
+            args['published_date'] = _dict.get('publishedDate')
+        if 'publish' in _dict:
+            args['publish'] = _dict.get('publish')
+        if 'version' in _dict:
+            args['version'] = _dict.get('version')
+        if 'cartridgeId' in _dict:
+            args['cartridge_id'] = _dict.get('cartridgeId')
+        if 'annotatorFlows' in _dict:
+            args['annotator_flows'] = [AnnotatorFlow.from_dict(x) for x in _dict.get('annotatorFlows')]
+        return cls(**args)
 
     @classmethod
     def _from_dict(cls, _dict):
         """Initialize a AcdFlow object from a json dictionary."""
-        args = {}
-        if 'id' in _dict:
-            args['id'] = _dict['id']
-        if 'name' in _dict:
-            args['name'] = _dict['name']
-        if 'description' in _dict:
-            args['description'] = _dict['description']
-        if 'annotatorFlows' in _dict:
-            args['annotator_flows'] = [AnnotatorFlow._from_dict(x) for x in _dict['annotatorFlows']]
-        return cls(**args)
+        return cls.from_dict(_dict)
 
-    def _to_dict(self):
+    def to_dict(self) -> Dict:
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'id') and self.id is not None:
@@ -892,54 +1632,101 @@ class AcdFlow(object):
             _dict['name'] = self.name
         if hasattr(self, 'description') and self.description is not None:
             _dict['description'] = self.description
+        if hasattr(self, 'published_date') and self.published_date is not None:
+            _dict['publishedDate'] = self.published_date
+        if hasattr(self, 'publish') and self.publish is not None:
+            _dict['publish'] = self.publish
+        if hasattr(self, 'version') and self.version is not None:
+            _dict['version'] = self.version
+        if hasattr(self, 'cartridge_id') and self.cartridge_id is not None:
+            _dict['cartridgeId'] = self.cartridge_id
         if hasattr(self, 'annotator_flows') and self.annotator_flows is not None:
-            _dict['annotatorFlows'] = [x._to_dict() for x in self.annotator_flows]
+            _dict['annotatorFlows'] = [x.to_dict() for x in self.annotator_flows]
         return _dict
 
-    def __str__(self):
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __str__(self) -> str:
         """Return a `str` version of this AcdFlow object."""
-        return json.dumps(self._to_dict(), indent=2)
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'AcdFlow') -> bool:
+        """Return `true` when self and other are equal, false otherwise."""
+        if not isinstance(other, self.__class__):
+            return False
+        return self.__dict__ == other.__dict__
+
+    def __ne__(self, other: 'AcdFlow') -> bool:
+        """Return `true` when self and other are not equal, false otherwise."""
+        return not self == other
 
 
-class AcdProfile(object):
+class AcdProfile():
     """
     AcdProfile.
 
     :attr str id: (optional)
     :attr str name: (optional)
     :attr str description: (optional)
-    :attr list[Annotator] annotators: (optional)
+    :attr str published_date: (optional)
+    :attr bool publish: (optional)
+    :attr str version: (optional)
+    :attr str cartridge_id: (optional)
+    :attr List[Annotator] annotators: (optional)
     """
 
-    def __init__(self, id=None, name=None, description=None, annotators=None):
+    def __init__(self, *, id: str = None, name: str = None, description: str = None, published_date: str = None, publish: bool = None, version: str = None, cartridge_id: str = None, annotators: List['Annotator'] = None) -> None:
         """
         Initialize a AcdProfile object.
 
         :param str id: (optional)
         :param str name: (optional)
         :param str description: (optional)
-        :param list[Annotator] annotators: (optional)
+        :param str published_date: (optional)
+        :param bool publish: (optional)
+        :param str version: (optional)
+        :param str cartridge_id: (optional)
+        :param List[Annotator] annotators: (optional)
         """
         self.id = id
         self.name = name
         self.description = description
+        self.published_date = published_date
+        self.publish = publish
+        self.version = version
+        self.cartridge_id = cartridge_id
         self.annotators = annotators
+
+    @classmethod
+    def from_dict(cls, _dict: Dict) -> 'AcdProfile':
+        """Initialize a AcdProfile object from a json dictionary."""
+        args = {}
+        if 'id' in _dict:
+            args['id'] = _dict.get('id')
+        if 'name' in _dict:
+            args['name'] = _dict.get('name')
+        if 'description' in _dict:
+            args['description'] = _dict.get('description')
+        if 'publishedDate' in _dict:
+            args['published_date'] = _dict.get('publishedDate')
+        if 'publish' in _dict:
+            args['publish'] = _dict.get('publish')
+        if 'version' in _dict:
+            args['version'] = _dict.get('version')
+        if 'cartridgeId' in _dict:
+            args['cartridge_id'] = _dict.get('cartridgeId')
+        if 'annotators' in _dict:
+            args['annotators'] = [Annotator.from_dict(x) for x in _dict.get('annotators')]
+        return cls(**args)
 
     @classmethod
     def _from_dict(cls, _dict):
         """Initialize a AcdProfile object from a json dictionary."""
-        args = {}
-        if 'id' in _dict:
-            args['id'] = _dict['id']
-        if 'name' in _dict:
-            args['name'] = _dict['name']
-        if 'description' in _dict:
-            args['description'] = _dict['description']
-        if 'annotators' in _dict:
-            args['annotators'] = [Annotator._from_dict(x) for x in _dict['annotators']]
-        return cls(**args)
+        return cls.from_dict(_dict)
 
-    def _to_dict(self):
+    def to_dict(self) -> Dict:
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'id') and self.id is not None:
@@ -948,669 +1735,39 @@ class AcdProfile(object):
             _dict['name'] = self.name
         if hasattr(self, 'description') and self.description is not None:
             _dict['description'] = self.description
+        if hasattr(self, 'published_date') and self.published_date is not None:
+            _dict['publishedDate'] = self.published_date
+        if hasattr(self, 'publish') and self.publish is not None:
+            _dict['publish'] = self.publish
+        if hasattr(self, 'version') and self.version is not None:
+            _dict['version'] = self.version
+        if hasattr(self, 'cartridge_id') and self.cartridge_id is not None:
+            _dict['cartridgeId'] = self.cartridge_id
         if hasattr(self, 'annotators') and self.annotators is not None:
-            _dict['annotators'] = [x._to_dict() for x in self.annotators]
+            _dict['annotators'] = [x.to_dict() for x in self.annotators]
         return _dict
 
-    def __str__(self):
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __str__(self) -> str:
         """Return a `str` version of this AcdProfile object."""
-        return json.dumps(self._to_dict(), indent=2)
-
-
-class AnnotatorFlow(object):
-    """
-    AnnotatorFlow.
-
-    :attr str profile: (optional)
-    :attr Flow flow: (optional)
-    """
-
-    def __init__(self, profile=None, flow=None):
-        """
-        Initialize a AnnotatorFlow object.
-
-        :param str profile: (optional)
-        :param Flow flow: (optional)
-        """
-        self.profile = profile
-        self.flow = flow
-
-    @classmethod
-    def _from_dict(cls, _dict):
-        """Initialize a AnnotatorFlow object from a json dictionary."""
-        args = {}
-        if 'profile' in _dict:
-            args['profile'] = _dict['profile']
-        if 'flow' in _dict:
-            args['flow'] = Flow._from_dict(_dict['flow'])
-        return cls(**args)
-
-    def _to_dict(self):
-        """Return a json dictionary representing this model."""
-        _dict = {}
-        if hasattr(self, 'profile') and self.profile is not None:
-            _dict['profile'] = self.profile
-        if hasattr(self, 'flow') and self.flow is not None:
-            _dict['flow'] = self.flow._to_dict()
-        return _dict
-
-    def __str__(self):
-        """Return a `str` version of this AnnotatorFlow object."""
-        return json.dumps(self._to_dict(), indent=2)
-
-
-class ConfigurationEntity(object):
-    """
-    ConfigurationEntity.
-
-    :attr str id: (optional)
-    :attr str type: (optional)
-    :attr int uid: (optional)
-    """
-
-    def __init__(self, id=None, type=None, uid=None):
-        """
-        Initialize a ConfigurationEntity object.
-
-        :param str id: (optional)
-        :param str type: (optional)
-        :param int uid: (optional)
-        """
-        self.id = id
-        self.type = type
-        self.uid = uid
-
-    @classmethod
-    def _from_dict(cls, _dict):
-        """Initialize a ConfigurationEntity object from a json dictionary."""
-        args = {}
-        if 'id' in _dict:
-            args['id'] = _dict['id']
-        if 'type' in _dict:
-            args['type'] = _dict['type']
-        if 'uid' in _dict:
-            args['uid'] = _dict['uid']
-        return cls(**args)
-
-    def _to_dict(self):
-        """Return a json dictionary representing this model."""
-        _dict = {}
-        if hasattr(self, 'id') and self.id is not None:
-            _dict['id'] = self.id
-        if hasattr(self, 'type') and self.type is not None:
-            _dict['type'] = self.type
-        if hasattr(self, 'uid') and self.uid is not None:
-            _dict['uid'] = self.uid
-        return _dict
-
-    def __str__(self):
-        """Return a `str` version of this ConfigurationEntity object."""
-        return json.dumps(self._to_dict(), indent=2)
-
-
-class ContainerAnnotation(object):
-    """
-    ContainerAnnotation.
-
-    :attr list[Annotation] allergy_ind: (optional)
-    :attr list[Annotation] allergy_medication_ind: (optional)
-    :attr list[AttributeValueAnnotation] attribute_values: (optional)
-    :attr list[AssistanceAnnotation] bathing_assistance_ind: (optional)
-    :attr list[CancerDiagnosis] ica_cancer_diagnosis_ind: (optional)
-    :attr list[Concept] concepts: (optional)
-    :attr list[ConceptValue] concept_values: (optional)
-    :attr list[AssistanceAnnotation] dressing_assistance_ind: (optional)
-    :attr list[AssistanceAnnotation] eating_assistance_ind: (optional)
-    :attr list[EjectionFractionAnnotation] ejection_fraction_ind: (optional)
-    :attr list[Annotation] hypothetical_spans: (optional)
-    :attr list[LabValueAnnotation] lab_value_ind: (optional)
-    :attr list[MedicationAnnotation] medication_ind: (optional)
-    :attr list[Annotation] email_address_ind: (optional)
-    :attr list[Annotation] location_ind: (optional)
-    :attr list[Annotation] person_ind: (optional)
-    :attr list[Annotation] u_s_phone_number_ind: (optional)
-    :attr list[Annotation] medical_institution_ind: (optional)
-    :attr list[Annotation] organization_ind: (optional)
-    :attr list[NegatedSpan] negated_spans: (optional)
-    :attr list[Procedure] procedure_ind: (optional)
-    :attr list[AssistanceAnnotation] seeing_assistance_ind: (optional)
-    :attr list[Smoking] smoking_ind: (optional)
-    :attr list[SymptomDisease] symptom_disease_ind: (optional)
-    :attr list[AssistanceAnnotation] toileting_assistance_ind: (optional)
-    :attr list[AssistanceAnnotation] walking_assistance_ind: (optional)
-    :attr list[Section] sections: (optional)
-    :attr list[NluEntities] nlu_entities: (optional)
-    :attr list[Relations] relations: (optional)
-    :attr list[SpellingCorrection]: (optional)
-    :attr list[SpellCorrectedText] spell_corrected_text: (optional)
-    """
-
-    def __init__(self, allergy_ind=None, allergy_medication_ind=None, attribute_values=None,
-                 bathing_assistance_ind=None, ica_cancer_diagnosis_ind=None, concepts=None,
-                 concept_values=None, dressing_assistance_ind=None, eating_assistance_ind=None,
-                 ejection_fraction_ind=None, hypothetical_spans=None, lab_value_ind=None, medication_ind=None,
-                 email_address_ind=None, location_ind=None, person_ind=None, u_s_phone_number_ind=None,
-                 medical_institution_ind=None, organization_ind=None, negated_spans=None, procedure_ind=None,
-                 seeing_assistance_ind=None, smoking_ind=None, symptom_disease_ind=None, toileting_assistance_ind=None,
-                 walking_assistance_ind=None, sections=None, nlu_entities=None, relations=None,
-                 spelling_corrections=None, spell_corrected_text=None):
-        """
-        Initialize a ContainerAnnotation object.
-
-        :param list[Annotation] allergy_ind: (optional)
-        :param list[Annotation] allergy_medication_ind: (optional)
-        :param list[AttributeValueAnnotation] attribute_values: (optional)
-        :param list[AssistanceAnnotation] bathing_assistance_ind: (optional)
-        :param list[CancerDiagnosis] ica_cancer_diagnosis_ind: (optional)
-        :param list[Concept] concepts: (optional)
-        :param list[ConceptValue] concept_values: (optional)
-        :param list[AssistanceAnnotation] dressing_assistance_ind: (optional)
-        :param list[AssistanceAnnotation] eating_assistance_ind: (optional)
-        :param list[EjectionFractionAnnotation] ejection_fraction_ind: (optional)
-        :param list[Annotation] hypothetical_spans: (optional)
-        :param list[LabValueAnnotation] lab_value_ind: (optional)
-        :param list[MedicationAnnotation] medication_ind: (optional)
-        :param list[Annotation] email_address_ind: (optional)
-        :param list[Annotation] location_ind: (optional)
-        :param list[Annotation] person_ind: (optional)
-        :param list[Annotation] u_s_phone_number_ind: (optional)
-        :param list[Annotation] medical_institution_ind: (optional)
-        :param list[Annotation] organization_ind: (optional)
-        :param list[NegatedSpan] negated_spans: (optional)
-        :param list[Procedure] procedure_ind: (optional)
-        :param list[AssistanceAnnotation] seeing_assistance_ind: (optional)
-        :param list[Smoking] smoking_ind: (optional)
-        :param list[SymptomDisease] symptom_disease_ind: (optional)
-        :param list[AssistanceAnnotation] toileting_assistance_ind: (optional)
-        :param list[AssistanceAnnotation] walking_assistance_ind: (optional)
-        :param list[Section] sections: (optional)
-        :param list[NluEntities] nlu_entities: (optional)
-        :param list[Relations] relations: (optional)
-        :param list[SpellingCorrection] spelling_correction: (optional)
-        :param list[SpellCorrectedText] spell_corrected_text: (optional)
-        """
-        self.allergy_ind = allergy_ind
-        self.allergy_medication_ind = allergy_medication_ind
-        self.attribute_values = attribute_values
-        self.bathing_assistance_ind = bathing_assistance_ind
-        self.ica_cancer_diagnosis_ind = ica_cancer_diagnosis_ind
-        self.concepts = concepts
-        self.concept_values = concept_values
-        self.dressing_assistance_ind = dressing_assistance_ind
-        self.eating_assistance_ind = eating_assistance_ind
-        self.ejection_fraction_ind = ejection_fraction_ind
-        self.hypothetical_spans = hypothetical_spans
-        self.lab_value_ind = lab_value_ind
-        self.medication_ind = medication_ind
-        self.email_address_ind = email_address_ind
-        self.location_ind = location_ind
-        self.person_ind = person_ind
-        self.u_s_phone_number_ind = u_s_phone_number_ind
-        self.medical_institution_ind = medical_institution_ind
-        self.organization_ind = organization_ind
-        self.negated_spans = negated_spans
-        self.procedure_ind = procedure_ind
-        self.seeing_assistance_ind = seeing_assistance_ind
-        self.smoking_ind = smoking_ind
-        self.symptom_disease_ind = symptom_disease_ind
-        self.toileting_assistance_ind = toileting_assistance_ind
-        self.walking_assistance_ind = walking_assistance_ind
-        self.sections = sections
-        self.nlu_entities = nlu_entities
-        self.relations = relations
-        self.spelling_corrections = spelling_corrections
-        self.spell_corrected_text = spell_corrected_text
-
-    @classmethod
-    def _from_dict(cls, _dict):
-        """Initialize a ContainerAnnotation object from a json dictionary."""
-        args = {}
-        if 'AllergyMedicationInd' in _dict:
-            args['allergy_medication_ind'] = [Annotation._from_dict(x) for x in _dict['AllergyMedicationInd']]
-        if 'AllergyInd' in _dict:
-            args['allergy_ind'] = [Annotation._from_dict(x) for x in _dict['AllergyInd']]
-        if 'attributeValues' in _dict:
-            args['attribute_values'] = [AttributeValueAnnotation._from_dict(x) for x in _dict['attributeValues']]
-        if 'BathingAssistanceInd' in _dict:
-            args['bathing_assistance_ind'] = ([AssistanceAnnotation._from_dict(x)
-                                               for x in _dict['BathingAssistanceInd']])
-        if 'IcaCancerDiagnosisInd' in _dict:
-            args['ica_cancer_diagnosis_ind'] = [CancerDiagnosis._from_dict(x) for x in _dict['IcaCancerDiagnosisInd']]
-        if 'concepts' in _dict:
-            args['concepts'] = [Concept._from_dict(x) for x in _dict['concepts']]
-        if 'conceptValues' in _dict:
-            args['concept_values'] = [ConceptValue._from_dict(x) for x in _dict['conceptValues']]
-        if 'DressingAssistanceInd' in _dict:
-            args['dressing_assistance_ind'] = ([AssistanceAnnotation._from_dict(x)
-                                                for x in _dict['DressingAssistanceInd']])
-        if 'EatingAssistanceInd' in _dict:
-            args['eating_assistance_ind'] = [AssistanceAnnotation._from_dict(x) for x in _dict['EatingAssistanceInd']]
-        if 'EjectionFractionInd' in _dict:
-            args['ejection_fraction_ind'] = ([EjectionFractionAnnotation._from_dict(x)
-                                              for x in _dict['EjectionFractionInd']])
-        if 'hypotheticalSpans' in _dict:
-            args['hypothetical_spans'] = [Annotation._from_dict(x) for x in _dict['hypotheticalSpans']]
-        if 'LabValueInd' in _dict:
-            args['lab_value_ind'] = [LabValueAnnotation._from_dict(x) for x in _dict['LabValueInd']]
-        if 'MedicationInd' in _dict:
-            args['medication_ind'] = [MedicationAnnotation._from_dict(x) for x in _dict['MedicationInd']]
-        if 'EmailAddressInd' in _dict:
-            args['email_address_ind'] = [Annotation._from_dict(x) for x in _dict['EmailAddressInd']]
-        if 'LocationInd' in _dict:
-            args['location_ind'] = [Annotation._from_dict(x) for x in _dict['LocationInd']]
-        if 'PersonInd' in _dict:
-            args['person_ind'] = [Annotation._from_dict(x) for x in _dict['PersonInd']]
-        if 'US_PhoneNumberInd' in _dict:
-            args['u_s_phone_number_ind'] = [Annotation._from_dict(x) for x in _dict['US_PhoneNumberInd']]
-        if 'MedicalInstitutionInd' in _dict:
-            args['medical_institution_ind'] = [Annotation._from_dict(x) for x in _dict['MedicalInstitutionInd']]
-        if 'OrganizationInd' in _dict:
-            args['organization_ind'] = [Annotation._from_dict(x) for x in _dict['OrganizationInd']]
-        if 'negatedSpans' in _dict:
-            args['negated_spans'] = [NegatedSpan._from_dict(x) for x in _dict['negatedSpans']]
-        if 'ProcedureInd' in _dict:
-            args['procedure_ind'] = [Procedure._from_dict(x) for x in _dict['ProcedureInd']]
-        if 'SeeingAssistanceInd' in _dict:
-            args['seeing_assistance_ind'] = [AssistanceAnnotation._from_dict(x) for x in _dict['SeeingAssistanceInd']]
-        if 'SmokingInd' in _dict:
-            args['smoking_ind'] = [Smoking._from_dict(x) for x in _dict['SmokingInd']]
-        if 'SymptomDiseaseInd' in _dict:
-            args['symptom_disease_ind'] = [SymptomDisease._from_dict(x) for x in _dict['SymptomDiseaseInd']]
-        if 'ToiletingAssistanceInd' in _dict:
-            args['toileting_assistance_ind'] = ([AssistanceAnnotation._from_dict(x)
-                                                 for x in _dict['ToiletingAssistanceInd']])
-        if 'WalkingAssistanceInd' in _dict:
-            args['walking_assistance_ind'] = ([AssistanceAnnotation._from_dict(x)
-                                               for x in _dict['WalkingAssistanceInd']])
-        if 'sections' in _dict:
-            args['sections'] = [Section._from_dict(x) for x in _dict['sections']]
-        if 'nluEntities' in _dict:
-            args['nlu_entities'] = [NluEntities._from_dict(x) for x in _dict['nluEntities']]
-        if 'relations' in _dict:
-            args['relations'] = [Relations._from_dict(x) for x in _dict['relations']]
-        if 'spellingCorrections' in _dict:
-            args['spelling_corrections'] = [SpellingCorrection._from_dict(x) for x in _dict['spellingCorrections']]
-        if 'spellCorrectedText' in _dict:
-            args['spell_corrected_text'] = [SpellCorrectedText._from_dict(x) for x in _dict['spellCorrectedText']]
-        return cls(**args)
-
-    def _to_dict(self):
-        """Return a json dictionary representing this model."""
-        _dict = {}
-        if hasattr(self, 'allergy_medication_ind') and self.allergy_medication_ind is not None:
-            _dict['AllergyMedicationInd'] = [x._to_dict() for x in self.allergy_medication_ind]
-        if hasattr(self, 'allergy_ind') and self.allergy_ind is not None:
-            _dict['AllergyInd'] = [x._to_dict() for x in self.allergy_ind]
-        if hasattr(self, 'attribute_values') and self.attribute_values is not None:
-            _dict['attributeValues'] = [x._to_dict() for x in self.attribute_values]
-        if hasattr(self, 'bathing_assistance_ind') and self.bathing_assistance_ind is not None:
-            _dict['BathingAssistanceInd'] = [x._to_dict() for x in self.bathing_assistance_ind]
-        if hasattr(self, 'ica_cancer_diagnosis_ind') and self.ica_cancer_diagnosis_ind is not None:
-            _dict['IcaCancerDiagnosisInd'] = [x._to_dict() for x in self.ica_cancer_diagnosis_ind]
-        if hasattr(self, 'concepts') and self.concepts is not None:
-            _dict['concepts'] = [x._to_dict() for x in self.concepts]
-        if hasattr(self, 'concept_values') and self.concept_values is not None:
-            _dict['conceptValues'] = [x._to_dict() for x in self.concept_values]
-        if hasattr(self, 'dressing_assistance_ind') and self.dressing_assistance_ind is not None:
-            _dict['DressingAssistanceInd'] = [x._to_dict() for x in self.dressing_assistance_ind]
-        if hasattr(self, 'eating_assistance_ind') and self.eating_assistance_ind is not None:
-            _dict['EatingAssistanceInd'] = [x._to_dict() for x in self.eating_assistance_ind]
-        if hasattr(self, 'ejection_fraction_ind') and self.ejection_fraction_ind is not None:
-            _dict['EjectionFractionInd'] = [x._to_dict() for x in self.ejection_fraction_ind]
-        if hasattr(self, 'hypothetical_spans') and self.hypothetical_spans is not None:
-            _dict['hypotheticalSpans'] = [x._to_dict() for x in self.hypothetical_spans]
-        if hasattr(self, 'lab_value_ind') and self.lab_value_ind is not None:
-            _dict['LabValueInd'] = [x._to_dict() for x in self.lab_value_ind]
-        if hasattr(self, 'medication_ind') and self.medication_ind is not None:
-            _dict['MedicationInd'] = [x._to_dict() for x in self.medication_ind]
-        if hasattr(self, 'email_address_ind') and self.email_address_ind is not None:
-            _dict['EmailAddressInd'] = [x._to_dict() for x in self.email_address_ind]
-        if hasattr(self, 'location_ind') and self.location_ind is not None:
-            _dict['LocationInd'] = [x._to_dict() for x in self.location_ind]
-        if hasattr(self, 'person_ind') and self.person_ind is not None:
-            _dict['PersonInd'] = [x._to_dict() for x in self.person_ind]
-        if hasattr(self, 'u_s_phone_number_ind') and self.u_s_phone_number_ind is not None:
-            _dict['US_PhoneNumberInd'] = [x._to_dict() for x in self.u_s_phone_number_ind]
-        if hasattr(self, 'medical_institution_ind') and self.medical_institution_ind is not None:
-            _dict['MedicalInstitutionInd'] = [x._to_dict() for x in self.medical_institution_ind]
-        if hasattr(self, 'organization_ind') and self.organization_ind is not None:
-            _dict['OrganizationInd'] = [x._to_dict() for x in self.organization_ind]
-        if hasattr(self, 'negated_spans') and self.negated_spans is not None:
-            _dict['negatedSpans'] = [x._to_dict() for x in self.negated_spans]
-        if hasattr(self, 'procedure_ind') and self.procedure_ind is not None:
-            _dict['ProcedureInd'] = [x._to_dict() for x in self.procedure_ind]
-        if hasattr(self, 'seeing_assistance_ind') and self.seeing_assistance_ind is not None:
-            _dict['SeeingAssistanceInd'] = [x._to_dict() for x in self.seeing_assistance_ind]
-        if hasattr(self, 'smoking_ind') and self.smoking_ind is not None:
-            _dict['SmokingInd'] = [x._to_dict() for x in self.smoking_ind]
-        if hasattr(self, 'symptom_disease_ind') and self.symptom_disease_ind is not None:
-            _dict['SymptomDiseaseInd'] = [x._to_dict() for x in self.symptom_disease_ind]
-        if hasattr(self, 'toileting_assistance_ind') and self.toileting_assistance_ind is not None:
-            _dict['ToiletingAssistanceInd'] = [x._to_dict() for x in self.toileting_assistance_ind]
-        if hasattr(self, 'walking_assistance_ind') and self.walking_assistance_ind is not None:
-            _dict['WalkingAssistanceInd'] = [x._to_dict() for x in self.walking_assistance_ind]
-        if hasattr(self, 'sections') and self.sections is not None:
-            _dict['sections'] = [x._to_dict() for x in self.sections]
-        if hasattr(self, 'nlu_entities') and self.nlu_entities is not None:
-            _dict['nluEntities'] = [x._to_dict() for x in self.nlu_entities]
-        if hasattr(self, 'relations') and self.relations is not None:
-            _dict['relations'] = [x._to_dict() for x in self.relations]
-        if hasattr(self, 'spelling_corrections') and self.spelling_corrections is not None:
-            _dict['spellingCorrections'] = [x._to_dict() for x in self.spelling_corrections]
-        if hasattr(self, 'spell_corrected_text') and self.spell_corrected_text is not None:
-            _dict['spellCorrectedText'] = [x._to_dict() for x in self.spell_corrected_text]
-        return _dict
-
-    def __str__(self):
-        """Return a `str` version of this ContainerAnnotation object."""
-        return json.dumps(self._to_dict(), indent=2)
-
-class ContainerGroup(object):
-    """
-    ContainerGroup.
-    :attr list[UnstructuredContainer] unstructured: (optional)
-    :attr list[AnnotatorFlow] annotator_flows: (optional)
-    """
-
-    def __init__(self, unstructured=None, annotator_flows=None):
-        """
-        Initialize a ContainerGroup object.
-        :param list[UnstructuredContainer] unstructured: (optional)
-        :param list[AnnotatorFlow] annotator_flows: (optional)
-        """
-        self.unstructured = unstructured
-        self.annotator_flows = annotator_flows
-
-
-    @classmethod
-    def _from_dict(cls, _dict):
-        """Initialize a ContainerGroup object from a json dictionary."""
-        args = {}
-        if 'unstructured' in _dict:
-            args['unstructured'] = [UnstructuredContainer._from_dict(x) for x in _dict['unstructured']]
-        if 'annotatorFlows' in _dict:
-            args['annotator_flows'] = [AnnotatorFlow._from_dict(x) for x in _dict['annotatorFlows']]
-        return cls(**args)
-
-    def _to_dict(self):
-        """Return a json dictionary representing this model."""
-        _dict = {}
-        if hasattr(self, 'unstructured') and self.unstructured is not None:
-            _dict['unstructured'] = [x._to_dict() for x in self.unstructured]
-        if hasattr(self, 'annotator_flows') and self.annotator_flows is not None:
-            _dict['annotatorFlows'] = [x._to_dict() for x in self.annotator_flows]
-        return _dict
-
-class Disambiguation(object):
-    """
-    Disambiguation.
-
-    :attr str validity: (optional)
-    """
-
-    def __init__(self, validity=None):
-        """
-        Initialize a Disambiguation object.
-
-        :param str validity: (optional)
-        """
-        self.validity = validity
-
-    @classmethod
-    def _from_dict(cls, _dict):
-        """Initialize a Disambiguation object from a json dictionary."""
-        args = {}
-        if 'validity' in _dict:
-            args['validity'] = _dict['validity']
-        return cls(**args)
-
-    def _to_dict(self):
-        """Return a json dictionary representing this model."""
-        _dict = {}
-        if hasattr(self, 'validity') and self.validity is not None:
-            _dict['validity'] = self.validity
-        return _dict
-
-    def __str__(self):
-        """Return a `str` version of this Disambiguation object."""
-        return json.dumps(self._to_dict(), indent=2)
-
-
-class Flow(object):
-    """
-    Flow.
-
-    :attr list[FlowEntry] elements: (optional)
-    :attr bool async: (optional)
-    """
-
-    def __init__(self, elements=None, async_=None):
-        """
-        Initialize a Flow object.
-
-        :param list[FlowEntry] elements: (optional)
-        :param bool async: (optional)
-        """
-        self.elements = elements
-        self.async_ = async_
-
-    @classmethod
-    def _from_dict(cls, _dict):
-        """Initialize a Flow object from a json dictionary."""
-        args = {}
-        if 'elements' in _dict:
-            args['elements'] = [FlowEntry._from_dict(x) for x in _dict['elements']]
-        if 'async' in _dict:
-            args['async_'] = _dict['async']
-        return cls(**args)
-
-    def _to_dict(self):
-        """Return a json dictionary representing this model."""
-        _dict = {}
-        if hasattr(self, 'elements') and self.elements is not None:
-            _dict['elements'] = [x._to_dict() for x in self.elements]
-        if hasattr(self, 'async_') and self.async_ is not None:
-            _dict['async'] = self.async_
-        return _dict
-
-    def __str__(self):
-        """Return a `str` version of this Flow object."""
-        return json.dumps(self._to_dict(), indent=2)
-
-
-class FlowEntry(object):
-    """
-    FlowEntry.
-
-    :attr Annotator annotator: (optional)
-    :attr Flow flow: (optional)
-    """
-
-    def __init__(self, annotator=None, flow=None):
-        """
-        Initialize a FlowEntry object.
-
-        :param Annotator annotator: (optional)
-        :param Flow flow: (optional)
-        """
-        self.annotator = annotator
-        self.flow = flow
-
-    @classmethod
-    def _from_dict(cls, _dict):
-        """Initialize a FlowEntry object from a json dictionary."""
-        args = {}
-        if 'annotator' in _dict:
-            args['annotator'] = Annotator._from_dict(_dict['annotator'])
-        if 'flow' in _dict:
-            args['flow'] = Flow._from_dict(_dict['flow'])
-        return cls(**args)
-
-    def _to_dict(self):
-        """Return a json dictionary representing this model."""
-        _dict = {}
-        if hasattr(self, 'annotator') and self.annotator is not None:
-            _dict['annotator'] = self.annotator._to_dict()
-        if hasattr(self, 'flow') and self.flow is not None:
-            _dict['flow'] = self.flow._to_dict()
-        return _dict
-
-    def __str__(self):
-        """Return a `str` version of this FlowEntry object."""
-        return json.dumps(self._to_dict(), indent=2)
-
-
-class ListStringWrapper(object):
-    """
-    ListStringWrapper.
-
-    :attr list[str] data: (optional)
-    """
-
-    def __init__(self, data=None):
-        """
-        Initialize a ListStringWrapper object.
-
-        :param list[str] data: (optional)
-        """
-        self.data = data
-
-    @classmethod
-    def _from_dict(cls, _dict):
-        """Initialize a ListStringWrapper object from a json dictionary."""
-        args = {}
-        if 'data' in _dict:
-            args['data'] = _dict['data']
-        return cls(**args)
-
-    def _to_dict(self):
-        """Return a json dictionary representing this model."""
-        _dict = {}
-        if hasattr(self, 'data') and self.data is not None:
-            _dict['data'] = self.data
-        return _dict
-
-    def __str__(self):
-        """Return a `str` version of this ListStringWrapper object."""
-        return json.dumps(self._to_dict(), indent=2)
-
-
-class RequestContainer(object):
-    """
-    RequestContainer.
-
-    :attr list[UnstructuredContainer] unstructured: (optional)
-    :attr list[AnnotatorFlow] annotator_flows: (optional)
-    """
-
-    def __init__(self, unstructured=None, annotator_flows=None):
-        """
-        Initialize a RequestContainer object.
-
-        :param list[UnstructuredContainer] unstructured: (optional)
-        :param list[AnnotatorFlow] annotator_flows: (optional)
-        """
-        self.unstructured = unstructured
-        self.annotator_flows = annotator_flows
-
-    @classmethod
-    def _from_dict(cls, _dict):
-        """Initialize a RequestContainer object from a json dictionary."""
-        args = {}
-        if 'unstructured' in _dict:
-            args['unstructured'] = [UnstructuredContainer._from_dict(x) for x in _dict['unstructured']]
-        if 'annotatorFlows' in _dict:
-            args['annotator_flows'] = [AnnotatorFlow._from_dict(x) for x in _dict['annotatorFlows']]
-        return cls(**args)
-
-    def _to_dict(self):
-        """Return a json dictionary representing this model."""
-        _dict = {}
-        if hasattr(self, 'unstructured') and self.unstructured is not None:
-            _dict['unstructured'] = [x._to_dict() for x in self.unstructured]
-        if hasattr(self, 'annotator_flows') and self.annotator_flows is not None:
-            _dict['annotatorFlows'] = [x._to_dict() for x in self.annotator_flows]
-        return _dict
-
-    def __str__(self):
-        """Return a `str` version of this RequestContainer object."""
-        return json.dumps(self._to_dict(), indent=2)
-
-
-class UnstructuredContainer(object):
-    """
-    UnstructuredContainer.
-
-    :attr str text: (optional)
-    :attr str id: (optional)
-    :attr str type: (optional)
-    :attr ContainerAnnotation data: (optional)
-    :attr dict metadata: (optional)
-    :attr int uid: (optional)
-    """
-
-    def __init__(self, text=None, id=None, type=None, data=None, metadata=None, uid=None):
-        """
-        Initialize a UnstructuredContainer object.
-
-        :param str text: (optional)
-        :param str id: (optional)
-        :param str type: (optional)
-        :param ContainerAnnotation data: (optional)
-        :param dict metadata: (optional)
-        :param int uid: (optional)
-        """
-        self.text = text
-        self.id = id
-        self.type = type
-        self.data = data
-        self.metadata = metadata
-        self.uid = uid
-
-    @classmethod
-    def _from_dict(cls, _dict):
-        """Initialize a UnstructuredContainer object from a json dictionary."""
-        args = {}
-        if 'text' in _dict:
-            args['text'] = _dict['text']
-        if 'id' in _dict:
-            args['id'] = _dict['id']
-        if 'type' in _dict:
-            args['type'] = _dict['type']
-        if 'data' in _dict:
-            args['data'] = ContainerAnnotation._from_dict(_dict['data'])
-        if 'metadata' in _dict:
-            args['metadata'] = _dict['metadata']
-        if 'uid' in _dict:
-            args['uid'] = _dict['uid']
-        return cls(**args)
-
-    def _to_dict(self):
-        """Return a json dictionary representing this model."""
-        _dict = {}
-        if hasattr(self, 'text') and self.text is not None:
-            _dict['text'] = self.text
-        if hasattr(self, 'id') and self.id is not None:
-            _dict['id'] = self.id
-        if hasattr(self, 'type') and self.type is not None:
-            _dict['type'] = self.type
-        if hasattr(self, 'data') and self.data is not None:
-            _dict['data'] = self.data._to_dict()
-        if hasattr(self, 'metadata') and self.metadata is not None:
-            _dict['metadata'] = self.metadata
-        if hasattr(self, 'uid') and self.uid is not None:
-            _dict['uid'] = self.uid
-        return _dict
-
-    def __str__(self):
-        """Return a `str` version of this UnstructuredContainer object."""
-        return json.dumps(self._to_dict(), indent=2)
-
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'AcdProfile') -> bool:
+        """Return `true` when self and other are equal, false otherwise."""
+        if not isinstance(other, self.__class__):
+            return False
+        return self.__dict__ == other.__dict__
+
+    def __ne__(self, other: 'AcdProfile') -> bool:
+        """Return `true` when self and other are not equal, false otherwise."""
+        return not self == other
 
 class AllergyMedication(object):
     """
     AllergyMedication.
-
     :attr str id: (optional)
     :attr str type: (optional)
     :attr int uid: (optional)
@@ -1629,7 +1786,6 @@ class AllergyMedication(object):
                  **kwargs):
         """
         Initialize a AllergyMedication object.
-
         :param str id: (optional)
         :param str type: (optional)
         :param int uid: (optional)
@@ -1658,7 +1814,7 @@ class AllergyMedication(object):
             setattr(self, _key, _value)
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a AllergyMedication object from a json dictionary."""
         args = {}
         xtra = _dict.copy()
@@ -1698,7 +1854,12 @@ class AllergyMedication(object):
         args.update(xtra)
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a AllergyMedication object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'id') and self.id is not None:
@@ -1730,6 +1891,10 @@ class AllergyMedication(object):
                     _dict[_key] = _value
         return _dict
 
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
     def __setattr__(self, name, value):
         properties = ({'id', 'type', 'uid', 'begin', 'end', 'covered_text', 'negated', 'hypothetical',
                        'section_normalized_name', 'section_surface_form', 'medication'})
@@ -1747,7 +1912,6 @@ class AllergyMedication(object):
 class Annotation(object):
     """
     Annotation.
-
     :attr str id: (optional)
     :attr str type: (optional)
     :attr int uid: (optional)
@@ -1764,7 +1928,6 @@ class Annotation(object):
                  hypothetical=None, section_normalized_name=None, section_surface_form=None, **kwargs):
         """
         Initialize a Annotation object.
-
         :param str id: (optional)
         :param str type: (optional)
         :param int uid: (optional)
@@ -1791,7 +1954,7 @@ class Annotation(object):
             setattr(self, _key, _value)
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a Annotation object from a json dictionary."""
         args = {}
         xtra = _dict.copy()
@@ -1828,7 +1991,12 @@ class Annotation(object):
         args.update(xtra)
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a Annotation object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'id') and self.id is not None:
@@ -1858,6 +2026,10 @@ class Annotation(object):
                     _dict[_key] = _value
         return _dict
 
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
     def __setattr__(self, name, value):
         properties = ({'id', 'type', 'uid', 'begin', 'end', 'covered_text', 'negated', 'hypothetical',
                        'section_normalized_name', 'section_surface_form'})
@@ -1871,75 +2043,244 @@ class Annotation(object):
         """Return a `str` version of this Annotation object."""
         return json.dumps(self._to_dict(), indent=2)
 
+class AnalyticFlowBeanInput():
+    """
+    AnalyticFlowBeanInput.
 
-class Annotator(object):
+    :attr List[UnstructuredContainer] unstructured: (optional)
+    :attr List[AnnotatorFlow] annotator_flows: (optional)
+    """
+
+    def __init__(self, *, unstructured: List['UnstructuredContainer'] = None, annotator_flows: List['AnnotatorFlow'] = None) -> None:
+        """
+        Initialize a AnalyticFlowBeanInput object.
+
+        :param List[UnstructuredContainer] unstructured: (optional)
+        :param List[AnnotatorFlow] annotator_flows: (optional)
+        """
+        self.unstructured = unstructured
+        self.annotator_flows = annotator_flows
+
+    @classmethod
+    def from_dict(cls, _dict: Dict) -> 'AnalyticFlowBeanInput':
+        """Initialize a AnalyticFlowBeanInput object from a json dictionary."""
+        args = {}
+        if 'unstructured' in _dict:
+            args['unstructured'] = [UnstructuredContainer.from_dict(x) for x in _dict.get('unstructured')]
+        if 'annotatorFlows' in _dict:
+            args['annotator_flows'] = [AnnotatorFlow.from_dict(x) for x in _dict.get('annotatorFlows')]
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a AnalyticFlowBeanInput object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'unstructured') and self.unstructured is not None:
+            _dict['unstructured'] = [x.to_dict() for x in self.unstructured]
+        if hasattr(self, 'annotator_flows') and self.annotator_flows is not None:
+            _dict['annotatorFlows'] = [x.to_dict() for x in self.annotator_flows]
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __str__(self) -> str:
+        """Return a `str` version of this AnalyticFlowBeanInput object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'AnalyticFlowBeanInput') -> bool:
+        """Return `true` when self and other are equal, false otherwise."""
+        if not isinstance(other, self.__class__):
+            return False
+        return self.__dict__ == other.__dict__
+
+    def __ne__(self, other: 'AnalyticFlowBeanInput') -> bool:
+        """Return `true` when self and other are not equal, false otherwise."""
+        return not self == other
+
+
+class Annotator():
     """
     Annotator.
 
-    :attr Annotator annotator: (optional)
-    :attr Flow flow: (optional)
-    :attr str name: (optional)
-    :attr str description: (optional)
-    :attr object parameters: (optional)
-    :attr list[ConfigurationEntity] configurations: (optional)
+    :attr str name:
+    :attr dict parameters: (optional)
+    :attr List[ConfigurationEntity] configurations: (optional)
     """
 
-    def __init__(self, name=None, annotator=None, flow=None, description=None, parameters=None, configurations=None):
+    def __init__(self, name: str, *, parameters: dict = None, configurations: List['ConfigurationEntity'] = None) -> None:
         """
         Initialize a Annotator object.
 
-        :param str name: (optional)
-        :param Annotator annotator: (optional)
-        :param Flow flow: (optional)
-        :param str description: (optional)
-        :param object parameters: (optional)
-        :param list[ConfigurationEntity] configurations: (optional)
+        :param str name:
+        :param dict parameters: (optional)
+        :param List[ConfigurationEntity] configurations: (optional)
         """
-        self.annotator = annotator
-        self.flow = flow
         self.name = name
-        self.description = description
         self.parameters = parameters
         self.configurations = configurations
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict: Dict) -> 'Annotator':
         """Initialize a Annotator object from a json dictionary."""
         args = {}
-        if 'annotator' in _dict:
-            args['annotator'] = Annotator._from_dict(_dict['annotator'])
-        if 'flow' in _dict:
-            args['flow'] = Flow._from_dict(_dict['flow'])
         if 'name' in _dict:
-            args['name'] = _dict['name']
-        if 'description' in _dict:
-            args['description'] = _dict['description']
+            args['name'] = _dict.get('name')
+        else:
+            raise ValueError('Required property \'name\' not present in Annotator JSON')
         if 'parameters' in _dict:
-            args['parameters'] = _dict['parameters']
+            args['parameters'] = _dict.get('parameters')
         if 'configurations' in _dict:
-            args['configurations'] = [ConfigurationEntity._from_dict(x) for x in _dict['configurations']]
+            args['configurations'] = [ConfigurationEntity.from_dict(x) for x in _dict.get('configurations')]
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a Annotator object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
         """Return a json dictionary representing this model."""
         _dict = {}
-        if hasattr(self, 'annotator') and self.annotator is not None:
-            _dict['annotator'] = self.annotator._to_dict()
-        if hasattr(self, 'flow') and self.flow is not None:
-            _dict['flow'] = self.flow._to_dict()
         if hasattr(self, 'name') and self.name is not None:
             _dict['name'] = self.name
-        if hasattr(self, 'description') and self.description is not None:
-            _dict['description'] = self.description
         if hasattr(self, 'parameters') and self.parameters is not None:
             _dict['parameters'] = self.parameters
         if hasattr(self, 'configurations') and self.configurations is not None:
-            _dict['configurations'] = [x._to_dict() for x in self.configurations]
+            _dict['configurations'] = [x.to_dict() for x in self.configurations]
         return _dict
 
-    def __str__(self):
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __str__(self) -> str:
         """Return a `str` version of this Annotator object."""
-        return json.dumps(self._to_dict(), indent=2)
+        return json.dumps(self.to_dict(), indent=2, cls=AnnotatorEncoder)
+
+    def __eq__(self, other: 'Annotator') -> bool:
+        """Return `true` when self and other are equal, false otherwise."""
+        if not isinstance(other, self.__class__):
+            return False
+        return self.__dict__ == other.__dict__
+
+    def __ne__(self, other: 'Annotator') -> bool:
+        """Return `true` when self and other are not equal, false otherwise."""
+        return not self == other
+
+class AnnotatorEncoder(json.JSONEncoder):
+    def default(self, o):
+        return o.__dict__
+
+class AnnotatorFlow():
+    """
+    AnnotatorFlow.
+
+    :attr str profile: (optional)
+    :attr Flow flow:
+    :attr str id: (optional)
+    :attr str type: (optional)
+    :attr dict data: (optional)
+    :attr dict metadata: (optional)
+    :attr List[ConfigurationEntity] global_configurations: (optional)
+    :attr int uid: (optional)
+    """
+
+    def __init__(self, flow: 'Flow', *, profile: str = None, id: str = None, type: str = None, data: dict = None, metadata: dict = None, global_configurations: List['ConfigurationEntity'] = None, uid: int = None) -> None:
+        """
+        Initialize a AnnotatorFlow object.
+
+        :param Flow flow:
+        :param str profile: (optional)
+        :param str id: (optional)
+        :param str type: (optional)
+        :param dict data: (optional)
+        :param dict metadata: (optional)
+        :param List[ConfigurationEntity] global_configurations: (optional)
+        :param int uid: (optional)
+        """
+        self.profile = profile
+        self.flow = flow
+        self.id = id
+        self.type = type
+        self.data = data
+        self.metadata = metadata
+        self.global_configurations = global_configurations
+        self.uid = uid
+
+    @classmethod
+    def from_dict(cls, _dict: Dict) -> 'AnnotatorFlow':
+        """Initialize a AnnotatorFlow object from a json dictionary."""
+        args = {}
+        if 'profile' in _dict:
+            args['profile'] = _dict.get('profile')
+        if 'flow' in _dict:
+            args['flow'] = Flow.from_dict(_dict.get('flow'))
+        else:
+            raise ValueError('Required property \'flow\' not present in AnnotatorFlow JSON')
+        if 'id' in _dict:
+            args['id'] = _dict.get('id')
+        if 'type' in _dict:
+            args['type'] = _dict.get('type')
+        if 'data' in _dict:
+            args['data'] = _dict.get('data')
+        if 'metadata' in _dict:
+            args['metadata'] = _dict.get('metadata')
+        if 'globalConfigurations' in _dict:
+            args['global_configurations'] = [ConfigurationEntity.from_dict(x) for x in _dict.get('globalConfigurations')]
+        if 'uid' in _dict:
+            args['uid'] = _dict.get('uid')
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a AnnotatorFlow object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'profile') and self.profile is not None:
+            _dict['profile'] = self.profile
+        if hasattr(self, 'flow') and self.flow is not None:
+            _dict['flow'] = self.flow.to_dict()
+        if hasattr(self, 'id') and self.id is not None:
+            _dict['id'] = self.id
+        if hasattr(self, 'type') and self.type is not None:
+            _dict['type'] = self.type
+        if hasattr(self, 'data') and self.data is not None:
+            _dict['data'] = self.data
+        if hasattr(self, 'metadata') and self.metadata is not None:
+            _dict['metadata'] = self.metadata
+        if hasattr(self, 'global_configurations') and self.global_configurations is not None:
+            _dict['globalConfigurations'] = [x.to_dict() for x in self.global_configurations]
+        if hasattr(self, 'uid') and self.uid is not None:
+            _dict['uid'] = self.uid
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __str__(self) -> str:
+        """Return a `str` version of this AnnotatorFlow object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'AnnotatorFlow') -> bool:
+        """Return `true` when self and other are equal, false otherwise."""
+        if not isinstance(other, self.__class__):
+            return False
+        return self.__dict__ == other.__dict__
+
+    def __ne__(self, other: 'AnnotatorFlow') -> bool:
+        """Return `true` when self and other are not equal, false otherwise."""
+        return not self == other
+
 
 class Name(object):
     # allergy.
@@ -1997,7 +2338,6 @@ class Name(object):
 class AssistanceAnnotation(object):
     """
     AssistanceAnnotation.
-
     :attr str id: (optional)
     :attr str type: (optional)
     :attr int uid: (optional)
@@ -2019,7 +2359,6 @@ class AssistanceAnnotation(object):
                  **kwargs):
         """
         Initialize a AssistanceAnnotation object.
-
         :param str id: (optional)
         :param str type: (optional)
         :param int uid: (optional)
@@ -2052,7 +2391,7 @@ class AssistanceAnnotation(object):
             setattr(self, _key, _value)
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a AssistanceAnnotation object from a json dictionary."""
         args = {}
         xtra = _dict.copy()
@@ -2098,7 +2437,12 @@ class AssistanceAnnotation(object):
         args.update(xtra)
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a AssistanceAnnotation object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'id') and self.id is not None:
@@ -2134,6 +2478,10 @@ class AssistanceAnnotation(object):
                     _dict[_key] = _value
         return _dict
 
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
     def __setattr__(self, name, value):
         properties = ({'id', 'type', 'uid', 'begin', 'end', 'covered_text', 'negated', 'hypothetical',
                        'primary_action_normalized_name', 'modality', 'primary_action_surface_form',
@@ -2151,7 +2499,6 @@ class AssistanceAnnotation(object):
 class AttributeValueEntry(object):
     """
     AttributeValueEntry.
-
     :attr str value: (optional)
     :attr str unit: (optional)
     :attr str frequency: (optional)
@@ -2162,7 +2509,6 @@ class AttributeValueEntry(object):
     def __init__(self, value=None, unit=None, frequency=None, duration=None, dimension=None, **kwargs):
         """
         Initialize a AttributeValueEntry object.
-
         :param str value: (optional)
         :param str unit: (optional)
         :param str frequency: (optional)
@@ -2185,7 +2531,7 @@ class AttributeValueEntry(object):
         return self.__dict__[key]
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a AttributeValueEntry object from a json dictionary."""
         args = {}
         xtra = _dict.copy()
@@ -2207,7 +2553,12 @@ class AttributeValueEntry(object):
         args.update(xtra)
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a AttributeValueEntry object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'value') and self.value is not None:
@@ -2227,6 +2578,10 @@ class AttributeValueEntry(object):
                     _dict[_key] = _value
         return _dict
 
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
     def __setattr__(self, name, value):
         properties = {'value', 'unit', 'frequency', 'duration', 'dimension'}
         if not hasattr(self, '_additionalProperties'):
@@ -2242,7 +2597,6 @@ class AttributeValueEntry(object):
 class AttributeValueAnnotation(object):
     """
     AttributeValueAnnotation.
-
     :attr str id: (optional)
     :attr str type: (optional)
     :attr int uid: (optional)
@@ -2278,7 +2632,6 @@ class AttributeValueAnnotation(object):
                  section_surface_form=None, cpt_code=None, disambiguation_data=None, **kwargs):
         """
         Initialize a AttributeValueAnnotation object.
-
         :param str id: (optional)
         :param str type: (optional)
         :param int uid: (optional)
@@ -2337,7 +2690,7 @@ class AttributeValueAnnotation(object):
             setattr(self, _key, _value)
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a AttributeValueAnnotation object from a json dictionary."""
         args = {}
         xtra = _dict.copy()
@@ -2426,7 +2779,12 @@ class AttributeValueAnnotation(object):
         args.update(xtra)
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a AttributeValueAnnotation object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'id') and self.id is not None:
@@ -2488,6 +2846,10 @@ class AttributeValueAnnotation(object):
                     _dict[_key] = _value
         return _dict
 
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
     def __setattr__(self, name, value):
         properties = ({'id', 'type', 'uid', 'begin', 'end', 'covered_text', 'negated', 'hypothetical', 'preferred_name',
                        'values', 'source', 'source_version', 'concept', 'name', 'icd9_code', 'icd10_code', 'nci_code',
@@ -2507,7 +2869,6 @@ class AttributeValueAnnotation(object):
 class CancerDiagnosis(object):
     """
     CancerDiagnosis.
-
     :attr str id: (optional)
     :attr str type: (optional)
     :attr int uid: (optional)
@@ -2529,7 +2890,6 @@ class CancerDiagnosis(object):
                  section_surface_form=None, disambiguation_data=None, cancer=None, **kwargs):
         """
         Initialize a CancerDiagnosis object.
-
         :param str id: (optional)
         :param str type: (optional)
         :param int uid: (optional)
@@ -2564,7 +2924,7 @@ class CancerDiagnosis(object):
             setattr(self, _key, _value)
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a CancerDiagnosis object from a json dictionary."""
         args = {}
         xtra = _dict.copy()
@@ -2613,7 +2973,12 @@ class CancerDiagnosis(object):
         args.update(xtra)
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a CancerDiagnosis object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'id') and self.id is not None:
@@ -2651,6 +3016,10 @@ class CancerDiagnosis(object):
                     _dict[_key] = _value
         return _dict
 
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
     def __setattr__(self, name, value):
         properties = ({'id', 'type', 'uid', 'begin', 'end', 'covered_text', 'negated', 'hypothetical', 'cui',
                        'section_normalized_name', 'modality', 'section_surface_form', 'disambiguation_data', 'cancer'})
@@ -2664,220 +3033,10 @@ class CancerDiagnosis(object):
         """Return a `str` version of this CancerDiagnosis object."""
         return json.dumps(self._to_dict(), indent=2)
 
-class SpellingCorrection(object):
-    """
-    Spelling Correction.
-
-    :attr int begin:
-    :attr int end:
-    :attr str covered_text:
-    :attr list[Suggestion] suggestions
-    """
-    def __init__(self, begin=None, end=None, covered_text=None, suggestions=None, **kwargs):
-        """
-        Initializes a spelling correction
-
-        :param int begin:
-        :param int end:
-        :param str covered_text:
-        :param list[Suggestion] suggestions:
-
-        """
-        self.begin = begin
-        self.end = end
-        self.covered_text = covered_text
-        self.suggestions = suggestions
-        for _key, _value in kwargs.items():
-            setattr(self, _key, _value)
-
-    @classmethod
-    def _from_dict(cls, _dict):
-        """Initialize a SpellingCorrection object from a json dictionary."""
-        args = {}
-        xtra = _dict.copy()
-
-        if 'begin' in _dict:
-            args['begin'] = _dict['begin']
-            del xtra['begin']
-        if 'end' in _dict:
-            args['end'] = _dict['end']
-            del xtra['end']
-        if 'coveredText' in _dict:
-            args['covered_text'] = _dict['coveredText']
-            del xtra['coveredText']
-        if 'suggestions' in _dict:
-            args['suggestions'] = [Suggestion._from_dict(entry) for entry in _dict['suggestions']]
-            del xtra['suggestions']
-
-        args.update(xtra)
-        return cls(**args)
-
-    def _to_dict(self):
-        """Return a json dictionary representing this spelling correction model."""
-        _dict = {}
-        if hasattr(self, 'begin') and self.begin is not None:
-            _dict['begin'] = self.begin
-        if hasattr(self, 'end') and self.end is not None:
-            _dict['end'] = self.end
-        if hasattr(self, 'covered_text') and self.covered_text is not None:
-            _dict['coveredText'] = self.covered_text
-        if hasattr(self, 'suggestions') and self.suggestions is not None:
-            _dict['suggestions'] = [entry._to_dict() for entry in self.suggestions]
-        if hasattr(self, '_additionalProperties'):
-            for _key in self._additionalProperties:
-                _value = getattr(self, _key, None)
-                if _value is not None:
-                    _dict[_key] = _value
-        return _dict
-
-    def __setattr__(self, name, value):
-        properties = {'begin', 'end', 'covered_text', 'suggestions'}
-        if not hasattr(self, '_additionalProperties'):
-            super(SpellingCorrection, self).__setattr__('_additionalProperties', set())
-        if name not in properties:
-            self._additionalProperties.add(name)
-        super(SpellingCorrection, self).__setattr__(name, value)
-
-    def __str__(self):
-        """Return a `str` version of this Spelling Correction object."""
-        return json.dumps(self._to_dict(), indent=2)
-
-class Suggestion(object):
-    """
-    :attr str text
-    :attr float confidence
-    :attr bool applied
-    :attr list[str] semtypes: (optional)
-    """
-
-    def __init__(self, text=None, confidence=None, applied=None, semtypes=None, **kwargs):
-        """
-        Initializes a spelling suggestion
-
-        :param str text
-        :param float confidence
-        :param bool applied
-        :param list[str] semtypes: (optional)
-        """
-        self.text = text
-        self.confidence = confidence
-        self.applied = applied
-        self.semtypes = semtypes
-        for _key, _value in kwargs.items():
-            setattr(self, _key, _value)
-
-    @classmethod
-    def _from_dict(cls, _dict):
-        """Initialize a spelling suggestion object from a json dictionary."""
-        args = {}
-        xtra = _dict.copy()
-
-        if 'text' in _dict:
-            args['text'] = _dict['text']
-            del xtra['text']
-        if 'confidence' in _dict:
-            args['confidence'] = _dict['confidence']
-            del xtra['confidence']
-        if 'applied' in _dict:
-            args['applied'] = _dict['applied']
-            del xtra['applied']
-        if 'semtypes' in _dict:
-            args['semtypes'] = _dict['semtypes']
-            del xtra['semtypes']
-
-        args.update(xtra)
-        return cls(**args)
-
-    def _to_dict(self):
-        """Return a json dictionary representing this spelling suggestion."""
-        _dict = {}
-        if hasattr(self, 'text') and self.text is not None:
-            _dict['text'] = self.text
-        if hasattr(self, 'confidence') and self.confidence is not None:
-            _dict['confidence'] = self.confidence
-        if hasattr(self, 'applied') and self.applied is not None:
-            _dict['applied'] = self.applied
-        if hasattr(self, 'semtypes') and self.semtypes is not None:
-            _dict['semtypes'] = self.semtypes
-        if hasattr(self, '_additionalProperties'):
-            for _key in self._additionalProperties:
-                _value = getattr(self, _key, None)
-                if _value is not None:
-                    _dict[_key] = _value
-        return _dict
-
-    def __setattr__(self, name, value):
-        properties = {'text', 'confidence', 'applied', 'semtypes'}
-        if not hasattr(self, '_additionalProperties'):
-            super(Suggestion, self).__setattr__('_additionalProperties', set())
-        if name not in properties:
-            self._additionalProperties.add(name)
-        super(Suggestion, self).__setattr__(name, value)
-
-    def __str__(self):
-        """Return a `str` version of this spelling suggestion object."""
-        return json.dumps(self._to_dict(), indent=2)
-
-class SpellCorrectedText(object):
-    """
-    :attr str corrected_text
-    :attr str debug_text: (optional)
-    """
-    def __init__(self, corrected_text=None, debug_text=None, **kwargs):
-        """
-        Initializes a Spell corrected text
-
-        :param str corrected_text
-        :param str debug_text: (optional)
-        """
-        self.corrected_text = corrected_text
-        self.debug_text = debug_text
-        for _key, _value in kwargs.items():
-            setattr(self, _key, _value)
-
-    @classmethod
-    def _from_dict(cls, _dict):
-        """Initialize a spelling corrected text object from a json dictionary."""
-        args = {}
-        xtra = _dict.copy()
-
-        if 'correctedText' in _dict:
-            args['corrected_text'] = _dict['correctedText']
-            del xtra['correctedText']
-        if 'debugText' in _dict:
-            args['debug_text'] = _dict['debugText']
-            del xtra['debugText']
-
-        args.update(xtra)
-        return cls(**args)
-
-    def _to_dict(self):
-        """Return a json dictionary representing this spell corrected text"""
-        _dict = {}
-        if hasattr(self, 'corrected_text') and self.corrected_text is not None:
-            _dict['correctedText'] = self.corrected_text
-        if hasattr(self, 'debug_text') and self.debug_text is not None:
-            _dict['debugText'] = self.debug_text
-
-        return _dict
-
-    def __setattr__(self, name, value):
-        properties = {'corrected_text', 'debug_text'}
-        if not hasattr(self, '_additionalProperties'):
-            super(SpellCorrectedText, self).__setattr__('_additionalProperties', set())
-        if name not in properties:
-            self._additionalProperties.add(name)
-        super(SpellCorrectedText, self).__setattr__(name, value)
-
-    def __str__(self):
-        """Return a `str` version of this spelling suggestion object."""
-        return json.dumps(self._to_dict(), indent=2)
-
 
 class Concept(object):
     """
     Concept.
-
     :attr str id: (optional)
     :attr str type: (optional)
     :attr int uid: (optional)
@@ -2912,7 +3071,6 @@ class Concept(object):
                  section_normalized_name=None, section_surface_form=None, cpt_code=None, **kwargs):
         """
         Initialize a Concept object.
-
         :param str id: (optional)
         :param str type: (optional)
         :param int uid: (optional)
@@ -2969,7 +3127,7 @@ class Concept(object):
             setattr(self, _key, _value)
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a Concept object from a json dictionary."""
         args = {}
         xtra = _dict.copy()
@@ -3055,7 +3213,12 @@ class Concept(object):
         args.update(xtra)
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a Concept object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'id') and self.id is not None:
@@ -3115,6 +3278,10 @@ class Concept(object):
                     _dict[_key] = _value
         return _dict
 
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
     def __setattr__(self, name, value):
         properties = ({'id', 'type', 'uid', 'begin', 'end', 'covered_text', 'negated', 'hypothetical', 'cui',
                        'preferred_name', 'semantic_type', 'source', 'source_version', 'disambiguation_data',
@@ -3134,7 +3301,6 @@ class Concept(object):
 class ConceptValue(object):
     """
     ConceptValue.
-
     :attr str id: (optional)
     :attr str type: (optional)
     :attr int uid: (optional)
@@ -3158,7 +3324,6 @@ class ConceptValue(object):
                  value=None, section_normalized_name=None, section_surface_form=None, **kwargs):
         """
         Initialize a ConceptValue object.
-
         :param str id: (optional)
         :param str type: (optional)
         :param int uid: (optional)
@@ -3197,7 +3362,7 @@ class ConceptValue(object):
             setattr(self, _key, _value)
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a ConceptValue object from a json dictionary."""
         args = {}
         xtra = _dict.copy()
@@ -3252,7 +3417,12 @@ class ConceptValue(object):
         args.update(xtra)
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a ConceptValue object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'id') and self.id is not None:
@@ -3294,6 +3464,10 @@ class ConceptValue(object):
                     _dict[_key] = _value
         return _dict
 
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
     def __setattr__(self, name, value):
         properties = ({'id', 'type', 'uid', 'begin', 'end', 'covered_text', 'negated', 'hypothetical', 'cui',
                        'dimension', 'preferred_name', 'trigger', 'source', 'value', 'section_normalized_name',
@@ -3309,10 +3483,495 @@ class ConceptValue(object):
         return json.dumps(self._to_dict(), indent=2)
 
 
+class ConfigurationEntity():
+    """
+    ConfigurationEntity.
+
+    :attr str id: (optional)
+    :attr str type: (optional)
+    :attr int uid: (optional)
+    :attr int mergeid: (optional)
+    """
+
+    def __init__(self, *, id: str = None, type: str = None, uid: int = None, mergeid: int = None) -> None:
+        """
+        Initialize a ConfigurationEntity object.
+
+        :param str id: (optional)
+        :param str type: (optional)
+        :param int uid: (optional)
+        :param int mergeid: (optional)
+        """
+        self.id = id
+        self.type = type
+        self.uid = uid
+        self.mergeid = mergeid
+
+    @classmethod
+    def from_dict(cls, _dict: Dict) -> 'ConfigurationEntity':
+        """Initialize a ConfigurationEntity object from a json dictionary."""
+        args = {}
+        if 'id' in _dict:
+            args['id'] = _dict.get('id')
+        if 'type' in _dict:
+            args['type'] = _dict.get('type')
+        if 'uid' in _dict:
+            args['uid'] = _dict.get('uid')
+        if 'mergeid' in _dict:
+            args['mergeid'] = _dict.get('mergeid')
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a ConfigurationEntity object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'id') and self.id is not None:
+            _dict['id'] = self.id
+        if hasattr(self, 'type') and self.type is not None:
+            _dict['type'] = self.type
+        if hasattr(self, 'uid') and self.uid is not None:
+            _dict['uid'] = self.uid
+        if hasattr(self, 'mergeid') and self.mergeid is not None:
+            _dict['mergeid'] = self.mergeid
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __str__(self) -> str:
+        """Return a `str` version of this ConfigurationEntity object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'ConfigurationEntity') -> bool:
+        """Return `true` when self and other are equal, false otherwise."""
+        if not isinstance(other, self.__class__):
+            return False
+        return self.__dict__ == other.__dict__
+
+    def __ne__(self, other: 'ConfigurationEntity') -> bool:
+        """Return `true` when self and other are not equal, false otherwise."""
+        return not self == other
+
+class ContainerAnnotation(object):
+    """
+    ContainerAnnotation.
+    :attr list[Annotation] allergy_ind: (optional)
+    :attr list[Annotation] allergy_medication_ind: (optional)
+    :attr list[AttributeValueAnnotation] attribute_values: (optional)
+    :attr list[AssistanceAnnotation] bathing_assistance_ind: (optional)
+    :attr list[CancerDiagnosis] ica_cancer_diagnosis_ind: (optional)
+    :attr list[Concept] concepts: (optional)
+    :attr list[ConceptValue] concept_values: (optional)
+    :attr list[AssistanceAnnotation] dressing_assistance_ind: (optional)
+    :attr list[AssistanceAnnotation] eating_assistance_ind: (optional)
+    :attr list[EjectionFractionAnnotation] ejection_fraction_ind: (optional)
+    :attr list[Annotation] hypothetical_spans: (optional)
+    :attr list[LabValueAnnotation] lab_value_ind: (optional)
+    :attr list[MedicationAnnotation] medication_ind: (optional)
+    :attr list[Annotation] email_address_ind: (optional)
+    :attr list[Annotation] location_ind: (optional)
+    :attr list[Annotation] person_ind: (optional)
+    :attr list[Annotation] u_s_phone_number_ind: (optional)
+    :attr list[Annotation] medical_institution_ind: (optional)
+    :attr list[Annotation] organization_ind: (optional)
+    :attr list[NegatedSpan] negated_spans: (optional)
+    :attr list[Procedure] procedure_ind: (optional)
+    :attr list[AssistanceAnnotation] seeing_assistance_ind: (optional)
+    :attr list[Smoking] smoking_ind: (optional)
+    :attr list[SymptomDisease] symptom_disease_ind: (optional)
+    :attr list[AssistanceAnnotation] toileting_assistance_ind: (optional)
+    :attr list[AssistanceAnnotation] walking_assistance_ind: (optional)
+    :attr list[Section] sections: (optional)
+    :attr list[NluEntities] nlu_entities: (optional)
+    :attr list[Relations] relations: (optional)
+    :attr list[SpellingCorrection]: (optional)
+    :attr list[SpellCorrectedText] spell_corrected_text: (optional)
+    """
+
+    def __init__(self, allergy_ind=None, allergy_medication_ind=None, attribute_values=None,
+                 bathing_assistance_ind=None, ica_cancer_diagnosis_ind=None, concepts=None,
+                 concept_values=None, dressing_assistance_ind=None, eating_assistance_ind=None,
+                 ejection_fraction_ind=None, hypothetical_spans=None, lab_value_ind=None, medication_ind=None,
+                 email_address_ind=None, location_ind=None, person_ind=None, u_s_phone_number_ind=None,
+                 medical_institution_ind=None, organization_ind=None, negated_spans=None, procedure_ind=None,
+                 seeing_assistance_ind=None, smoking_ind=None, symptom_disease_ind=None, toileting_assistance_ind=None,
+                 walking_assistance_ind=None, sections=None, nlu_entities=None, relations=None,
+                 spelling_corrections=None, spell_corrected_text=None):
+        """
+        Initialize a ContainerAnnotation object.
+        :param list[Annotation] allergy_ind: (optional)
+        :param list[Annotation] allergy_medication_ind: (optional)
+        :param list[AttributeValueAnnotation] attribute_values: (optional)
+        :param list[AssistanceAnnotation] bathing_assistance_ind: (optional)
+        :param list[CancerDiagnosis] ica_cancer_diagnosis_ind: (optional)
+        :param list[Concept] concepts: (optional)
+        :param list[ConceptValue] concept_values: (optional)
+        :param list[AssistanceAnnotation] dressing_assistance_ind: (optional)
+        :param list[AssistanceAnnotation] eating_assistance_ind: (optional)
+        :param list[EjectionFractionAnnotation] ejection_fraction_ind: (optional)
+        :param list[Annotation] hypothetical_spans: (optional)
+        :param list[LabValueAnnotation] lab_value_ind: (optional)
+        :param list[MedicationAnnotation] medication_ind: (optional)
+        :param list[Annotation] email_address_ind: (optional)
+        :param list[Annotation] location_ind: (optional)
+        :param list[Annotation] person_ind: (optional)
+        :param list[Annotation] u_s_phone_number_ind: (optional)
+        :param list[Annotation] medical_institution_ind: (optional)
+        :param list[Annotation] organization_ind: (optional)
+        :param list[NegatedSpan] negated_spans: (optional)
+        :param list[Procedure] procedure_ind: (optional)
+        :param list[AssistanceAnnotation] seeing_assistance_ind: (optional)
+        :param list[Smoking] smoking_ind: (optional)
+        :param list[SymptomDisease] symptom_disease_ind: (optional)
+        :param list[AssistanceAnnotation] toileting_assistance_ind: (optional)
+        :param list[AssistanceAnnotation] walking_assistance_ind: (optional)
+        :param list[Section] sections: (optional)
+        :param list[NluEntities] nlu_entities: (optional)
+        :param list[Relations] relations: (optional)
+        :param list[SpellingCorrection] spelling_correction: (optional)
+        :param list[SpellCorrectedText] spell_corrected_text: (optional)
+        """
+        self.allergy_ind = allergy_ind
+        self.allergy_medication_ind = allergy_medication_ind
+        self.attribute_values = attribute_values
+        self.bathing_assistance_ind = bathing_assistance_ind
+        self.ica_cancer_diagnosis_ind = ica_cancer_diagnosis_ind
+        self.concepts = concepts
+        self.concept_values = concept_values
+        self.dressing_assistance_ind = dressing_assistance_ind
+        self.eating_assistance_ind = eating_assistance_ind
+        self.ejection_fraction_ind = ejection_fraction_ind
+        self.hypothetical_spans = hypothetical_spans
+        self.lab_value_ind = lab_value_ind
+        self.medication_ind = medication_ind
+        self.email_address_ind = email_address_ind
+        self.location_ind = location_ind
+        self.person_ind = person_ind
+        self.u_s_phone_number_ind = u_s_phone_number_ind
+        self.medical_institution_ind = medical_institution_ind
+        self.organization_ind = organization_ind
+        self.negated_spans = negated_spans
+        self.procedure_ind = procedure_ind
+        self.seeing_assistance_ind = seeing_assistance_ind
+        self.smoking_ind = smoking_ind
+        self.symptom_disease_ind = symptom_disease_ind
+        self.toileting_assistance_ind = toileting_assistance_ind
+        self.walking_assistance_ind = walking_assistance_ind
+        self.sections = sections
+        self.nlu_entities = nlu_entities
+        self.relations = relations
+        self.spelling_corrections = spelling_corrections
+        self.spell_corrected_text = spell_corrected_text
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize a ContainerAnnotation object from a json dictionary."""
+        args = {}
+        if 'AllergyMedicationInd' in _dict:
+            args['allergy_medication_ind'] = [Annotation._from_dict(x) for x in _dict['AllergyMedicationInd']]
+        if 'AllergyInd' in _dict:
+            args['allergy_ind'] = [Annotation._from_dict(x) for x in _dict['AllergyInd']]
+        if 'attributeValues' in _dict:
+            args['attribute_values'] = [AttributeValueAnnotation._from_dict(x) for x in _dict['attributeValues']]
+        if 'BathingAssistanceInd' in _dict:
+            args['bathing_assistance_ind'] = ([AssistanceAnnotation._from_dict(x)
+                                               for x in _dict['BathingAssistanceInd']])
+        if 'IcaCancerDiagnosisInd' in _dict:
+            args['ica_cancer_diagnosis_ind'] = [CancerDiagnosis._from_dict(x) for x in _dict['IcaCancerDiagnosisInd']]
+        if 'concepts' in _dict:
+            args['concepts'] = [Concept._from_dict(x) for x in _dict['concepts']]
+        if 'conceptValues' in _dict:
+            args['concept_values'] = [ConceptValue._from_dict(x) for x in _dict['conceptValues']]
+        if 'DressingAssistanceInd' in _dict:
+            args['dressing_assistance_ind'] = ([AssistanceAnnotation._from_dict(x)
+                                                for x in _dict['DressingAssistanceInd']])
+        if 'EatingAssistanceInd' in _dict:
+            args['eating_assistance_ind'] = [AssistanceAnnotation._from_dict(x) for x in _dict['EatingAssistanceInd']]
+        if 'EjectionFractionInd' in _dict:
+            args['ejection_fraction_ind'] = ([EjectionFractionAnnotation._from_dict(x)
+                                              for x in _dict['EjectionFractionInd']])
+        if 'hypotheticalSpans' in _dict:
+            args['hypothetical_spans'] = [Annotation._from_dict(x) for x in _dict['hypotheticalSpans']]
+        if 'LabValueInd' in _dict:
+            args['lab_value_ind'] = [LabValueAnnotation._from_dict(x) for x in _dict['LabValueInd']]
+        if 'MedicationInd' in _dict:
+            args['medication_ind'] = [MedicationAnnotation._from_dict(x) for x in _dict['MedicationInd']]
+        if 'EmailAddressInd' in _dict:
+            args['email_address_ind'] = [Annotation._from_dict(x) for x in _dict['EmailAddressInd']]
+        if 'LocationInd' in _dict:
+            args['location_ind'] = [Annotation._from_dict(x) for x in _dict['LocationInd']]
+        if 'PersonInd' in _dict:
+            args['person_ind'] = [Annotation._from_dict(x) for x in _dict['PersonInd']]
+        if 'US_PhoneNumberInd' in _dict:
+            args['u_s_phone_number_ind'] = [Annotation._from_dict(x) for x in _dict['US_PhoneNumberInd']]
+        if 'MedicalInstitutionInd' in _dict:
+            args['medical_institution_ind'] = [Annotation._from_dict(x) for x in _dict['MedicalInstitutionInd']]
+        if 'OrganizationInd' in _dict:
+            args['organization_ind'] = [Annotation._from_dict(x) for x in _dict['OrganizationInd']]
+        if 'negatedSpans' in _dict:
+            args['negated_spans'] = [NegatedSpan._from_dict(x) for x in _dict['negatedSpans']]
+        if 'ProcedureInd' in _dict:
+            args['procedure_ind'] = [Procedure._from_dict(x) for x in _dict['ProcedureInd']]
+        if 'SeeingAssistanceInd' in _dict:
+            args['seeing_assistance_ind'] = [AssistanceAnnotation._from_dict(x) for x in _dict['SeeingAssistanceInd']]
+        if 'SmokingInd' in _dict:
+            args['smoking_ind'] = [Smoking._from_dict(x) for x in _dict['SmokingInd']]
+        if 'SymptomDiseaseInd' in _dict:
+            args['symptom_disease_ind'] = [SymptomDisease._from_dict(x) for x in _dict['SymptomDiseaseInd']]
+        if 'ToiletingAssistanceInd' in _dict:
+            args['toileting_assistance_ind'] = ([AssistanceAnnotation._from_dict(x)
+                                                 for x in _dict['ToiletingAssistanceInd']])
+        if 'WalkingAssistanceInd' in _dict:
+            args['walking_assistance_ind'] = ([AssistanceAnnotation._from_dict(x)
+                                               for x in _dict['WalkingAssistanceInd']])
+        if 'sections' in _dict:
+            args['sections'] = [Section._from_dict(x) for x in _dict['sections']]
+        if 'nluEntities' in _dict:
+            args['nlu_entities'] = [NluEntities._from_dict(x) for x in _dict['nluEntities']]
+        if 'relations' in _dict:
+            args['relations'] = [Relations._from_dict(x) for x in _dict['relations']]
+        if 'spellingCorrections' in _dict:
+            args['spelling_corrections'] = [SpellingCorrection._from_dict(x) for x in _dict['spellingCorrections']]
+        if 'spellCorrectedText' in _dict:
+            args['spell_corrected_text'] = [SpellCorrectedText._from_dict(x) for x in _dict['spellCorrectedText']]
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a ContainerAnnotation object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'allergy_medication_ind') and self.allergy_medication_ind is not None:
+            _dict['AllergyMedicationInd'] = [x._to_dict() for x in self.allergy_medication_ind]
+        if hasattr(self, 'allergy_ind') and self.allergy_ind is not None:
+            _dict['AllergyInd'] = [x._to_dict() for x in self.allergy_ind]
+        if hasattr(self, 'attribute_values') and self.attribute_values is not None:
+            _dict['attributeValues'] = [x._to_dict() for x in self.attribute_values]
+        if hasattr(self, 'bathing_assistance_ind') and self.bathing_assistance_ind is not None:
+            _dict['BathingAssistanceInd'] = [x._to_dict() for x in self.bathing_assistance_ind]
+        if hasattr(self, 'ica_cancer_diagnosis_ind') and self.ica_cancer_diagnosis_ind is not None:
+            _dict['IcaCancerDiagnosisInd'] = [x._to_dict() for x in self.ica_cancer_diagnosis_ind]
+        if hasattr(self, 'concepts') and self.concepts is not None:
+            _dict['concepts'] = [x._to_dict() for x in self.concepts]
+        if hasattr(self, 'concept_values') and self.concept_values is not None:
+            _dict['conceptValues'] = [x._to_dict() for x in self.concept_values]
+        if hasattr(self, 'dressing_assistance_ind') and self.dressing_assistance_ind is not None:
+            _dict['DressingAssistanceInd'] = [x._to_dict() for x in self.dressing_assistance_ind]
+        if hasattr(self, 'eating_assistance_ind') and self.eating_assistance_ind is not None:
+            _dict['EatingAssistanceInd'] = [x._to_dict() for x in self.eating_assistance_ind]
+        if hasattr(self, 'ejection_fraction_ind') and self.ejection_fraction_ind is not None:
+            _dict['EjectionFractionInd'] = [x._to_dict() for x in self.ejection_fraction_ind]
+        if hasattr(self, 'hypothetical_spans') and self.hypothetical_spans is not None:
+            _dict['hypotheticalSpans'] = [x._to_dict() for x in self.hypothetical_spans]
+        if hasattr(self, 'lab_value_ind') and self.lab_value_ind is not None:
+            _dict['LabValueInd'] = [x._to_dict() for x in self.lab_value_ind]
+        if hasattr(self, 'medication_ind') and self.medication_ind is not None:
+            _dict['MedicationInd'] = [x._to_dict() for x in self.medication_ind]
+        if hasattr(self, 'email_address_ind') and self.email_address_ind is not None:
+            _dict['EmailAddressInd'] = [x._to_dict() for x in self.email_address_ind]
+        if hasattr(self, 'location_ind') and self.location_ind is not None:
+            _dict['LocationInd'] = [x._to_dict() for x in self.location_ind]
+        if hasattr(self, 'person_ind') and self.person_ind is not None:
+            _dict['PersonInd'] = [x._to_dict() for x in self.person_ind]
+        if hasattr(self, 'u_s_phone_number_ind') and self.u_s_phone_number_ind is not None:
+            _dict['US_PhoneNumberInd'] = [x._to_dict() for x in self.u_s_phone_number_ind]
+        if hasattr(self, 'medical_institution_ind') and self.medical_institution_ind is not None:
+            _dict['MedicalInstitutionInd'] = [x._to_dict() for x in self.medical_institution_ind]
+        if hasattr(self, 'organization_ind') and self.organization_ind is not None:
+            _dict['OrganizationInd'] = [x._to_dict() for x in self.organization_ind]
+        if hasattr(self, 'negated_spans') and self.negated_spans is not None:
+            _dict['negatedSpans'] = [x._to_dict() for x in self.negated_spans]
+        if hasattr(self, 'procedure_ind') and self.procedure_ind is not None:
+            _dict['ProcedureInd'] = [x._to_dict() for x in self.procedure_ind]
+        if hasattr(self, 'seeing_assistance_ind') and self.seeing_assistance_ind is not None:
+            _dict['SeeingAssistanceInd'] = [x._to_dict() for x in self.seeing_assistance_ind]
+        if hasattr(self, 'smoking_ind') and self.smoking_ind is not None:
+            _dict['SmokingInd'] = [x._to_dict() for x in self.smoking_ind]
+        if hasattr(self, 'symptom_disease_ind') and self.symptom_disease_ind is not None:
+            _dict['SymptomDiseaseInd'] = [x._to_dict() for x in self.symptom_disease_ind]
+        if hasattr(self, 'toileting_assistance_ind') and self.toileting_assistance_ind is not None:
+            _dict['ToiletingAssistanceInd'] = [x._to_dict() for x in self.toileting_assistance_ind]
+        if hasattr(self, 'walking_assistance_ind') and self.walking_assistance_ind is not None:
+            _dict['WalkingAssistanceInd'] = [x._to_dict() for x in self.walking_assistance_ind]
+        if hasattr(self, 'sections') and self.sections is not None:
+            _dict['sections'] = [x._to_dict() for x in self.sections]
+        if hasattr(self, 'nlu_entities') and self.nlu_entities is not None:
+            _dict['nluEntities'] = [x._to_dict() for x in self.nlu_entities]
+        if hasattr(self, 'relations') and self.relations is not None:
+            _dict['relations'] = [x._to_dict() for x in self.relations]
+        if hasattr(self, 'spelling_corrections') and self.spelling_corrections is not None:
+            _dict['spellingCorrections'] = [x._to_dict() for x in self.spelling_corrections]
+        if hasattr(self, 'spell_corrected_text') and self.spell_corrected_text is not None:
+            _dict['spellCorrectedText'] = [x._to_dict() for x in self.spell_corrected_text]
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __str__(self):
+        """Return a `str` version of this ContainerAnnotation object."""
+        return json.dumps(self._to_dict(), indent=2)
+
+class ContainerGroup(object):
+    """
+    ContainerGroup.
+    :attr list[UnstructuredContainer] unstructured: (optional)
+    :attr list[AnnotatorFlow] annotator_flows: (optional)
+    """
+
+    def __init__(self, unstructured=None, annotator_flows=None):
+        """
+        Initialize a ContainerGroup object.
+        :param list[UnstructuredContainer] unstructured: (optional)
+        :param list[AnnotatorFlow] annotator_flows: (optional)
+        """
+        self.unstructured = unstructured
+        self.annotator_flows = annotator_flows
+
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize a ContainerGroup object from a json dictionary."""
+        args = {}
+        if 'unstructured' in _dict:
+            args['unstructured'] = [UnstructuredContainer._from_dict(x) for x in _dict['unstructured']]
+        if 'annotatorFlows' in _dict:
+            args['annotator_flows'] = [AnnotatorFlow._from_dict(x) for x in _dict['annotatorFlows']]
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a ContainerGroup object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'unstructured') and self.unstructured is not None:
+            _dict['unstructured'] = [x._to_dict() for x in self.unstructured]
+        if hasattr(self, 'annotator_flows') and self.annotator_flows is not None:
+            _dict['annotatorFlows'] = [x._to_dict() for x in self.annotator_flows]
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+
+class Disambiguation(object):
+    """
+    Disambiguation.
+    :attr str validity: (optional)
+    """
+
+    def __init__(self, validity=None):
+        """
+        Initialize a Disambiguation object.
+        :param str validity: (optional)
+        """
+        self.validity = validity
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize a Disambiguation object from a json dictionary."""
+        args = {}
+        if 'validity' in _dict:
+            args['validity'] = _dict['validity']
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a Disambiguation object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'validity') and self.validity is not None:
+            _dict['validity'] = self.validity
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __str__(self):
+        """Return a `str` version of this Disambiguation object."""
+        return json.dumps(self._to_dict(), indent=2)
+
+class DeployCartridgeResponse():
+    """
+    DeployCartridgeResponse.
+
+    :attr int code: (optional)
+    :attr List[ServiceError] artifact_response: (optional)
+    """
+
+    def __init__(self, *, code: int = None, artifact_response: List['ServiceError'] = None) -> None:
+        """
+        Initialize a DeployCartridgeResponse object.
+
+        :param int code: (optional)
+        :param List[ServiceError] artifact_response: (optional)
+        """
+        self.code = code
+        self.artifact_response = artifact_response
+
+    @classmethod
+    def from_dict(cls, _dict: Dict) -> 'DeployCartridgeResponse':
+        """Initialize a DeployCartridgeResponse object from a json dictionary."""
+        args = {}
+        if 'code' in _dict:
+            args['code'] = _dict.get('code')
+        if 'artifactResponse' in _dict:
+            args['artifact_response'] = [ServiceError.from_dict(x) for x in _dict.get('artifactResponse')]
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a DeployCartridgeResponse object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'code') and self.code is not None:
+            _dict['code'] = self.code
+        if hasattr(self, 'artifact_response') and self.artifact_response is not None:
+            _dict['artifactResponse'] = [x.to_dict() for x in self.artifact_response]
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __str__(self) -> str:
+        """Return a `str` version of this DeployCartridgeResponse object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'DeployCartridgeResponse') -> bool:
+        """Return `true` when self and other are equal, false otherwise."""
+        if not isinstance(other, self.__class__):
+            return False
+        return self.__dict__ == other.__dict__
+
+    def __ne__(self, other: 'DeployCartridgeResponse') -> bool:
+        """Return `true` when self and other are not equal, false otherwise."""
+        return not self == other
+
+
 class EjectionFractionAnnotation(object):
     """
     EjectionFractionAnnotation.
-
     :attr str id: (optional)
     :attr str type: (optional)
     :attr int uid: (optional)
@@ -3341,7 +4000,6 @@ class EjectionFractionAnnotation(object):
                  section_normalized_name=None, section_surface_form=None, **kwargs):
         """
         Initialize a EjectionFractionAnnotation object.
-
         :param str id: (optional)
         :param str type: (optional)
         :param int uid: (optional)
@@ -3386,7 +4044,7 @@ class EjectionFractionAnnotation(object):
             setattr(self, _key, _value)
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a EjectionFractionAnnotation object from a json dictionary."""
         args = {}
         xtra = _dict.copy()
@@ -3450,7 +4108,12 @@ class EjectionFractionAnnotation(object):
         args.update(xtra)
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a EjectionFractionAnnotation object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'id') and self.id is not None:
@@ -3498,6 +4161,10 @@ class EjectionFractionAnnotation(object):
                     _dict[_key] = _value
         return _dict
 
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
     def __setattr__(self, name, value):
         properties = ({'id', 'type', 'uid', 'begin', 'end', 'covered_text', 'negated', 'hypothetical', 'first_value',
                        'ef_alphabetic_value_surface_form', 'second_value', 'ef_term_surface_form',
@@ -3514,10 +4181,197 @@ class EjectionFractionAnnotation(object):
         return json.dumps(self._to_dict(), indent=2)
 
 
+class Entity():
+    """
+    Entity.
+
+    :attr str id: (optional)
+    :attr str type: (optional)
+    :attr int uid: (optional)
+    :attr int mergeid: (optional)
+    """
+
+    def __init__(self, *, id: str = None, type: str = None, uid: int = None, mergeid: int = None) -> None:
+        """
+        Initialize a Entity object.
+
+        :param str id: (optional)
+        :param str type: (optional)
+        :param int uid: (optional)
+        :param int mergeid: (optional)
+        """
+        self.id = id
+        self.type = type
+        self.uid = uid
+        self.mergeid = mergeid
+
+    @classmethod
+    def from_dict(cls, _dict: Dict) -> 'Entity':
+        """Initialize a Entity object from a json dictionary."""
+        args = {}
+        if 'id' in _dict:
+            args['id'] = _dict.get('id')
+        if 'type' in _dict:
+            args['type'] = _dict.get('type')
+        if 'uid' in _dict:
+            args['uid'] = _dict.get('uid')
+        if 'mergeid' in _dict:
+            args['mergeid'] = _dict.get('mergeid')
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a Entity object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'id') and self.id is not None:
+            _dict['id'] = self.id
+        if hasattr(self, 'type') and self.type is not None:
+            _dict['type'] = self.type
+        if hasattr(self, 'uid') and self.uid is not None:
+            _dict['uid'] = self.uid
+        if hasattr(self, 'mergeid') and self.mergeid is not None:
+            _dict['mergeid'] = self.mergeid
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __str__(self) -> str:
+        """Return a `str` version of this Entity object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'Entity') -> bool:
+        """Return `true` when self and other are equal, false otherwise."""
+        if not isinstance(other, self.__class__):
+            return False
+        return self.__dict__ == other.__dict__
+
+    def __ne__(self, other: 'Entity') -> bool:
+        """Return `true` when self and other are not equal, false otherwise."""
+        return not self == other
+
+
+class Flow():
+    """
+    Flow.
+
+    :attr List[FlowEntry] elements: (optional)
+    :attr bool async_: (optional)
+    """
+
+    def __init__(self, *, elements: List['FlowEntry'] = None, async_: bool = None) -> None:
+        """
+        Initialize a Flow object.
+
+        :param List[FlowEntry] elements: (optional)
+        :param bool async_: (optional)
+        """
+        self.elements = elements
+        self.async_ = async_
+
+    @classmethod
+    def from_dict(cls, _dict: Dict) -> 'Flow':
+        """Initialize a Flow object from a json dictionary."""
+        args = {}
+        if 'elements' in _dict:
+            args['elements'] = [FlowEntry.from_dict(x) for x in _dict.get('elements')]
+        if 'async' in _dict:
+            args['async_'] = _dict.get('async')
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a Flow object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'elements') and self.elements is not None:
+            _dict['elements'] = [x.to_dict() for x in self.elements]
+        if hasattr(self, 'async_') and self.async_ is not None:
+            _dict['async'] = self.async_
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __str__(self) -> str:
+        """Return a `str` version of this Flow object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'Flow') -> bool:
+        """Return `true` when self and other are equal, false otherwise."""
+        if not isinstance(other, self.__class__):
+            return False
+        return self.__dict__ == other.__dict__
+
+    def __ne__(self, other: 'Flow') -> bool:
+        """Return `true` when self and other are not equal, false otherwise."""
+        return not self == other
+
+
+class FlowEntry():
+    """
+    FlowEntry.
+    :attr Annotator annotator: (optional)
+    """
+
+    def __init__(self, annotator=None) -> None:
+        """
+        Initialize a FlowEntry object.
+        :param Annotator annotator: (optional)
+        """
+        self.annotator = annotator
+    
+    @classmethod
+    def from_dict(cls, _dict: Dict) -> 'FlowEntry':
+        """Initialize a FlowEntry object from a json dictionary."""
+        args = {}
+        if 'annoator' in _dict:
+            args['annotator'] = _dict['annotator']
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a FlowEntry object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'annotator') and self.annotator is not None:
+            _dict['annotator'] = self.annotator
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __str__(self) -> str:
+        """Return a `str` version of this FlowEntry object."""
+        return json.dumps(self.to_dict(), indent=2, cls=AnnotatorEncoder)
+
+    def __eq__(self, other: 'FlowEntry') -> bool:
+        """Return `true` when self and other are equal, false otherwise."""
+        if not isinstance(other, self.__class__):
+            return False
+        return self.__dict__ == other.__dict__
+
+    def __ne__(self, other: 'FlowEntry') -> bool:
+        """Return `true` when self and other are not equal, false otherwise."""
+        return not self == other
+
+
 class LabValueAnnotation(object):
     """
     LabValueAnnotation.
-
     :attr str id: (optional)
     :attr str type: (optional)
     :attr int uid: (optional)
@@ -3542,7 +4396,6 @@ class LabValueAnnotation(object):
                  section_normalized_name=None, section_surface_form=None, **kwargs):
         """
         Initialize a LabValueAnnotation object.
-
         :param str id: (optional)
         :param str type: (optional)
         :param int uid: (optional)
@@ -3581,7 +4434,7 @@ class LabValueAnnotation(object):
             setattr(self, _key, _value)
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a LabValueAnnotation object from a json dictionary."""
         args = {}
         xtra = _dict.copy()
@@ -3636,7 +4489,12 @@ class LabValueAnnotation(object):
         args.update(xtra)
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a LabValueAnnotation object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'id') and self.id is not None:
@@ -3678,6 +4536,10 @@ class LabValueAnnotation(object):
                     _dict[_key] = _value
         return _dict
 
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
     def __setattr__(self, name, value):
         properties = ({'id', 'type', 'uid', 'begin', 'end', 'covered_text', 'negated', 'hypothetical',
                        'loinc_id', 'low_value', 'date_in_milliseconds', 'lab_type_surface_form',
@@ -3693,10 +4555,63 @@ class LabValueAnnotation(object):
         return json.dumps(self._to_dict(), indent=2)
 
 
+class ListStringWrapper():
+    """
+    ListStringWrapper.
+
+    :attr List[str] data: (optional)
+    """
+
+    def __init__(self, *, data: List[str] = None) -> None:
+        """
+        Initialize a ListStringWrapper object.
+
+        :param List[str] data: (optional)
+        """
+        self.data = data
+
+    @classmethod
+    def from_dict(cls, _dict: Dict) -> 'ListStringWrapper':
+        """Initialize a ListStringWrapper object from a json dictionary."""
+        args = {}
+        if 'data' in _dict:
+            args['data'] = _dict.get('data')
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a ListStringWrapper object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'data') and self.data is not None:
+            _dict['data'] = self.data
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __str__(self) -> str:
+        """Return a `str` version of this ListStringWrapper object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'ListStringWrapper') -> bool:
+        """Return `true` when self and other are equal, false otherwise."""
+        if not isinstance(other, self.__class__):
+            return False
+        return self.__dict__ == other.__dict__
+
+    def __ne__(self, other: 'ListStringWrapper') -> bool:
+        """Return `true` when self and other are not equal, false otherwise."""
+        return not self == other
+
+
 class MedicationAnnotation(object):
     """
     MedicationAnnotation.
-
     :attr str id: (optional)
     :attr str type: (optional)
     :attr int uid: (optional)
@@ -3716,7 +4631,6 @@ class MedicationAnnotation(object):
                  **kwargs):
         """
         Initialize a MedicationAnnotation object.
-
         :param str id: (optional)
         :param str type: (optional)
         :param int uid: (optional)
@@ -3747,7 +4661,7 @@ class MedicationAnnotation(object):
             setattr(self, _key, _value)
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a MedicationAnnotation object from a json dictionary."""
         args = {}
         xtra = _dict.copy()
@@ -3790,7 +4704,12 @@ class MedicationAnnotation(object):
         args.update(xtra)
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a MedicationAnnotation object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'id') and self.id is not None:
@@ -3824,6 +4743,10 @@ class MedicationAnnotation(object):
                     _dict[_key] = _value
         return _dict
 
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
     def __setattr__(self, name, value):
         properties = ({'id', 'type', 'uid', 'begin', 'end', 'covered_text', 'negated', 'hypothetical',
                        'section_normalized_name', 'cui', 'drug', 'section_surface_form'})
@@ -3841,7 +4764,6 @@ class MedicationAnnotation(object):
 class NegatedSpan(object):
     """
     NegatedSpan.
-
     :attr str id: (optional)
     :attr str type: (optional)
     :attr int uid: (optional)
@@ -3857,7 +4779,6 @@ class NegatedSpan(object):
                  hypothetical=None, trigger=None, **kwargs):
         """
         Initialize a NegatedSpan object.
-
         :param str id: (optional)
         :param str type: (optional)
         :param int uid: (optional)
@@ -3882,7 +4803,7 @@ class NegatedSpan(object):
             setattr(self, _key, _value)
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a NegatedSpan object from a json dictionary."""
         args = {}
         xtra = _dict.copy()
@@ -3916,7 +4837,12 @@ class NegatedSpan(object):
         args.update(xtra)
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a NegationAnnotation object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'id') and self.id is not None:
@@ -3944,6 +4870,10 @@ class NegatedSpan(object):
                     _dict[_key] = _value
         return _dict
 
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
     def __setattr__(self, name, value):
         properties = {'id', 'type', 'uid', 'begin', 'end', 'covered_text', 'negated', 'hypothetical', 'trigger'}
         if not hasattr(self, '_additionalProperties'):
@@ -3957,10 +4887,239 @@ class NegatedSpan(object):
         return json.dumps(self._to_dict(), indent=2)
 
 
+class NluEntities(object):
+    """
+    NLU Entities.
+    :attr int begin: (optional)
+    :attr str covered_text: (optional)
+    :attr int end: (optional)
+    :attr str type: (optional)
+    :attr str source: (optional)
+    :attr float relevance: (optional)
+    :attr int uid
+    """
+
+    def __init__(self, begin=None, covered_text=None, end=None, type=None, source=None, relevance=None,
+                 uid=None, **kwargs):
+        """
+        Initialize an NLU Entities object.
+        :param int begin: (optional)
+        :param str covered_text: (optional)
+        :param int end: (optional)
+        :param str type: (optional)
+        :param str source: (optional)
+        :param float relevance: (optional)
+        :param int uid: (optional)
+        :param **kwargs: (optional) Any additional properties.
+        """
+        self.begin = begin
+        self.covered_text = covered_text
+        self.end = end
+        self.type = type
+        self.source = source
+        self.relevance = relevance
+        self.uid = uid
+        for _key, _value in kwargs.items():
+            setattr(self, _key, _value)
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize an NLU Entities object from a json dictionary."""
+        args = {}
+        xtra = _dict.copy()
+        if 'begin' in _dict:
+            args['begin'] = _dict['begin']
+            del xtra['begin']
+        if 'coveredText' in _dict:
+            args['covered_text'] = _dict['coveredText']
+            del xtra['coveredText']
+        if 'end' in _dict:
+            args['end'] = _dict['end']
+            del xtra['end']
+        if 'type' in _dict:
+            args['type'] = _dict['type']
+            del xtra['type']
+        if 'source' in _dict:
+            args['source'] = _dict['source']
+            del xtra['source']
+        if 'relevance' in _dict:
+            args['relevance'] = _dict['relevance']
+            del xtra['relevance']
+        if 'uid' in _dict:
+            args['uid'] = _dict['uid']
+            del xtra['uid']
+        args.update(xtra)
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a NluEntities object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'begin') and self.begin is not None:
+            _dict['begin'] = self.begin
+        if hasattr(self, 'covered_text') and self.covered_text is not None:
+            _dict['coveredText'] = self.covered_text
+        if hasattr(self, 'end') and self.end is not None:
+            _dict['end'] = self.end
+        if hasattr(self, 'type') and self.type is not None:
+            _dict['type'] = self.type
+        if hasattr(self, 'source') and self.source is not None:
+            _dict['source'] = self.source
+        if hasattr(self, 'relevance') and self.relevance is not None:
+            _dict['relevance'] = self.relevance
+        if hasattr(self, 'uid') and self.uid is not None:
+            _dict['uid'] = self.uid
+        if hasattr(self, '_additionalProperties'):
+            for _key in self._additionalProperties:
+                _value = getattr(self, _key, None)
+                if _value is not None:
+                    _dict[_key] = _value
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __setattr__(self, name, value):
+        properties = {'begin', 'covered_text', 'end', 'type', 'source', 'relevance', 'uid'}
+        if not hasattr(self, '_additionalProperties'):
+            super(NluEntities, self).__setattr__('_additionalProperties', set())
+        if name not in properties:
+            self._additionalProperties.add(name)
+        super(NluEntities, self).__setattr__(name, value)
+
+    def __str__(self):
+        """Return a `str` version of this NluEntities object."""
+        return json.dumps(self._to_dict(), indent=2)
+
+class NodeEntity(object):
+    """
+    NLU Relations Node Entity.
+    :attr int uid: (optional)
+    """
+
+    def __init__(self, uid, **kwargs):
+        """
+        Initialize a NLU Relations Node Entity object.
+        :param int uid: (optional)
+        :param **kwargs: (optional) Any additional properties.
+        """
+        self.uid = uid
+        for _key, _value in kwargs.items():
+            setattr(self, _key, _value)
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize an NLU Relations Node Entity object from a json dictionary."""
+        args = {}
+        xtra = _dict.copy()
+        if 'uid' in _dict:
+            args['uid'] = _dict['uid']
+            del xtra['uid']
+        args.update(xtra)
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a NodeEntity object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'uid') and self.uid is not None:
+            _dict['uid'] = self.uid
+        if hasattr(self, '_additionalProperties'):
+            for _key in self._additionalProperties:
+                _value = getattr(self, _key, None)
+                if _value is not None:
+                    _dict[_key] = _value
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __setattr__(self, name, value):
+        properties = {'uid'}
+        if not hasattr(self, '_additionalProperties'):
+            super(Node, self).__setattr__('_additionalProperties', set())
+        if name not in properties:
+            self._additionalProperties.add(name)
+        super(Node, self).__setattr__(name, value)
+
+    def __str__(self):
+        """Return a `str` version of this NLU Relations Node Entity object."""
+        return json.dumps(self._to_dict(), indent=2)
+
+class Node(object):
+    """
+    NLU Relations Node.
+    :attr NodeEntity entity: (optional)
+    """
+
+    def __init__(self, entity, **kwargs):
+        """
+        Initialize a NLU Relations Node object.
+        :param NodeEntity entity: (optional)
+        :param **kwargs: (optional) Any additional properties.
+        """
+        self.entity = entity
+        for _key, _value in kwargs.items():
+            setattr(self, _key, _value)
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize an NLU Relations Node  object from a json dictionary."""
+        args = {}
+        xtra = _dict.copy()
+        if 'entity' in _dict:
+            args['entity'] = _dict['entity']
+            del xtra['entity']
+        args.update(xtra)
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a Node object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'entity') and self.entity is not None:
+            _dict['entity'] = self.entity
+        if hasattr(self, '_additionalProperties'):
+            for _key in self._additionalProperties:
+                _value = getattr(self, _key, None)
+                if _value is not None:
+                    _dict[_key] = _value
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __setattr__(self, name, value):
+        properties = {'entity'}
+        if not hasattr(self, '_additionalProperties'):
+            super(Node, self).__setattr__('_additionalProperties', set())
+        if name not in properties:
+            self._additionalProperties.add(name)
+        super(Node, self).__setattr__(name, value)
+
+    def __str__(self):
+        """Return a `str` version of this NLU Relations Node object."""
+        return json.dumps(self._to_dict(), indent=2)
+
+
 class Procedure(object):
     """
     Procedure.
-
     :attr str id: (optional)
     :attr str type: (optional)
     :attr int uid: (optional)
@@ -3985,7 +5144,6 @@ class Procedure(object):
                  section_surface_form=None, disambiguation_data=None, **kwargs):
         """
         Initialize a Procedure object.
-
         :param str id: (optional)
         :param str type: (optional)
         :param int uid: (optional)
@@ -4024,7 +5182,7 @@ class Procedure(object):
             setattr(self, _key, _value)
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a Procedure object from a json dictionary."""
         args = {}
         xtra = _dict.copy()
@@ -4079,7 +5237,12 @@ class Procedure(object):
         args.update(xtra)
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a Procedure object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'id') and self.id is not None:
@@ -4121,6 +5284,10 @@ class Procedure(object):
                     _dict[_key] = _value
         return _dict
 
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
     def __setattr__(self, name, value):
         properties = ({'id', 'type', 'uid', 'begin', 'end', 'covered_text', 'negated', 'hypothetical', 'cui',
                        'section_normalized_name', 'date_in_milliseconds', 'snomed_concept_id', 'procedure_surface_form',
@@ -4136,10 +5303,528 @@ class Procedure(object):
         return json.dumps(self._to_dict(), indent=2)
 
 
+class Relations(object):
+    """
+    NLU Relations.
+    :attr str source: (optional)
+    :attr float score: (optional)
+    :attr list[Node] nodes: (optional)
+    :attr str type: (optional)
+    """
+
+    def __init__(self, source=None, score=None, nodes=None, type=None, **kwargs):
+        """
+        Initialize an NLU Relations object.
+        :param str source: (optional)
+        :param float score: (optional)
+        :param list[Node] nodes: (optional)
+        :param str type: (optional)
+        :param **kwargs: (optional) Any additional properties.
+        """
+        self.source = source
+        self.score = score
+        self.nodes = nodes
+        self.type = type
+        for _key, _value in kwargs.items():
+            setattr(self, _key, _value)
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize an NLU Relations object from a json dictionary."""
+        args = {}
+        xtra = _dict.copy()
+        if 'source' in _dict:
+            args['source'] = _dict['source']
+            del xtra['source']
+        if 'score' in _dict:
+            args['score'] = _dict['score']
+            del xtra['score']
+        if 'nodes' in _dict:
+            args['nodes'] = [Node._from_dict(entry) for entry in _dict['nodes']]
+            del xtra['nodes']
+        if 'type' in _dict:
+            args['type'] = _dict['type']
+            del xtra['type']
+        args.update(xtra)
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a Relations object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'source') and self.source is not None:
+            _dict['source'] = self.source
+        if hasattr(self, 'score') and self.score is not None:
+            _dict['score'] = self.score
+        if hasattr(self, 'nodes') and self.nodes is not None:
+            _dict['nodes'] = [entry._to_dict() for entry in self.nodes]
+        if hasattr(self, 'type') and self.type is not None:
+            _dict['type'] = self.type
+        if hasattr(self, '_additionalProperties'):
+            for _key in self._additionalProperties:
+                _value = getattr(self, _key, None)
+                if _value is not None:
+                    _dict[_key] = _value
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __setattr__(self, name, value):
+        properties = {'source', 'score', 'nodes', 'type'}
+        if not hasattr(self, '_additionalProperties'):
+            super(Relations, self).__setattr__('_additionalProperties', set())
+        if name not in properties:
+            self._additionalProperties.add(name)
+        super(Relations, self).__setattr__(name, value)
+
+    def __str__(self):
+        """Return a `str` version of this Relations object."""
+        return json.dumps(self._to_dict(), indent=2)
+
+
+class RequestContainer(object):
+    """
+    RequestContainer.
+    :attr list[UnstructuredContainer] unstructured: (optional)
+    :attr list[AnnotatorFlow] annotator_flows: (optional)
+    """
+
+    def __init__(self, unstructured=None, annotator_flows=None):
+        """
+        Initialize a RequestContainer object.
+        :param list[UnstructuredContainer] unstructured: (optional)
+        :param list[AnnotatorFlow] annotator_flows: (optional)
+        """
+        self.unstructured = unstructured
+        self.annotator_flows = annotator_flows
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize a RequestContainer object from a json dictionary."""
+        args = {}
+        if 'unstructured' in _dict:
+            args['unstructured'] = [UnstructuredContainer._from_dict(x) for x in _dict['unstructured']]
+        if 'annotatorFlows' in _dict:
+            args['annotator_flows'] = [AnnotatorFlow._from_dict(x) for x in _dict['annotatorFlows']]
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a RequestContainer object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'unstructured') and self.unstructured is not None:
+            _dict['unstructured'] = [x._to_dict() for x in self.unstructured]
+        if hasattr(self, 'annotator_flows') and self.annotator_flows is not None:
+            _dict['annotatorFlows'] = [x._to_dict() for x in self.annotator_flows]
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __str__(self):
+        """Return a `str` version of this RequestContainer object."""
+        return json.dumps(self._to_dict(), indent=2)
+
+
+class SectionTrigger(object):
+    """
+    SectionTrigger.
+    :attr int begin: (optional)
+    :attr str covered_text: (optional)
+    :attr int end: (optional)
+    :attr str section_normalized_name: (optional)
+    :attr str source: (optional)
+    :attr str type: (optional)
+    """
+
+    def __init__(self, begin=None, covered_text=None, end=None, section_normalized_name=None, source=None,
+                 type=None, **kwargs):
+        """
+        Initialize a SectionTrigger object.
+        :param int begin: (optional)
+        :param str covered_text: (optional)
+        :param int end: (optional)
+        :param str section_normalized_name: (optional)
+        :param str source: (optional)
+        :param str type: (optional)
+        :param **kwargs: (optional) Any additional properties.
+        """
+        self.begin = begin
+        self.covered_text = covered_text
+        self.end = end
+        self.section_normalized_name = section_normalized_name
+        self.source = source
+        self.type = type
+        for _key, _value in kwargs.items():
+            setattr(self, _key, _value)
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize a SectionTrigger object from a json dictionary."""
+        args = {}
+        xtra = _dict.copy()
+        if 'begin' in _dict:
+            args['begin'] = _dict['begin']
+            del xtra['begin']
+        if 'coveredText' in _dict:
+            args['covered_text'] = _dict['coveredText']
+            del xtra['coveredText']
+        if 'end' in _dict:
+            args['end'] = _dict['end']
+            del xtra['end']
+        if 'sectionNormalizedName' in _dict:
+            args['section_normalized_name'] = _dict['sectionNormalizedName']
+            del xtra['sectionNormalizedName']
+        if 'source' in _dict:
+            args['source'] = _dict['source']
+            del xtra['source']
+        if 'type' in _dict:
+            args['type'] = _dict['type']
+            del xtra['type']
+        args.update(xtra)
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a SectionTrigger object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'begin') and self.begin is not None:
+            _dict['begin'] = self.begin
+        if hasattr(self, 'covered_text') and self.covered_text is not None:
+            _dict['coveredText'] = self.covered_text
+        if hasattr(self, 'end') and self.end is not None:
+            _dict['end'] = self.end
+        if hasattr(self, 'section_normalized_name') and self.section_normalized_name is not None:
+            _dict['sectionNormalizedName'] = self.section_normalized_name
+        if hasattr(self, 'source') and self.source is not None:
+            _dict['source'] = self.source
+        if hasattr(self, 'type') and self.type is not None:
+            _dict['type'] = self.type
+        if hasattr(self, '_additionalProperties'):
+            for _key in self._additionalProperties:
+                _value = getattr(self, _key, None)
+                if _value is not None:
+                    _dict[_key] = _value
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __setattr__(self, name, value):
+        properties = {'begin', 'covered_text', 'end', 'section_normalized_name', 'source', 'type'}
+        if not hasattr(self, '_additionalProperties'):
+            super(SectionTrigger, self).__setattr__('_additionalProperties', set())
+        if name not in properties:
+            self._additionalProperties.add(name)
+        super(SectionTrigger, self).__setattr__(name, value)
+
+    def __str__(self):
+        """Return a `str` version of this SectionTrigger object."""
+        return json.dumps(self._to_dict(), indent=2)
+
+
+class Section(object):
+    """
+    Section.
+    :attr int begin: (optional)
+    :attr str covered_text: (optional)
+    :attr int end: (optional)
+    :attr str type: (optional)
+    :attr str section_type: (optional)
+    :attr SectionTrigger trigger: (optional)
+    """
+
+    def __init__(self, begin=None, covered_text=None, end=None, type=None, section_type=None, trigger=None, **kwargs):
+        """
+        Initialize a Section object.
+        :param int begin: (optional)
+        :param str covered_text: (optional)
+        :param int end: (optional)
+        :param str type: (optional)
+        :param str section_type: (optional)
+        :param SectionTrigger trigger: (optional)
+        :param **kwargs: (optional) Any additional properties.
+        """
+        self.begin = begin
+        self.covered_text = covered_text
+        self.end = end
+        self.type = type
+        self.section_type = section_type
+        self.trigger = trigger
+        for _key, _value in kwargs.items():
+            setattr(self, _key, _value)
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize a Section object from a json dictionary."""
+        args = {}
+        xtra = _dict.copy()
+        if 'begin' in _dict:
+            args['begin'] = _dict['begin']
+            del xtra['begin']
+        if 'coveredText' in _dict:
+            args['covered_text'] = _dict['coveredText']
+            del xtra['coveredText']
+        if 'end' in _dict:
+            args['end'] = _dict['end']
+            del xtra['end']
+        if 'type' in _dict:
+            args['type'] = _dict['type']
+            del xtra['type']
+        if 'sectionType' in _dict:
+            args['section_type'] = _dict['sectionType']
+            del xtra['sectionType']
+        if 'trigger' in _dict:
+            args['trigger'] = SectionTrigger._from_dict(_dict['trigger'])
+            del xtra['trigger']
+        args.update(xtra)
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a Section object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'begin') and self.begin is not None:
+            _dict['begin'] = self.begin
+        if hasattr(self, 'covered_text') and self.covered_text is not None:
+            _dict['coveredText'] = self.covered_text
+        if hasattr(self, 'end') and self.end is not None:
+            _dict['end'] = self.end
+        if hasattr(self, 'type') and self.type is not None:
+            _dict['type'] = self.type
+        if hasattr(self, 'section_type') and self.section_type is not None:
+            _dict['sectionType'] = self.section_type
+        if hasattr(self, 'trigger') and self.trigger is not None:
+            _dict['trigger'] = self.trigger._to_dict()
+        if hasattr(self, '_additionalProperties'):
+            for _key in self._additionalProperties:
+                _value = getattr(self, _key, None)
+                if _value is not None:
+                    _dict[_key] = _value
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __setattr__(self, name, value):
+        properties = {'begin', 'covered_text', 'end', 'type', 'section_type', 'trigger'}
+        if not hasattr(self, '_additionalProperties'):
+            super(Section, self).__setattr__('_additionalProperties', set())
+        if name not in properties:
+            self._additionalProperties.add(name)
+        super(Section, self).__setattr__(name, value)
+
+    def __str__(self):
+        """Return a `str` version of this Section object."""
+        return json.dumps(self._to_dict(), indent=2)
+
+
+class ServiceError():
+    """
+    Object representing an HTTP response with an error.
+
+    :attr int code: (optional) respone code.
+    :attr str message: (optional) response error message.
+    :attr str level: (optional) error severity level.
+    :attr str description: (optional) error description.
+    :attr str more_info: (optional) additional error information.
+    :attr str correlation_id: (optional) error message correlation identifier.
+    :attr str artifact: (optional)
+    :attr str href: (optional)
+    """
+
+    def __init__(self, *, code: int = None, message: str = None, level: str = None, description: str = None, more_info: str = None, correlation_id: str = None, artifact: str = None, href: str = None) -> None:
+        """
+        Initialize a ServiceError object.
+
+        :param int code: (optional) respone code.
+        :param str message: (optional) response error message.
+        :param str level: (optional) error severity level.
+        :param str description: (optional) error description.
+        :param str more_info: (optional) additional error information.
+        :param str correlation_id: (optional) error message correlation identifier.
+        :param str artifact: (optional)
+        :param str href: (optional)
+        """
+        self.code = code
+        self.message = message
+        self.level = level
+        self.description = description
+        self.more_info = more_info
+        self.correlation_id = correlation_id
+        self.artifact = artifact
+        self.href = href
+
+    @classmethod
+    def from_dict(cls, _dict: Dict) -> 'ServiceError':
+        """Initialize a ServiceError object from a json dictionary."""
+        args = {}
+        if 'code' in _dict:
+            args['code'] = _dict.get('code')
+        if 'message' in _dict:
+            args['message'] = _dict.get('message')
+        if 'level' in _dict:
+            args['level'] = _dict.get('level')
+        if 'description' in _dict:
+            args['description'] = _dict.get('description')
+        if 'moreInfo' in _dict:
+            args['more_info'] = _dict.get('moreInfo')
+        if 'correlationId' in _dict:
+            args['correlation_id'] = _dict.get('correlationId')
+        if 'artifact' in _dict:
+            args['artifact'] = _dict.get('artifact')
+        if 'href' in _dict:
+            args['href'] = _dict.get('href')
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a ServiceError object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'code') and self.code is not None:
+            _dict['code'] = self.code
+        if hasattr(self, 'message') and self.message is not None:
+            _dict['message'] = self.message
+        if hasattr(self, 'level') and self.level is not None:
+            _dict['level'] = self.level
+        if hasattr(self, 'description') and self.description is not None:
+            _dict['description'] = self.description
+        if hasattr(self, 'more_info') and self.more_info is not None:
+            _dict['moreInfo'] = self.more_info
+        if hasattr(self, 'correlation_id') and self.correlation_id is not None:
+            _dict['correlationId'] = self.correlation_id
+        if hasattr(self, 'artifact') and self.artifact is not None:
+            _dict['artifact'] = self.artifact
+        if hasattr(self, 'href') and self.href is not None:
+            _dict['href'] = self.href
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __str__(self) -> str:
+        """Return a `str` version of this ServiceError object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'ServiceError') -> bool:
+        """Return `true` when self and other are equal, false otherwise."""
+        if not isinstance(other, self.__class__):
+            return False
+        return self.__dict__ == other.__dict__
+
+    def __ne__(self, other: 'ServiceError') -> bool:
+        """Return `true` when self and other are not equal, false otherwise."""
+        return not self == other
+
+    
+    class LevelEnum(Enum):
+        """
+        error severity level.
+        """
+        ERROR = "ERROR"
+        WARNING = "WARNING"
+        INFO = "INFO"
+
+
+class ServiceStatus():
+    """
+    Object representing service runtime status.
+
+    :attr str service_state: (optional) scurrent service state.
+    :attr str state_details: (optional) service state details.
+    """
+
+    def __init__(self, *, service_state: str = None, state_details: str = None) -> None:
+        """
+        Initialize a ServiceStatus object.
+
+        :param str service_state: (optional) scurrent service state.
+        :param str state_details: (optional) service state details.
+        """
+        self.service_state = service_state
+        self.state_details = state_details
+
+    @classmethod
+    def from_dict(cls, _dict: Dict) -> 'ServiceStatus':
+        """Initialize a ServiceStatus object from a json dictionary."""
+        args = {}
+        if 'serviceState' in _dict:
+            args['service_state'] = _dict.get('serviceState')
+        if 'stateDetails' in _dict:
+            args['state_details'] = _dict.get('stateDetails')
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a ServiceStatus object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self) -> Dict:
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'service_state') and self.service_state is not None:
+            _dict['serviceState'] = self.service_state
+        if hasattr(self, 'state_details') and self.state_details is not None:
+            _dict['stateDetails'] = self.state_details
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __str__(self) -> str:
+        """Return a `str` version of this ServiceStatus object."""
+        return json.dumps(self.to_dict(), indent=2)
+
+    def __eq__(self, other: 'ServiceStatus') -> bool:
+        """Return `true` when self and other are equal, false otherwise."""
+        if not isinstance(other, self.__class__):
+            return False
+        return self.__dict__ == other.__dict__
+
+    def __ne__(self, other: 'ServiceStatus') -> bool:
+        """Return `true` when self and other are not equal, false otherwise."""
+        return not self == other
+
+    
+    class ServiceStateEnum(Enum):
+        """
+        scurrent service state.
+        """
+        OK = "OK"
+        WARNING = "WARNING"
+        ERROR = "ERROR"
+
+
 class Smoking(object):
     """
     Smoking.
-
     :attr str id: (optional)
     :attr str type: (optional)
     :attr int uid: (optional)
@@ -4162,7 +5847,6 @@ class Smoking(object):
                  smoke_term_surface_form=None, smoke_term_normalized_name=None, section_surface_form=None, **kwargs):
         """
         Initialize a Smoking object.
-
         :param str id: (optional)
         :param str type: (optional)
         :param int uid: (optional)
@@ -4199,7 +5883,7 @@ class Smoking(object):
             setattr(self, _key, _value)
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a Smoking object from a json dictionary."""
         args = {}
         xtra = _dict.copy()
@@ -4251,7 +5935,12 @@ class Smoking(object):
         args.update(xtra)
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a Smoking object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'id') and self.id is not None:
@@ -4291,6 +5980,10 @@ class Smoking(object):
                     _dict[_key] = _value
         return _dict
 
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
     def __setattr__(self, name, value):
         properties = ({'id', 'type', 'uid', 'begin', 'end', 'covered_text', 'negated', 'hypothetical',
                        'participation', 'section_normalized_name', 'modality', 'current',
@@ -4306,10 +5999,243 @@ class Smoking(object):
         return json.dumps(self._to_dict(), indent=2)
 
 
+class SpellingCorrection(object):
+    """
+    Spelling Correction.
+    :attr int begin:
+    :attr int end:
+    :attr str covered_text:
+    :attr list[Suggestion] suggestions
+    """
+    def __init__(self, begin=None, end=None, covered_text=None, suggestions=None, **kwargs):
+        """
+        Initializes a spelling correction
+        :param int begin:
+        :param int end:
+        :param str covered_text:
+        :param list[Suggestion] suggestions:
+        """
+        self.begin = begin
+        self.end = end
+        self.covered_text = covered_text
+        self.suggestions = suggestions
+        for _key, _value in kwargs.items():
+            setattr(self, _key, _value)
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize a SpellingCorrection object from a json dictionary."""
+        args = {}
+        xtra = _dict.copy()
+
+        if 'begin' in _dict:
+            args['begin'] = _dict['begin']
+            del xtra['begin']
+        if 'end' in _dict:
+            args['end'] = _dict['end']
+            del xtra['end']
+        if 'coveredText' in _dict:
+            args['covered_text'] = _dict['coveredText']
+            del xtra['coveredText']
+        if 'suggestions' in _dict:
+            args['suggestions'] = [Suggestion._from_dict(entry) for entry in _dict['suggestions']]
+            del xtra['suggestions']
+
+        args.update(xtra)
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a SpellingCorrection object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this spelling correction model."""
+        _dict = {}
+        if hasattr(self, 'begin') and self.begin is not None:
+            _dict['begin'] = self.begin
+        if hasattr(self, 'end') and self.end is not None:
+            _dict['end'] = self.end
+        if hasattr(self, 'covered_text') and self.covered_text is not None:
+            _dict['coveredText'] = self.covered_text
+        if hasattr(self, 'suggestions') and self.suggestions is not None:
+            _dict['suggestions'] = [entry._to_dict() for entry in self.suggestions]
+        if hasattr(self, '_additionalProperties'):
+            for _key in self._additionalProperties:
+                _value = getattr(self, _key, None)
+                if _value is not None:
+                    _dict[_key] = _value
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __setattr__(self, name, value):
+        properties = {'begin', 'end', 'covered_text', 'suggestions'}
+        if not hasattr(self, '_additionalProperties'):
+            super(SpellingCorrection, self).__setattr__('_additionalProperties', set())
+        if name not in properties:
+            self._additionalProperties.add(name)
+        super(SpellingCorrection, self).__setattr__(name, value)
+
+    def __str__(self):
+        """Return a `str` version of this Spelling Correction object."""
+        return json.dumps(self._to_dict(), indent=2)
+
+
+class SpellCorrectedText(object):
+    """
+    :attr str corrected_text
+    :attr str debug_text: (optional)
+    """
+    def __init__(self, corrected_text=None, debug_text=None, **kwargs):
+        """
+        Initializes a Spell corrected text
+        :param str corrected_text
+        :param str debug_text: (optional)
+        """
+        self.corrected_text = corrected_text
+        self.debug_text = debug_text
+        for _key, _value in kwargs.items():
+            setattr(self, _key, _value)
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize a spelling corrected text object from a json dictionary."""
+        args = {}
+        xtra = _dict.copy()
+
+        if 'correctedText' in _dict:
+            args['corrected_text'] = _dict['correctedText']
+            del xtra['correctedText']
+        if 'debugText' in _dict:
+            args['debug_text'] = _dict['debugText']
+            del xtra['debugText']
+
+        args.update(xtra)
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a SpellCorrectedText object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this spell corrected text"""
+        _dict = {}
+        if hasattr(self, 'corrected_text') and self.corrected_text is not None:
+            _dict['correctedText'] = self.corrected_text
+        if hasattr(self, 'debug_text') and self.debug_text is not None:
+            _dict['debugText'] = self.debug_text
+
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __setattr__(self, name, value):
+        properties = {'corrected_text', 'debug_text'}
+        if not hasattr(self, '_additionalProperties'):
+            super(SpellCorrectedText, self).__setattr__('_additionalProperties', set())
+        if name not in properties:
+            self._additionalProperties.add(name)
+        super(SpellCorrectedText, self).__setattr__(name, value)
+
+    def __str__(self):
+        """Return a `str` version of this spelling suggestion object."""
+        return json.dumps(self._to_dict(), indent=2)
+
+
+class Suggestion(object):
+    """
+    :attr str text
+    :attr float confidence
+    :attr bool applied
+    :attr list[str] semtypes: (optional)
+    """
+
+    def __init__(self, text=None, confidence=None, applied=None, semtypes=None, **kwargs):
+        """
+        Initializes a spelling suggestion
+        :param str text
+        :param float confidence
+        :param bool applied
+        :param list[str] semtypes: (optional)
+        """
+        self.text = text
+        self.confidence = confidence
+        self.applied = applied
+        self.semtypes = semtypes
+        for _key, _value in kwargs.items():
+            setattr(self, _key, _value)
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize a spelling suggestion object from a json dictionary."""
+        args = {}
+        xtra = _dict.copy()
+
+        if 'text' in _dict:
+            args['text'] = _dict['text']
+            del xtra['text']
+        if 'confidence' in _dict:
+            args['confidence'] = _dict['confidence']
+            del xtra['confidence']
+        if 'applied' in _dict:
+            args['applied'] = _dict['applied']
+            del xtra['applied']
+        if 'semtypes' in _dict:
+            args['semtypes'] = _dict['semtypes']
+            del xtra['semtypes']
+
+        args.update(xtra)
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a Suggestion object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this spelling suggestion."""
+        _dict = {}
+        if hasattr(self, 'text') and self.text is not None:
+            _dict['text'] = self.text
+        if hasattr(self, 'confidence') and self.confidence is not None:
+            _dict['confidence'] = self.confidence
+        if hasattr(self, 'applied') and self.applied is not None:
+            _dict['applied'] = self.applied
+        if hasattr(self, 'semtypes') and self.semtypes is not None:
+            _dict['semtypes'] = self.semtypes
+        if hasattr(self, '_additionalProperties'):
+            for _key in self._additionalProperties:
+                _value = getattr(self, _key, None)
+                if _value is not None:
+                    _dict[_key] = _value
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __setattr__(self, name, value):
+        properties = {'text', 'confidence', 'applied', 'semtypes'}
+        if not hasattr(self, '_additionalProperties'):
+            super(Suggestion, self).__setattr__('_additionalProperties', set())
+        if name not in properties:
+            self._additionalProperties.add(name)
+        super(Suggestion, self).__setattr__(name, value)
+
+    def __str__(self):
+        """Return a `str` version of this spelling suggestion object."""
+        return json.dumps(self._to_dict(), indent=2)
+
+
 class SymptomDisease(object):
     """
     SymptomDisease.
-
     :attr str id: (optional)
     :attr str type: (optional)
     :attr int uid: (optional)
@@ -4340,7 +6266,6 @@ class SymptomDisease(object):
                  disambiguation_data=None, **kwargs):
         """
         Initialize a SymptomDisease object.
-
         :param str id: (optional)
         :param str type: (optional)
         :param int uid: (optional)
@@ -4389,7 +6314,7 @@ class SymptomDisease(object):
             setattr(self, _key, _value)
 
     @classmethod
-    def _from_dict(cls, _dict):
+    def from_dict(cls, _dict):
         """Initialize a SymptomDisease object from a json dictionary."""
         args = {}
         xtra = _dict.copy()
@@ -4459,7 +6384,12 @@ class SymptomDisease(object):
         args.update(xtra)
         return cls(**args)
 
-    def _to_dict(self):
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a SymptomDisease object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
         if hasattr(self, 'id') and self.id is not None:
@@ -4511,6 +6441,10 @@ class SymptomDisease(object):
                     _dict[_key] = _value
         return _dict
 
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
     def __setattr__(self, name, value):
         properties = ({'id', 'type', 'uid', 'begin', 'end', 'covered_text', 'negated', 'hypothetical', 'cui',
                        'icd10_code', 'section_normalized_name', 'modality', 'symptom_disease_surface_form',
@@ -4526,475 +6460,79 @@ class SymptomDisease(object):
         """Return a `str` version of this SymptomDisease object."""
         return json.dumps(self._to_dict(), indent=2)
 
-class SectionTrigger(object):
-    """
-    SectionTrigger.
 
-    :attr int begin: (optional)
-    :attr str covered_text: (optional)
-    :attr int end: (optional)
-    :attr str section_normalized_name: (optional)
-    :attr str source: (optional)
+class UnstructuredContainer(object):
+    """
+    UnstructuredContainer.
+    :attr str text: (optional)
+    :attr str id: (optional)
     :attr str type: (optional)
-    """
-
-    def __init__(self, begin=None, covered_text=None, end=None, section_normalized_name=None, source=None,
-                 type=None, **kwargs):
-        """
-        Initialize a SectionTrigger object.
-
-        :param int begin: (optional)
-        :param str covered_text: (optional)
-        :param int end: (optional)
-        :param str section_normalized_name: (optional)
-        :param str source: (optional)
-        :param str type: (optional)
-        :param **kwargs: (optional) Any additional properties.
-        """
-        self.begin = begin
-        self.covered_text = covered_text
-        self.end = end
-        self.section_normalized_name = section_normalized_name
-        self.source = source
-        self.type = type
-        for _key, _value in kwargs.items():
-            setattr(self, _key, _value)
-
-    @classmethod
-    def _from_dict(cls, _dict):
-        """Initialize a SectionTrigger object from a json dictionary."""
-        args = {}
-        xtra = _dict.copy()
-        if 'begin' in _dict:
-            args['begin'] = _dict['begin']
-            del xtra['begin']
-        if 'coveredText' in _dict:
-            args['covered_text'] = _dict['coveredText']
-            del xtra['coveredText']
-        if 'end' in _dict:
-            args['end'] = _dict['end']
-            del xtra['end']
-        if 'sectionNormalizedName' in _dict:
-            args['section_normalized_name'] = _dict['sectionNormalizedName']
-            del xtra['sectionNormalizedName']
-        if 'source' in _dict:
-            args['source'] = _dict['source']
-            del xtra['source']
-        if 'type' in _dict:
-            args['type'] = _dict['type']
-            del xtra['type']
-        args.update(xtra)
-        return cls(**args)
-
-    def _to_dict(self):
-        """Return a json dictionary representing this model."""
-        _dict = {}
-        if hasattr(self, 'begin') and self.begin is not None:
-            _dict['begin'] = self.begin
-        if hasattr(self, 'covered_text') and self.covered_text is not None:
-            _dict['coveredText'] = self.covered_text
-        if hasattr(self, 'end') and self.end is not None:
-            _dict['end'] = self.end
-        if hasattr(self, 'section_normalized_name') and self.section_normalized_name is not None:
-            _dict['sectionNormalizedName'] = self.section_normalized_name
-        if hasattr(self, 'source') and self.source is not None:
-            _dict['source'] = self.source
-        if hasattr(self, 'type') and self.type is not None:
-            _dict['type'] = self.type
-        if hasattr(self, '_additionalProperties'):
-            for _key in self._additionalProperties:
-                _value = getattr(self, _key, None)
-                if _value is not None:
-                    _dict[_key] = _value
-        return _dict
-
-    def __setattr__(self, name, value):
-        properties = {'begin', 'covered_text', 'end', 'section_normalized_name', 'source', 'type'}
-        if not hasattr(self, '_additionalProperties'):
-            super(SectionTrigger, self).__setattr__('_additionalProperties', set())
-        if name not in properties:
-            self._additionalProperties.add(name)
-        super(SectionTrigger, self).__setattr__(name, value)
-
-    def __str__(self):
-        """Return a `str` version of this SectionTrigger object."""
-        return json.dumps(self._to_dict(), indent=2)
-
-
-class Section(object):
-    """
-    Section.
-
-    :attr int begin: (optional)
-    :attr str covered_text: (optional)
-    :attr int end: (optional)
-    :attr str type: (optional)
-    :attr str section_type: (optional)
-    :attr SectionTrigger trigger: (optional)
-    """
-
-    def __init__(self, begin=None, covered_text=None, end=None, type=None, section_type=None, trigger=None, **kwargs):
-        """
-        Initialize a Section object.
-
-        :param int begin: (optional)
-        :param str covered_text: (optional)
-        :param int end: (optional)
-        :param str type: (optional)
-        :param str section_type: (optional)
-        :param SectionTrigger trigger: (optional)
-        :param **kwargs: (optional) Any additional properties.
-        """
-        self.begin = begin
-        self.covered_text = covered_text
-        self.end = end
-        self.type = type
-        self.section_type = section_type
-        self.trigger = trigger
-        for _key, _value in kwargs.items():
-            setattr(self, _key, _value)
-
-    @classmethod
-    def _from_dict(cls, _dict):
-        """Initialize a Section object from a json dictionary."""
-        args = {}
-        xtra = _dict.copy()
-        if 'begin' in _dict:
-            args['begin'] = _dict['begin']
-            del xtra['begin']
-        if 'coveredText' in _dict:
-            args['covered_text'] = _dict['coveredText']
-            del xtra['coveredText']
-        if 'end' in _dict:
-            args['end'] = _dict['end']
-            del xtra['end']
-        if 'type' in _dict:
-            args['type'] = _dict['type']
-            del xtra['type']
-        if 'sectionType' in _dict:
-            args['section_type'] = _dict['sectionType']
-            del xtra['sectionType']
-        if 'trigger' in _dict:
-            args['trigger'] = SectionTrigger._from_dict(_dict['trigger'])
-            del xtra['trigger']
-        args.update(xtra)
-        return cls(**args)
-
-    def _to_dict(self):
-        """Return a json dictionary representing this model."""
-        _dict = {}
-        if hasattr(self, 'begin') and self.begin is not None:
-            _dict['begin'] = self.begin
-        if hasattr(self, 'covered_text') and self.covered_text is not None:
-            _dict['coveredText'] = self.covered_text
-        if hasattr(self, 'end') and self.end is not None:
-            _dict['end'] = self.end
-        if hasattr(self, 'type') and self.type is not None:
-            _dict['type'] = self.type
-        if hasattr(self, 'section_type') and self.section_type is not None:
-            _dict['sectionType'] = self.section_type
-        if hasattr(self, 'trigger') and self.trigger is not None:
-            _dict['trigger'] = self.trigger._to_dict()
-        if hasattr(self, '_additionalProperties'):
-            for _key in self._additionalProperties:
-                _value = getattr(self, _key, None)
-                if _value is not None:
-                    _dict[_key] = _value
-        return _dict
-
-    def __setattr__(self, name, value):
-        properties = {'begin', 'covered_text', 'end', 'type', 'section_type', 'trigger'}
-        if not hasattr(self, '_additionalProperties'):
-            super(Section, self).__setattr__('_additionalProperties', set())
-        if name not in properties:
-            self._additionalProperties.add(name)
-        super(Section, self).__setattr__(name, value)
-
-    def __str__(self):
-        """Return a `str` version of this Section object."""
-        return json.dumps(self._to_dict(), indent=2)
-
-class NluEntities(object):
-    """
-    NLU Entities.
-
-    :attr int begin: (optional)
-    :attr str covered_text: (optional)
-    :attr int end: (optional)
-    :attr str type: (optional)
-    :attr str source: (optional)
-    :attr float relevance: (optional)
-    :attr int uid
-    """
-
-    def __init__(self, begin=None, covered_text=None, end=None, type=None, source=None, relevance=None,
-                 uid=None, **kwargs):
-        """
-        Initialize an NLU Entities object.
-
-        :param int begin: (optional)
-        :param str covered_text: (optional)
-        :param int end: (optional)
-        :param str type: (optional)
-        :param str source: (optional)
-        :param float relevance: (optional)
-        :param int uid: (optional)
-        :param **kwargs: (optional) Any additional properties.
-        """
-        self.begin = begin
-        self.covered_text = covered_text
-        self.end = end
-        self.type = type
-        self.source = source
-        self.relevance = relevance
-        self.uid = uid
-        for _key, _value in kwargs.items():
-            setattr(self, _key, _value)
-
-    @classmethod
-    def _from_dict(cls, _dict):
-        """Initialize an NLU Entities object from a json dictionary."""
-        args = {}
-        xtra = _dict.copy()
-        if 'begin' in _dict:
-            args['begin'] = _dict['begin']
-            del xtra['begin']
-        if 'coveredText' in _dict:
-            args['covered_text'] = _dict['coveredText']
-            del xtra['coveredText']
-        if 'end' in _dict:
-            args['end'] = _dict['end']
-            del xtra['end']
-        if 'type' in _dict:
-            args['type'] = _dict['type']
-            del xtra['type']
-        if 'source' in _dict:
-            args['source'] = _dict['source']
-            del xtra['source']
-        if 'relevance' in _dict:
-            args['relevance'] = _dict['relevance']
-            del xtra['relevance']
-        if 'uid' in _dict:
-            args['uid'] = _dict['uid']
-            del xtra['uid']
-        args.update(xtra)
-        return cls(**args)
-
-    def _to_dict(self):
-        """Return a json dictionary representing this model."""
-        _dict = {}
-        if hasattr(self, 'begin') and self.begin is not None:
-            _dict['begin'] = self.begin
-        if hasattr(self, 'covered_text') and self.covered_text is not None:
-            _dict['coveredText'] = self.covered_text
-        if hasattr(self, 'end') and self.end is not None:
-            _dict['end'] = self.end
-        if hasattr(self, 'type') and self.type is not None:
-            _dict['type'] = self.type
-        if hasattr(self, 'source') and self.source is not None:
-            _dict['source'] = self.source
-        if hasattr(self, 'relevance') and self.relevance is not None:
-            _dict['relevance'] = self.relevance
-        if hasattr(self, 'uid') and self.uid is not None:
-            _dict['uid'] = self.uid
-        if hasattr(self, '_additionalProperties'):
-            for _key in self._additionalProperties:
-                _value = getattr(self, _key, None)
-                if _value is not None:
-                    _dict[_key] = _value
-        return _dict
-
-    def __setattr__(self, name, value):
-        properties = {'begin', 'covered_text', 'end', 'type', 'source', 'relevance', 'uid'}
-        if not hasattr(self, '_additionalProperties'):
-            super(NluEntities, self).__setattr__('_additionalProperties', set())
-        if name not in properties:
-            self._additionalProperties.add(name)
-        super(NluEntities, self).__setattr__(name, value)
-
-    def __str__(self):
-        """Return a `str` version of this NluEntities object."""
-        return json.dumps(self._to_dict(), indent=2)
-
-class NodeEntity(object):
-    """
-    NLU Relations Node Entity.
-
+    :attr ContainerAnnotation data: (optional)
+    :attr dict metadata: (optional)
     :attr int uid: (optional)
     """
 
-    def __init__(self, uid, **kwargs):
+    def __init__(self, text=None, id=None, type=None, data=None, metadata=None, uid=None):
         """
-        Initialize a NLU Relations Node Entity object.
-
-        :param int uid: (optional)
-        :param **kwargs: (optional) Any additional properties.
-        """
-        self.uid = uid
-        for _key, _value in kwargs.items():
-            setattr(self, _key, _value)
-
-    @classmethod
-    def _from_dict(cls, _dict):
-        """Initialize an NLU Relations Node Entity object from a json dictionary."""
-        args = {}
-        xtra = _dict.copy()
-        if 'uid' in _dict:
-            args['uid'] = _dict['uid']
-            del xtra['uid']
-        args.update(xtra)
-        return cls(**args)
-
-    def _to_dict(self):
-        """Return a json dictionary representing this model."""
-        _dict = {}
-        if hasattr(self, 'uid') and self.uid is not None:
-            _dict['uid'] = self.uid
-        if hasattr(self, '_additionalProperties'):
-            for _key in self._additionalProperties:
-                _value = getattr(self, _key, None)
-                if _value is not None:
-                    _dict[_key] = _value
-        return _dict
-
-    def __setattr__(self, name, value):
-        properties = {'uid'}
-        if not hasattr(self, '_additionalProperties'):
-            super(Node, self).__setattr__('_additionalProperties', set())
-        if name not in properties:
-            self._additionalProperties.add(name)
-        super(Node, self).__setattr__(name, value)
-
-    def __str__(self):
-        """Return a `str` version of this NLU Relations Node Entity object."""
-        return json.dumps(self._to_dict(), indent=2)
-
-class Node(object):
-    """
-    NLU Relations Node.
-
-    :attr NodeEntity entity: (optional)
-    """
-
-    def __init__(self, entity, **kwargs):
-        """
-        Initialize a NLU Relations Node object.
-
-        :param NodeEntity entity: (optional)
-        :param **kwargs: (optional) Any additional properties.
-        """
-        self.entity = entity
-        for _key, _value in kwargs.items():
-            setattr(self, _key, _value)
-
-    @classmethod
-    def _from_dict(cls, _dict):
-        """Initialize an NLU Relations Node  object from a json dictionary."""
-        args = {}
-        xtra = _dict.copy()
-        if 'entity' in _dict:
-            args['entity'] = _dict['entity']
-            del xtra['entity']
-        args.update(xtra)
-        return cls(**args)
-
-    def _to_dict(self):
-        """Return a json dictionary representing this model."""
-        _dict = {}
-        if hasattr(self, 'entity') and self.entity is not None:
-            _dict['entity'] = self.entity
-        if hasattr(self, '_additionalProperties'):
-            for _key in self._additionalProperties:
-                _value = getattr(self, _key, None)
-                if _value is not None:
-                    _dict[_key] = _value
-        return _dict
-
-    def __setattr__(self, name, value):
-        properties = {'entity'}
-        if not hasattr(self, '_additionalProperties'):
-            super(Node, self).__setattr__('_additionalProperties', set())
-        if name not in properties:
-            self._additionalProperties.add(name)
-        super(Node, self).__setattr__(name, value)
-
-    def __str__(self):
-        """Return a `str` version of this NLU Relations Node object."""
-        return json.dumps(self._to_dict(), indent=2)
-
-class Relations(object):
-    """
-    NLU Relations.
-
-    :attr str source: (optional)
-    :attr float score: (optional)
-    :attr list[Node] nodes: (optional)
-    :attr str type: (optional)
-    """
-
-    def __init__(self, source=None, score=None, nodes=None, type=None, **kwargs):
-        """
-        Initialize an NLU Relations object.
-
-        :param str source: (optional)
-        :param float score: (optional)
-        :param list[Node] nodes: (optional)
+        Initialize a UnstructuredContainer object.
+        :param str text: (optional)
+        :param str id: (optional)
         :param str type: (optional)
-        :param **kwargs: (optional) Any additional properties.
+        :param ContainerAnnotation data: (optional)
+        :param dict metadata: (optional)
+        :param int uid: (optional)
         """
-        self.source = source
-        self.score = score
-        self.nodes = nodes
+        self.text = text
+        self.id = id
         self.type = type
-        for _key, _value in kwargs.items():
-            setattr(self, _key, _value)
+        self.data = data
+        self.metadata = metadata
+        self.uid = uid
 
     @classmethod
-    def _from_dict(cls, _dict):
-        """Initialize an NLU Relations object from a json dictionary."""
+    def from_dict(cls, _dict):
+        """Initialize a UnstructuredContainer object from a json dictionary."""
         args = {}
-        xtra = _dict.copy()
-        if 'source' in _dict:
-            args['source'] = _dict['source']
-            del xtra['source']
-        if 'score' in _dict:
-            args['score'] = _dict['score']
-            del xtra['score']
-        if 'nodes' in _dict:
-            args['nodes'] = [Node._from_dict(entry) for entry in _dict['nodes']]
-            del xtra['nodes']
+        if 'text' in _dict:
+            args['text'] = _dict['text']
+        if 'id' in _dict:
+            args['id'] = _dict['id']
         if 'type' in _dict:
             args['type'] = _dict['type']
-            del xtra['type']
-        args.update(xtra)
+        if 'data' in _dict:
+            args['data'] = ContainerAnnotation._from_dict(_dict['data'])
+        if 'metadata' in _dict:
+            args['metadata'] = _dict['metadata']
+        if 'uid' in _dict:
+            args['uid'] = _dict['uid']
         return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a UnstructuredContainer object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'text') and self.text is not None:
+            _dict['text'] = self.text
+        if hasattr(self, 'id') and self.id is not None:
+            _dict['id'] = self.id
+        if hasattr(self, 'type') and self.type is not None:
+            _dict['type'] = self.type
+        if hasattr(self, 'data') and self.data is not None:
+            _dict['data'] = self.data._to_dict()
+        if hasattr(self, 'metadata') and self.metadata is not None:
+            _dict['metadata'] = self.metadata
+        if hasattr(self, 'uid') and self.uid is not None:
+            _dict['uid'] = self.uid
+        return _dict
 
     def _to_dict(self):
         """Return a json dictionary representing this model."""
-        _dict = {}
-        if hasattr(self, 'source') and self.source is not None:
-            _dict['source'] = self.source
-        if hasattr(self, 'score') and self.score is not None:
-            _dict['score'] = self.score
-        if hasattr(self, 'nodes') and self.nodes is not None:
-            _dict['nodes'] = [entry._to_dict() for entry in self.nodes]
-        if hasattr(self, 'type') and self.type is not None:
-            _dict['type'] = self.type
-        if hasattr(self, '_additionalProperties'):
-            for _key in self._additionalProperties:
-                _value = getattr(self, _key, None)
-                if _value is not None:
-                    _dict[_key] = _value
-        return _dict
-
-    def __setattr__(self, name, value):
-        properties = {'source', 'score', 'nodes', 'type'}
-        if not hasattr(self, '_additionalProperties'):
-            super(Relations, self).__setattr__('_additionalProperties', set())
-        if name not in properties:
-            self._additionalProperties.add(name)
-        super(Relations, self).__setattr__(name, value)
+        return self.to_dict()
 
     def __str__(self):
-        """Return a `str` version of this Relations object."""
+        """Return a `str` version of this UnstructuredContainer object."""
         return json.dumps(self._to_dict(), indent=2)
