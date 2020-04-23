@@ -31,7 +31,7 @@ USERNAME = CONFIG.get('custom', 'icd_user')
 PASSWORD = CONFIG.get('custom', 'icd_pwd')
 
 IML_TEST = wh.InsightsForMedicalLiteratureServiceV1(
-    authenticator=IAMAuthenticator(apikey=APIKEY),
+    authenticator=IAMAuthenticator(apikey=APIKEY, url=IAMURL, disable_ssl_verification=DISABLE_SSL),
     version=VERSION
     )
 IML_TEST.set_service_url(BASE_URL)

@@ -30,7 +30,7 @@ CORPUS = CONFIG.get('custom', 'custom_corpus')
 MONITOR_KEY = CONFIG.get('custom', 'monitor_apikey')
 
 IML_TEST = wh.InsightsForMedicalLiteratureServiceV1(
-    authenticator=IAMAuthenticator(APIKEY),
+    authenticator=IAMAuthenticator(apikey=APIKEY, url=IAMURL, disable_ssl_verification=DISABLE_SSL),
     version=VERSION
     )
 IML_TEST.set_service_url(BASE_URL)

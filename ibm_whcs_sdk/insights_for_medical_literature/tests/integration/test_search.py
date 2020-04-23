@@ -46,7 +46,7 @@ SECOND_CUI = CONFIG.get('search', 'second_cui')
 SECOND_SEMTYPE = CONFIG.get('search', 'second_sem_type')
 
 IML_TEST = wh.InsightsForMedicalLiteratureServiceV1(
-    authenticator=IAMAuthenticator(apikey=APIKEY),
+    authenticator=IAMAuthenticator(apikey=APIKEY, url=IAMURL, disable_ssl_verification=DISABLE_SSL),
     version=VERSION
     )
 IML_TEST.set_service_url(BASE_URL)
