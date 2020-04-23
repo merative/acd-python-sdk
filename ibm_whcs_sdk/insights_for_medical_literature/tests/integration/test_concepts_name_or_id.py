@@ -32,7 +32,7 @@ CUI = CONFIG.get('search', 'search_cui')
 ONTOLOGY = CONFIG.get('search', 'umls')
 
 IML_TEST = wh.InsightsForMedicalLiteratureServiceV1(
-    authenticator=IAMAuthenticator(apikey=APIKEY),
+    authenticator=IAMAuthenticator(apikey=APIKEY, url=IAMURL, disable_ssl_verification=DISABLE_SSL),
     version=VERSION
     )
 IML_TEST.set_service_url(BASE_URL)

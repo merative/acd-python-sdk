@@ -31,7 +31,7 @@ CORPUS = CONFIG.get('settings', 'corpus')
 DISABLE_SSL = CONFIG.get('settings', 'disable_ssl')
 
 IML_TEST = wh.InsightsForMedicalLiteratureServiceV1(
-    authenticator=IAMAuthenticator(apikey=APIKEY),
+    authenticator=IAMAuthenticator(apikey=APIKEY, url=IAMURL, disable_ssl_verification=DISABLE_SSL),
     version=VERSION
     )
 IML_TEST.set_service_url(BASE_URL)

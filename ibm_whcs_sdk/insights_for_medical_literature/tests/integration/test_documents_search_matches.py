@@ -35,7 +35,7 @@ SEMTYPE = CONFIG.get('document', 'sem_type')
 ATTR = CONFIG.get('document', 'attribute_id')
 
 IML_TEST = wh.InsightsForMedicalLiteratureServiceV1(
-    authenticator=IAMAuthenticator(apikey=APIKEY),
+    authenticator=IAMAuthenticator(apikey=APIKEY, url=IAMURL, disable_ssl_verification=DISABLE_SSL),
     version=VERSION
     )
 IML_TEST.set_service_url(BASE_URL)
