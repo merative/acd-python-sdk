@@ -87,9 +87,9 @@ def test_update_flow():
     test_annoFlow = wh.AnnotatorFlow(flow = test_flow)
     test_annoFlows = []
     test_annoFlows.append(test_annoFlow)
-#    response = ACD.update_flows(id = "unittest_new_flow", new_name = 'test flow',
-#                                         new_description = 'functional test flow', new_annotator_flows = test_annoFlows)
-#    assert response is not None
+    response = ACD.update_flows(id = "unittest_new_flow", new_id = "unittest_new_flow", new_name = 'test flow',
+                                         new_description = 'functional test flow', new_annotator_flows = test_annoFlows)
+    assert response is not None
 
 def test_delete_flow():
     response = ACD.delete_flows(id = "unittest_new_flow")
