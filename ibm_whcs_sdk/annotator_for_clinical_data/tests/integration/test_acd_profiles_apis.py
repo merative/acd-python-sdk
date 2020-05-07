@@ -78,7 +78,7 @@ def test_update_profile():
     test_annoList = []
     test_anno = wh.Annotator(name = "concept_detection")
     test_annoList.append(test_anno)
-    response = ACD.update_profile(id = 'unittest_new_profile', nid = 'unittest_new_profile', ew_name = 'test profile',
+    response = ACD.update_profile(id = 'unittest_new_profile', new_id = 'unittest_new_profile', new_name = 'test profile',
                               new_description = 'updated functional test profile', new_annotators = test_annoList)
     assert response is not None
 
