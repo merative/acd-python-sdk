@@ -173,17 +173,17 @@ def test_search_keyword():
     operands = []
     copd_operand = {}
     copd_operand['ontology'] = 'text'
-    copd_operand['boolOperand'] = 'COPD'
+    copd_operand['operandName'] = 'COPD'
     copd_operand['text'] = 'COPD'
     operands.append(copd_operand)
     smoker_operand = {}
     smoker_operand['ontology'] = 'text'
-    smoker_operand['boolOperand'] = 'smoker'
+    smoker_operand['operandName'] = 'smoker'
     smoker_operand['text'] = 'smoker'
     operands.append(smoker_operand)
     smoking_operand = {}
     smoking_operand['ontology'] = 'text'
-    smoking_operand['boolOperand'] = 'smoking'
+    smoking_operand['operandName'] = 'smoking'
     smoking_operand['text'] = 'smoking'
     operands.append(smoking_operand)
     query = wh.Query(boolExpression=phrase, concepts=operands)
@@ -405,15 +405,6 @@ def test_search_returns_attributes():
         assert attribute.attribute_id is not None
         assert attribute.count > 0
 
-def test_returns_attribute_values():
-    values = wh.Values(ATTRIBUTE, scope='corpus')
-    returns = wh.ReturnsModel(None, None, None, None, values)
-    response = IML_TEST.search(CORPUS, returns, query=None)
-    search_model = wh.SearchModel._from_dict(response.get_result())
-    result_values = search_model.values
-    for value in result_values:
-        assert value.preferred_name is not None
-
 def test_returns_aggregations():
     agg_map = {}
     aggregations = wh.Aggregations(limit=VALID_LIMIT)
@@ -466,18 +457,6 @@ def test_search_returns_passages():
 #        for annotation_name in doc_annotations:
 #            annotation = doc_annotations[annotation_name]
 #            assert annotation.cui is not None
-
-def test_search_returns_ranges():
-    range_map = {}
-    ranges = wh.Ranges(ATTRIBUTE)
-    range_map[ATTRIBUTE] = ranges
-    returns = wh.ReturnsModel(ranges=ranges)
-    response = IML_TEST.search(CORPUS, returns, query=None)
-    search_model = wh.SearchModel._from_dict(response.get_result())
-    ranges_model = search_model.ranges
-    for key in ranges_model:
-        value_range = ranges_model[key]
-        assert value_range is None
 
 def test_search_no_corpus():
     try:

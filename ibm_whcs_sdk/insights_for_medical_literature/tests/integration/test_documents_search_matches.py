@@ -102,7 +102,6 @@ def test_get_earch_matches_cuis():
     for key in annotations_map:
         model = annotations_map[key]
         assert model.unique_id is not None
-        assert model.sticky_ids is not None
         assert model.ontology is not None
         assert model.section is not None
         assert model.preferred_name is not None
@@ -148,7 +147,6 @@ def test_get_search_matches_text():
     for key in annotations_map:
         model = annotations_map[key]
         assert model.unique_id is not None
-        assert model.sticky_ids is not None
         assert model.ontology is not None
         assert model.section is not None
         assert model.preferred_name is not None
