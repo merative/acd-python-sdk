@@ -14,24 +14,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.\
 
-import test_annotation as ta
-import test_attribute_values as tav
-import test_assistance_annotation as taa
-import test_cancer_diagnosis as tcd
-import test_concept_annotation as tca
-import test_concept_value_annotation as tcva
-import test_ejection_fraction as tef
-import test_lab_value as tlv
-import test_medication as tm
-import test_negated_span as tns
-import test_procedure as tp
-import test_smoking as ts
-import test_symptom_disease as tsd
-import test_section as tsec
-import test_nlu_entities as tne
-import test_relation as tr
+from ibm_whcs_sdk.annotator_for_clinical_data.tests.common import test_annotation as ta
+from ibm_whcs_sdk.annotator_for_clinical_data.tests.common import test_attribute_values as tav
+from ibm_whcs_sdk.annotator_for_clinical_data.tests.common import test_assistance_annotation as taa
+from ibm_whcs_sdk.annotator_for_clinical_data.tests.common import test_cancer_diagnosis as tcd
+from ibm_whcs_sdk.annotator_for_clinical_data.tests.common import test_concept_annotation as tca
+from ibm_whcs_sdk.annotator_for_clinical_data.tests.common import test_concept_value_annotation as tcva
+from ibm_whcs_sdk.annotator_for_clinical_data.tests.common import test_ejection_fraction as tef
+from ibm_whcs_sdk.annotator_for_clinical_data.tests.common import test_lab_value as tlv
+from ibm_whcs_sdk.annotator_for_clinical_data.tests.common import test_medication as tm
+from ibm_whcs_sdk.annotator_for_clinical_data.tests.common import test_negated_span as tns
+from ibm_whcs_sdk.annotator_for_clinical_data.tests.common import test_procedure as tp
+from ibm_whcs_sdk.annotator_for_clinical_data.tests.common import test_smoking as ts
+from ibm_whcs_sdk.annotator_for_clinical_data.tests.common import test_symptom_disease as tsd
+from ibm_whcs_sdk.annotator_for_clinical_data.tests.common import test_section as tsec
+from ibm_whcs_sdk.annotator_for_clinical_data.tests.common import test_nlu_entities as tne
+from ibm_whcs_sdk.annotator_for_clinical_data.tests.common import test_relation as tr
 #import tests.functional.test_spell_correction as tsc
-import test_spell_corrected_text as tsct
+from ibm_whcs_sdk.annotator_for_clinical_data.tests.common import test_spell_corrected_text as tsct
 
 class TestUnstructuredContainer(object):
 

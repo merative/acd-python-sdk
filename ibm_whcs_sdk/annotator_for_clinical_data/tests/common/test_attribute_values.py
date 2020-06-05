@@ -14,8 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import test_concept_annotation as tc
-import test_disambiguation as td
+from ibm_whcs_sdk.annotator_for_clinical_data.tests.common import test_concept_annotation as tc
+from ibm_whcs_sdk.annotator_for_clinical_data.tests.common import test_disambiguation as td
+from ibm_whcs_sdk.annotator_for_clinical_data.tests.common import test_insight_model as ti
 
 class TestAttributeValueAnnotation(object):
 
@@ -69,3 +70,5 @@ class TestAttributeValueAnnotation(object):
                     tc.TestConceptAnnotation.test_concept_annotation(annotation.concept)
                 if annotation.disambiguation_data is not None:
                     td.TestDisambiguation.test_disambiguation_data(annotation.disambiguation_data)
+                if annotation.insight_model_data is not None:
+                    ti.TestInsightModel.test_insight_model_data(annotation.insight_model_data)

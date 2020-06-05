@@ -2623,13 +2623,14 @@ class AttributeValueAnnotation(object):
     :attr str section_surface_form: (optional)
     :attr str cpt_code: (optional)
     :attr Disambiguation disambiguation_data: (optional)
+    :attr InsightModelData insight_model_data: (optional)
     """
 
     def __init__(self, id=None, type=None, uid=None, begin=None, end=None, covered_text=None, negated=None,
                  hypothetical=None, preferred_name=None, values=None, source=None, source_version=None,
                  concept=None, name=None, icd9_code=None, icd10_code=None, nci_code=None, snomed_concept_id=None,
                  mesh_id=None, rx_norm_id=None, loinc_id=None, vocabs=None, section_normalized_name=None,
-                 section_surface_form=None, cpt_code=None, disambiguation_data=None, **kwargs):
+                 section_surface_form=None, cpt_code=None, disambiguation_data=None, insight_model_data=None, **kwargs):
         """
         Initialize a AttributeValueAnnotation object.
         :param str id: (optional)
@@ -2658,6 +2659,7 @@ class AttributeValueAnnotation(object):
         :param str section_surface_form: (optional)
         :param str cpt_code: (optional)
         :param Disambiguation disambiguation_data: (optional)
+        "param InsightModelData insight_model_data: (optional)
         :param **kwargs: (optional) Any additional properties.
         """
         self.id = id
@@ -2686,6 +2688,7 @@ class AttributeValueAnnotation(object):
         self.section_surface_form = section_surface_form
         self.cpt_code = cpt_code
         self.disambiguation_data = disambiguation_data
+        self.insight_model_data = insight_model_data
         for _key, _value in kwargs.items():
             setattr(self, _key, _value)
 
@@ -2776,6 +2779,9 @@ class AttributeValueAnnotation(object):
         if 'disambiguationData' in _dict:
             args['disambiguation_data'] = Disambiguation._from_dict(_dict['disambiguationData'])
             del xtra['disambiguationData']
+        if 'insightModelData' in _dict:
+            args['insight_model_data'] = InsightModelData._from_dict(_dict['insightModelData'])
+            del xtra['insightModelData']
         args.update(xtra)
         return cls(**args)
 
@@ -2839,6 +2845,8 @@ class AttributeValueAnnotation(object):
             _dict['cptCode'] = self.cpt_code
         if hasattr(self, 'disambiguation_data') and self.disambiguation_data is not None:
             _dict['disambiguationData'] = self.disambiguation_data._to_dict()
+        if hasattr(self, 'insight_model_data') and self.insight_model_data is not None:
+            _dict['insightModelData'] = self.insight_model_data._to_dict()
         if hasattr(self, '_additionalProperties'):
             for _key in self._additionalProperties:
                 _value = getattr(self, _key, None)
@@ -2854,7 +2862,7 @@ class AttributeValueAnnotation(object):
         properties = ({'id', 'type', 'uid', 'begin', 'end', 'covered_text', 'negated', 'hypothetical', 'preferred_name',
                        'values', 'source', 'source_version', 'concept', 'name', 'icd9_code', 'icd10_code', 'nci_code',
                        'snomed_concept_id', 'mesh_id', 'rx_norm_id', 'loinc_id', 'vocabs', 'section_normalized_name',
-                       'section_surface_form', 'cpt_code', 'disambiguation_data'})
+                       'section_surface_form', 'cpt_code', 'disambiguation_data', 'insight_model_data'})
         if not hasattr(self, '_additionalProperties'):
             super(AttributeValueAnnotation, self).__setattr__('_additionalProperties', set())
         if name not in properties:
@@ -3062,13 +3070,14 @@ class Concept(object):
     :attr str section_normalized_name: (optional)
     :attr str section_surface_form: (optional)
     :attr str cpt_code: (optional)
+    :attr InsightModelData insight_model_data: (optional)
     """
 
     def __init__(self, id=None, type=None, uid=None, begin=None, end=None, covered_text=None, negated=None,
                  hypothetical=None, cui=None, preferred_name=None, semantic_type=None, source=None,
                  source_version=None, disambiguation_data=None, icd9_code=None, icd10_code=None, nci_code=None,
                  snomed_concept_id=None, mesh_id=None, rx_norm_id=None, loinc_id=None, vocabs=None,
-                 section_normalized_name=None, section_surface_form=None, cpt_code=None, **kwargs):
+                 section_normalized_name=None, section_surface_form=None, cpt_code=None, insight_model_data=None, **kwargs):
         """
         Initialize a Concept object.
         :param str id: (optional)
@@ -3096,6 +3105,7 @@ class Concept(object):
         :param str section_normalized_name: (optional)
         :param str section_surface_form: (optional)
         :param str cpt_code: (optional)
+        :param InsightModelData insight_model_data: (optional)
         :param **kwargs: (optional) Any additional properties.
         """
         self.id = id
@@ -3123,6 +3133,7 @@ class Concept(object):
         self.section_normalized_name = section_normalized_name
         self.section_surface_form = section_surface_form
         self.cpt_code = cpt_code
+        self.insight_model_data = insight_model_data
         for _key, _value in kwargs.items():
             setattr(self, _key, _value)
 
@@ -3210,6 +3221,9 @@ class Concept(object):
         if 'cptCode' in _dict:
             args['cpt_code'] = _dict['cptCode']
             del xtra['cptCode']
+        if 'insightModelData' in _dict:
+            args['insight_model_data'] = InsightModelData._from_dict(_dict['insightModelData'])
+            del xtra['insightModelData']
         args.update(xtra)
         return cls(**args)
 
@@ -3271,6 +3285,8 @@ class Concept(object):
             _dict['sectionSurfaceForm'] = self.section_surface_form
         if hasattr(self, 'cpt_code') and self.cpt_code is not None:
             _dict['cptCode'] = self.cpt_code
+        if hasattr(self, 'insight_model_data') and self.insight_model_data is not None:
+            _dict['insightModelData'] = self.insight_model_data._to_dict()
         if hasattr(self, '_additionalProperties'):
             for _key in self._additionalProperties:
                 _value = getattr(self, _key, None)
@@ -3286,7 +3302,8 @@ class Concept(object):
         properties = ({'id', 'type', 'uid', 'begin', 'end', 'covered_text', 'negated', 'hypothetical', 'cui',
                        'preferred_name', 'semantic_type', 'source', 'source_version', 'disambiguation_data',
                        'icd9_code', 'icd10_code', 'nci_code', 'snomed_concept_id', 'mesh_id', 'rx_norm_id',
-                       'loinc_id', 'vocabs', 'section_normalized_name', 'section_surface_form', 'cpt_code'})
+                       'loinc_id', 'vocabs', 'section_normalized_name', 'section_surface_form', 'cpt_code',
+                       'insight_model_data'})
         if not hasattr(self, '_additionalProperties'):
             super(Concept, self).__setattr__('_additionalProperties', set())
         if name not in properties:
@@ -4329,7 +4346,7 @@ class FlowEntry():
         :param Annotator annotator: (optional)
         """
         self.annotator = annotator
-    
+
     @classmethod
     def from_dict(cls, _dict: Dict) -> 'FlowEntry':
         """Initialize a FlowEntry object from a json dictionary."""
@@ -4368,6 +4385,702 @@ class FlowEntry():
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
 
+class InsightModelDataUsage(object):
+    """
+    InsightModelData Usage.
+    :attr float taken_score: (optional)
+    :attr float explicit_score: (optional)
+    :attr float implicit_score: (optional)
+    :attr float considering_score: (optional)
+    :attr float patient_reported_score: (optional)
+    :attr float discussed_score: (optional)
+    :attr float lab_measurement_score: (optional)
+    """
+
+    def __init__(self, taken_score=None, explicit_score=None, implicit_score=None, considering_score=None,
+                 patient_reported_score=None, discussed_score=None, lab_measurement_score=None, **kwargs):
+        """
+        Initialize an InsightModelData Usage object.
+        :param float taken_score: (optional)
+        :param float explicit_score: (optional)
+        :param float implicit_score: (optional)
+        :param float considering_score: (optional)
+        :param float patient_reported_score: (optional)
+        :param float discussed_score: (optional)
+        :param float lab_measurement_score: (optional)
+        :param **kwargs: (optional) Any additional properties.
+        """
+        self.taken_score = taken_score
+        self.explicit_score = explicit_score
+        self.implicit_score = implicit_score
+        self.considering_score = considering_score
+        self.patient_reported_score = patient_reported_score
+        self.discussed_score = discussed_score
+        self.lab_measurement_score = lab_measurement_score
+        for _key, _value in kwargs.items():
+            setattr(self, _key, _value)
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize an InsightModelData Usage object from a json dictionary."""
+        args = {}
+        xtra = _dict.copy()
+        if 'takenScore' in _dict:
+            args['taken_score'] = _dict['takenScore']
+            del xtra['takenScore']
+        if 'explicitScore' in _dict:
+            args['explicit_score'] = _dict['explicitScore']
+            del xtra['explicitScore']
+        if 'implicitScore' in _dict:
+            args['implicit_score'] = _dict['implicitScore']
+            del xtra['implicitScore']
+        if 'consideringScore' in _dict:
+            args['considering_score'] = _dict['consideringScore']
+            del xtra['consideringScore']
+        if 'patientReportedScore' in _dict:
+            args['patient_reported_score'] = _dict['patientReportedScore']
+            del xtra['patientReportedScore']
+        if 'discussedScore' in _dict:
+            args['discussed_score'] = _dict['discussedScore']
+            del xtra['discussedScore']
+        if 'labMeasurementScore' in _dict:
+            args['lab_measurement_score'] = _dict['labMeasurementScore']
+            del xtra['labMeasurementScore']
+        args.update(xtra)
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a InsightModelData Usage object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'taken_score') and self.taken_score is not None:
+            _dict['takenScore'] = self.taken_score
+        if hasattr(self, 'explicit_score') and self.explicit_score is not None:
+            _dict['explicitScore'] = self.explicit_score
+        if hasattr(self, 'implicit_score') and self.implicit_score is not None:
+            _dict['implicitScore'] = self.implicit_score
+        if hasattr(self, 'considering_score') and self.considering_score is not None:
+            _dict['consideringScore'] = self.considering_score
+        if hasattr(self, 'patient_reported_score') and self.patient_reported_score is not None:
+            _dict['patientReportedScore'] = self.patient_reported_score
+        if hasattr(self, 'discussed_score') and self.discussed_score is not None:
+            _dict['discussedScore'] = self.discussed_score
+        if hasattr(self, 'lab_measurement_score') and self.lab_measurement_score is not None:
+            _dict['labMeasurementScore'] = self.lab_measurement_score
+        if hasattr(self, '_additionalProperties'):
+            for _key in self._additionalProperties:
+                _value = getattr(self, _key, None)
+                if _value is not None:
+                    _dict[_key] = _value
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __setattr__(self, name, value):
+        properties = ({'taken_score', 'explicit_score', 'implicit_score', 'considering_score', 'patient_reported_score', 'discussed_score', 'lab_measurement_score'})
+        if not hasattr(self, '_additionalProperties'):
+            super(InsightModelDataUsage, self).__setattr__('_additionalProperties', set())
+        if name not in properties:
+            self._additionalProperties.add(name)
+        super(InsightModelDataUsage, self).__setattr__(name, value)
+
+    def __str__(self):
+        """Return a `str` version of this InsightModelData Usage object."""
+        return json.dumps(self._to_dict(), indent=2)
+
+class InsightModelDataTask(object):
+    """
+    InsightModelData Task.
+    :attr float therapeutic_score: (optional)
+    :attr float diagnostic_score: (optional)
+    :attr float lab_test_score: (optional)
+    :attr float surgical_task_score: (optional)
+    :attr float clinical_assessment_score: (optional)
+    """
+
+    def __init__(self, therapeutic_score=None, diagnostic_score=None, lab_test_score=None, surgical_task_score=None, clinical_assessment_score=None, **kwargs):
+        """
+        Initialize an InsightModelData Task object.
+        :param float therapeutic_score: (optional)
+        :param float diagnostic_score: (optional)
+        :param float lab_test_score: (optional)
+        :param float surgical_task_score: (optional)
+        :param float clinical_assessment_score: (optional)
+        :param **kwargs: (optional) Any additional properties.
+        """
+        self.therapeutic_score = therapeutic_score
+        self.diagnostic_score = diagnostic_score
+        self.lab_test_score = lab_test_score
+        self.surgical_task_score = surgical_task_score
+        self.clinical_assessment_score = clinical_assessment_score
+        for _key, _value in kwargs.items():
+            setattr(self, _key, _value)
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize an InsightModelData Task object from a json dictionary."""
+        args = {}
+        xtra = _dict.copy()
+        if 'therapeuticScore' in _dict:
+            args['therapeutic_score'] = _dict['therapeuticScore']
+            del xtra['therapeuticScore']
+        if 'diagnosticScore' in _dict:
+            args['diagnostic_score'] = _dict['diagnosticScore']
+            del xtra['diagnosticScore']
+        if 'labTestScore' in _dict:
+            args['lab_test_score'] = _dict['labTestScore']
+            del xtra['labTestScore']
+        if 'surgicalTaskScore' in _dict:
+            args['surgical_task_score'] = _dict['surgicalTaskScore']
+            del xtra['surgicalTaskScore']
+        if 'clinicalAssessmentScore' in _dict:
+            args['clinical_assessment_score'] = _dict['clinicalAssessmentScore']
+            del xtra['clinicalAssessmentScore']
+        args.update(xtra)
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a InsightModelData Task object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'therapeutic_score') and self.therapeutic_score is not None:
+            _dict['therapeuticScore'] = self.therapeutic_score
+        if hasattr(self, 'diagnostic_score') and self.diagnostic_score is not None:
+            _dict['diagnosticScore'] = self.diagnostic_score
+        if hasattr(self, 'lab_test_score') and self.lab_test_score is not None:
+            _dict['labTestScore'] = self.lab_test_score
+        if hasattr(self, 'surgical_task_score') and self.surgical_task_score is not None:
+            _dict['surgicalTaskScore'] = self.surgical_task_score
+        if hasattr(self, 'clinical_assessment_score') and self.clinical_assessment_score is not None:
+            _dict['clinicalAssessmentScore'] = self.clinical_assessment_score
+        if hasattr(self, '_additionalProperties'):
+            for _key in self._additionalProperties:
+                _value = getattr(self, _key, None)
+                if _value is not None:
+                    _dict[_key] = _value
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __setattr__(self, name, value):
+        properties = ({'therapeutic_score', 'diagnostic_score', 'lab_test_score', 'surgical_task_score', 'clinical_assessment_score'})
+        if not hasattr(self, '_additionalProperties'):
+            super(InsightModelDataTask, self).__setattr__('_additionalProperties', set())
+        if name not in properties:
+            self._additionalProperties.add(name)
+        super(InsightModelDataTask, self).__setattr__(name, value)
+
+    def __str__(self):
+        """Return a `str` version of this InsightModelData Task object."""
+        return json.dumps(self._to_dict(), indent=2)
+
+class InsightModelDataType(object):
+    """
+    InsightModelData Type.
+    :attr float device_score: (optional)
+    :attr float material_score: (optional)
+    :attr float medication_score: (optional)
+    :attr float procedure_score: (optional)
+    :attr float condition_management_score: (optional)
+    """
+
+    def __init__(self, device_score=None, material_score=None, medication_score=None, procedure_score=None, condition_management_score=None, **kwargs):
+        """
+        Initialize an InsightModelData Type object.
+        :param float device_score: (optional)
+        :param float material_score: (optional)
+        :param float medication_score: (optional)
+        :param float procedure_score: (optional)
+        :param float condition_management_score: (optional)
+        :param **kwargs: (optional) Any additional properties.
+        """
+        self.device_score = device_score
+        self.material_score = material_score
+        self.medication_score = medication_score
+        self.procedure_score = procedure_score
+        self.condition_management_score = condition_management_score
+        for _key, _value in kwargs.items():
+            setattr(self, _key, _value)
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize an InsightModelData Type object from a json dictionary."""
+        args = {}
+        xtra = _dict.copy()
+        if 'deviceScore' in _dict:
+            args['device_score'] = _dict['deviceScore']
+            del xtra['deviceScore']
+        if 'materialScore' in _dict:
+            args['material_score'] = _dict['materialScore']
+            del xtra['materialScore']
+        if 'medicationScore' in _dict:
+            args['medication_score'] = _dict['medicationScore']
+            del xtra['medicationScore']
+        if 'procedureScore' in _dict:
+            args['procedure_score'] = _dict['procedureScore']
+            del xtra['procedureScore']
+        if 'conditionManagementScore' in _dict:
+            args['condition_management_score'] = _dict['conditionManagementScore']
+            del xtra['conditionManagementScore']
+        args.update(xtra)
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a InsightModelData Type object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'device_score') and self.device_score is not None:
+            _dict['deviceScore'] = self.device_score
+        if hasattr(self, 'material_score') and self.material_score is not None:
+            _dict['materialScore'] = self.material_score
+        if hasattr(self, 'medication_score') and self.medication_score is not None:
+            _dict['medication_score'] = self.medication_score
+        if hasattr(self, 'procedure_score') and self.procedure_score is not None:
+            _dict['procedureScore'] = self.procedure_score
+        if hasattr(self, 'condition_management_score') and self.condition_management_score is not None:
+            _dict['conditionManagementScore'] = self.condition_management_score
+        if hasattr(self, '_additionalProperties'):
+            for _key in self._additionalProperties:
+                _value = getattr(self, _key, None)
+                if _value is not None:
+                    _dict[_key] = _value
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __setattr__(self, name, value):
+        properties = ({'device_score', 'material_score', 'medication_score', 'procedure_score', 'condition_management_score'})
+        if not hasattr(self, '_additionalProperties'):
+            super(InsightModelDataType, self).__setattr__('_additionalProperties', set())
+        if name not in properties:
+            self._additionalProperties.add(name)
+        super(InsightModelDataType, self).__setattr__(name, value)
+
+    def __str__(self):
+        """Return a `str` version of this InsightModelData Type object."""
+        return json.dumps(self._to_dict(), indent=2)
+
+class InsightModelDataEvent(object):
+    """
+    InsightModelData Event.
+    :attr float score: (optional)
+    :attr InsightModelDataUsage usage: (optional)
+    """
+
+    def __init__(self, score=None, usage=None, *kwargs):
+        """
+        Initialize an InsightModelData Event object.
+        :param float score: (optional)
+        :param InsightModelDataUsage usage: (optional)
+        :param **kwargs: (optional) Any additional properties.
+        """
+        self.score = score
+        self.usage = usage
+        for _key, _value in kwargs.items():
+            setattr(self, _key, _value)
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize an InsightModelData Event object from a json dictionary."""
+        args = {}
+        xtra = _dict.copy()
+        if 'score' in _dict:
+            args['score'] = _dict['score']
+            del xtra['score']
+        if 'usage' in _dict:
+            args['usage'] = InsightModelDataUsage._from_dict(_dict['usage'])
+            del xtra['usage']
+        args.update(xtra)
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a InsightModelData Event object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'score') and self.score is not None:
+            _dict['score'] = self.score
+        if hasattr(self, 'usage') and self.usage is not None:
+            _dict['usage'] = self.usage._to_dict()
+        if hasattr(self, '_additionalProperties'):
+            for _key in self._additionalProperties:
+                _value = getattr(self, _key, None)
+                if _value is not None:
+                    _dict[_key] = _value
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __setattr__(self, name, value):
+        properties = ({'score', 'usage'})
+        if not hasattr(self, '_additionalProperties'):
+            super(InsightModelDataEvent, self).__setattr__('_additionalProperties', set())
+        if name not in properties:
+            self._additionalProperties.add(name)
+        super(InsightModelDataEvent, self).__setattr__(name, value)
+
+    def __str__(self):
+        """Return a `str` version of this InsightModelData Event object."""
+        return json.dumps(self._to_dict(), indent=2)
+
+class InsightModelDataMedication(object):
+    """
+    InsightModelData Medication.
+    :attr InsightModelDataUsage usage: (optional)
+    :attr InsightModelDataEvent started: (optional)
+    :attr InsightModelDataEvent stopped: (optional)
+    :attr InsightModelDataEvent dose_changed: (optional)
+    :attr InsightModelDataEvent adverse: (optional)
+    """
+
+    def __init__(self, usage=None, started=None, stopped=None, dose_changed=None, adverse=None, **kwargs):
+        """
+        Initialize an InsightModelData Medication object.
+        :param InsightModelDataUsage usage: (optional)
+        :param InsightModelDataEvent started: (optional)
+        :param InsightModelDataEvent stopped: (optional)
+        :param InsightModelDataEvent dose_changed: (optional)
+        :param InsightModelDataEvent adverse: (optional)
+        :param **kwargs: (optional) Any additional properties.
+        """
+        self.usage = usage
+        self.started = started
+        self.stopped = stopped
+        self.dose_changed = dose_changed
+        self.adverse = adverse
+        for _key, _value in kwargs.items():
+            setattr(self, _key, _value)
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize an InsightModelData Medication object from a json dictionary."""
+        args = {}
+        xtra = _dict.copy()
+        if 'usage' in _dict:
+            args['usage'] = InsightModelDataUsage._from_dict(_dict['usage'])
+            del xtra['usage']
+        if 'started' in _dict:
+            args['started'] = InsightModelDataEvent._from_dict(_dict['started'])
+            del xtra['started']
+        if 'stopped' in _dict:
+            args['stopped'] = InsightModelDataEvent._from_dict(_dict['stopped'])
+            del xtra['stopped']
+        if 'doseChanged' in _dict:
+            args['dose_changed'] = InsightModelDataEvent._from_dict(_dict['doseChanged'])
+            del xtra['doseChanged']
+        if 'adverse' in _dict:
+            args['adverse'] = InsightModelDataEvent._from_dict(_dict['adverse'])
+            del xtra['adverse']
+        args.update(xtra)
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a InsightModelData Medication object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'usage') and self.usage is not None:
+            _dict['usage'] = self.usage._to_dict()
+        if hasattr(self, 'started') and self.started is not None:
+            _dict['started'] = self.started._to_dict()
+        if hasattr(self, 'stopped') and self.stopped is not None:
+            _dict['stopped'] = self.stopped._to_dict()
+        if hasattr(self, 'dose_changed') and self.dose_changed is not None:
+            _dict['doseChanged'] = self.dose_changed._to_dict()
+        if hasattr(self, 'adverse') and self.adverse is not None:
+            _dict['adverse'] = self.adverse._to_dict()
+        if hasattr(self, '_additionalProperties'):
+            for _key in self._additionalProperties:
+                _value = getattr(self, _key, None)
+                if _value is not None:
+                    _dict[_key] = _value
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __setattr__(self, name, value):
+            properties = ({'usage', 'started', 'stopped', 'dose_changed', 'adverse'})
+            if not hasattr(self, '_additionalProperties'):
+                super(InsightModelDataMedication, self).__setattr__('_additionalProperties', set())
+            if name not in properties:
+                self._additionalProperties.add(name)
+            super(InsightModelDataMedication, self).__setattr__(name, value)
+
+    def __str__(self):
+        """Return a `str` version of this InsightModelData Medication object."""
+        return json.dumps(self._to_dict(), indent=2)
+
+class InsightModelDataProcedure(object):
+    """
+    InsightModelData Procedure.
+    :attr InsightModelDataUsage usage: (optional)
+    :attr InsightModelDataTask task: (optional)
+    :attr InsightModelDataType type: (optional)
+    """
+
+    def __init__(self, usage=None, task=None, type=None, **kwargs):
+        """
+        Initialize an InsightModelData Procedure object.
+        :param InsightModelDataUsage usage: (optional)
+        :param InsightModelDataTask task: (optional)
+        :param InsightModelData type: (optional)
+        :param **kwargs: (optional) Any additional properties.
+        """
+        self.usage = usage
+        self.task = task
+        self.type = type
+        for _key, _value in kwargs.items():
+            setattr(self, _key, _value)
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize an InsightModelData Procedure object from a json dictionary."""
+        args = {}
+        xtra = _dict.copy()
+        if 'usage' in _dict:
+            args['usage'] = InsightModelDataUsage._from_dict(_dict['usage'])
+            del xtra['usage']
+        if 'task' in _dict:
+            args['task'] = InsightModelDataTask._from_dict(_dict['task'])
+            del xtra['task']
+        if 'type' in _dict:
+            args['type'] = InsightModelDataType._from_dict(_dict['type'])
+            del xtra['type']
+        args.update(xtra)
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a InsightModelData Procedure object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'usage') and self.usage is not None:
+            _dict['usage'] = self.usage._to_dict()
+        if hasattr(self, 'task') and self.task is not None:
+            _dict['task'] = self.task._to_dict()
+        if hasattr(self, 'type') and self.type is not None:
+            _dict['type'] = self.type._to_dict()
+        if hasattr(self, '_additionalProperties'):
+            for _key in self._additionalProperties:
+                _value = getattr(self, _key, None)
+                if _value is not None:
+                    _dict[_key] = _value
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __setattr__(self, name, value):
+            properties = ({'usage', 'task', 'type'})
+            if not hasattr(self, '_additionalProperties'):
+                super(InsightModelDataProcedure, self).__setattr__('_additionalProperties', set())
+            if name not in properties:
+                self._additionalProperties.add(name)
+            super(InsightModelDataProcedure, self).__setattr__(name, value)
+
+    def __str__(self):
+        """Return a `str` version of this InsightModelData Procedure object."""
+        return json.dumps(self._to_dict(), indent=2)
+
+class InsightModelDataDiagnosis(object):
+    """
+    InsightModelData Diagnosis.
+    :attr InsightModelDataUsage usage: (optional)
+    :attr float suspected_score: (optional)
+    :attr float symptom_score: (optional)
+    :attr float trauma_score: (optional)
+    :attr float family_history_score: (optional)
+    """
+
+    def __init__(self, usage=None, suspected_score=None, symptom_score=None, trauma_score=None, family_history_score=None, **kwargs):
+        """
+        Initialize an InsightModelData Diagnosis object.
+        :param InsightModelDataUsage usage: (optional)
+        :param float suspected_score: (optional)
+        :param float symptom_score: (optional)
+        :param float trauma_score: (optional)
+        :param float family_history_score: (optional)
+        :param **kwargs: (optional) Any additional properties.
+        """
+        self.usage = usage
+        self.suspected_score = suspected_score
+        self.symptom_score = symptom_score
+        self.trauma_score = trauma_score
+        self.family_history_score = family_history_score
+        for _key, _value in kwargs.items():
+            setattr(self, _key, _value)
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize an InsightModelData Diagnosis object from a json dictionary."""
+        args = {}
+        xtra = _dict.copy()
+        if 'usage' in _dict:
+            args['usage'] = InsightModelDataUsage._from_dict(_dict['usage'])
+            del xtra['usage']
+        if 'suspectedScore' in _dict:
+            args['suspected_score'] = _dict['suspectedScore']
+            del xtra['suspectedScore']
+        if 'symptomScore' in _dict:
+            args['symptom_score'] = _dict['symptomScore']
+            del xtra['symptomScore']
+        if 'traumaScore' in _dict:
+            args['trauma_score'] = _dict['traumaScore']
+            del xtra['traumaScore']
+        if 'familyHistoryScore' in _dict:
+            args['family_history_score'] = _dict['familyHistoryScore']
+            del xtra['familyHistoryScore']
+        args.update(xtra)
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a InsightModelData Diagnosis object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'usage') and self.usage is not None:
+            _dict['usage'] = self.usage._to_dict()
+        if hasattr(self, 'suspected_score') and self.suspected_score is not None:
+            _dict['suspectedScore'] = self.suspected_score
+        if hasattr(self, 'symptom_score') and self.symptom_score is not None:
+            _dict['symptomScore'] = self.symptom_score
+        if hasattr(self, 'trauma_score') and self.trauma_score is not None:
+            _dict['traumaScore'] = self.trauma_score
+        if hasattr(self, 'family_history_score') and self.family_history_score is not None:
+            _dict['familyHistoryScore'] = self.family_history_score
+        if hasattr(self, '_additionalProperties'):
+            for _key in self._additionalProperties:
+                _value = getattr(self, _key, None)
+                if _value is not None:
+                    _dict[_key] = _value
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __setattr__(self, name, value):
+            properties = ({'usage', 'suspected_score', 'symptom_score', 'trauma_score', 'family_history_score'})
+            if not hasattr(self, '_additionalProperties'):
+                super(InsightModelDataDiagnosis, self).__setattr__('_additionalProperties', set())
+            if name not in properties:
+                self._additionalProperties.add(name)
+            super(InsightModelDataDiagnosis, self).__setattr__(name, value)
+
+    def __str__(self):
+        """Return a `str` version of this InsightModelData Diagnosis object."""
+        return json.dumps(self._to_dict(), indent=2)
+
+class InsightModelData(object):
+    """
+    InsightModelData.
+    :attr InsightModelDataMedication medication: (optional)
+    :attr InsightModelDataProcedure procedure: (optional)
+    :attr InsightModelDataDiagnosis diagnosis: (optional)
+    """
+
+    def __init__(self, medication=None, procedure=None, diagnosis=None, **kwargs):
+        """
+        Initialize an InsightModelData object.
+        :param InsightModelDataMedication medication: (optional)
+        :param InsightModelDataProcedure procedure: (optional)
+        :param InsightModelDataDiagnosis diagnosis: (optional)
+        :param **kwargs: (optional) Any additional properties.
+        """
+        self.medication = medication
+        self.procedure = procedure
+        self.diagnosis = diagnosis
+        for _key, _value in kwargs.items():
+            setattr(self, _key, _value)
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize an InsightModelData object from a json dictionary."""
+        args = {}
+        xtra = _dict.copy()
+        if 'medication' in _dict:
+            args['medication'] = InsightModelDataMedication._from_dict(_dict['medication'])
+            del xtra['medication']
+        if 'procedure' in _dict:
+            args['procedure'] = InsightModelDataProcedure._from_dict(_dict['procedure'])
+            del xtra['procedure']
+        if 'diagnosis' in _dict:
+            args['diagnosis'] = InsightModelDataDiagnosis._from_dict(_dict['diagnosis'])
+            del xtra['diagnosis']
+        args.update(xtra)
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize an InsightModelData object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'medication') and self.medication is not None:
+            _dict['medication'] = self.medication._to_dict()
+        if hasattr(self, 'procedure') and self.procedure is not None:
+            _dict['procedure'] = self.procedure._to_dict()
+        if hasattr(self, 'diagnosis') and self.diagnosis is not None:
+            _dict['diagnosis'] = self.diagnosis._to_dict()
+        if hasattr(self, '_additionalProperties'):
+            for _key in self._additionalProperties:
+                _value = getattr(self, _key, None)
+                if _value is not None:
+                    _dict[_key] = _value
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __setattr__(self, name, value):
+        properties = ({'medication', 'procedure', 'diagnosis'})
+        if not hasattr(self, '_additionalProperties'):
+            super(InsightModelData, self).__setattr__('_additionalProperties', set())
+        if name not in properties:
+            self._additionalProperties.add(name)
+        super(InsightModelData, self).__setattr__(name, value)
+
+    def __str__(self):
+        """Return a `str` version of this InsightModelData object."""
+        return json.dumps(self._to_dict(), indent=2)
 
 class LabValueAnnotation(object):
     """
@@ -4624,11 +5337,12 @@ class MedicationAnnotation(object):
     :attr str cui: (optional)
     :attr list[object] drug: (optional)
     :attr str section_surface_form: (optional)
+    :attr InsightModelData insight_model_data: (optional)
     """
 
     def __init__(self, id=None, type=None, uid=None, begin=None, end=None, covered_text=None, negated=None,
                  hypothetical=None, section_normalized_name=None, cui=None, drug=None, section_surface_form=None,
-                 **kwargs):
+                 insight_model_data=None, **kwargs):
         """
         Initialize a MedicationAnnotation object.
         :param str id: (optional)
@@ -4643,6 +5357,7 @@ class MedicationAnnotation(object):
         :param str cui: (optional)
         :param list[object] drug: (optional)
         :param str section_surface_form: (optional)
+        :param InsightModelData insight_model_data: (optional)
         :param **kwargs: (optional) Any additional properties.
         """
         self.id = id
@@ -4657,6 +5372,7 @@ class MedicationAnnotation(object):
         self.cui = cui
         self.drug = drug
         self.section_surface_form = section_surface_form
+        self.insight_model_data = insight_model_data
         for _key, _value in kwargs.items():
             setattr(self, _key, _value)
 
@@ -4701,6 +5417,9 @@ class MedicationAnnotation(object):
         if 'sectionSurfaceForm' in _dict:
             args['section_surface_form'] = _dict['sectionSurfaceForm']
             del xtra['sectionSurfaceForm']
+        if 'insightModelData' in _dict:
+            args['insight_model_data'] = InsightModelData._from_dict(_dict['insightModelData'])
+            del xtra['insightModelData']
         args.update(xtra)
         return cls(**args)
 
@@ -4736,6 +5455,8 @@ class MedicationAnnotation(object):
             _dict['drug'] = self.drug
         if hasattr(self, 'section_surface_form') and self.section_surface_form is not None:
             _dict['sectionSurfaceForm'] = self.section_surface_form
+        if hasattr(self, 'insight_model_data') and self.insight_model_data is not None:
+            _dict['insightModelData'] = self.insight_model_data._to_dict()
         if hasattr(self, '_additionalProperties'):
             for _key in self._additionalProperties:
                 _value = getattr(self, _key, None)
@@ -4749,7 +5470,7 @@ class MedicationAnnotation(object):
 
     def __setattr__(self, name, value):
         properties = ({'id', 'type', 'uid', 'begin', 'end', 'covered_text', 'negated', 'hypothetical',
-                       'section_normalized_name', 'cui', 'drug', 'section_surface_form'})
+                       'section_normalized_name', 'cui', 'drug', 'section_surface_form', 'insight_model_data'})
         if not hasattr(self, '_additionalProperties'):
             super(MedicationAnnotation, self).__setattr__('_additionalProperties', set())
         if name not in properties:
@@ -5136,12 +5857,13 @@ class Procedure(object):
     :attr str procedure_normalized_name: (optional)
     :attr str section_surface_form: (optional)
     :attr Disambiguation disambiguation_data: (optional)
+    :attr InsightModelData insight_model_data: (optional)
     """
 
     def __init__(self, id=None, type=None, uid=None, begin=None, end=None, covered_text=None, negated=None,
                  hypothetical=None, cui=None, section_normalized_name=None, date_in_milliseconds=None,
                  snomed_concept_id=None, procedure_surface_form=None, procedure_normalized_name=None,
-                 section_surface_form=None, disambiguation_data=None, **kwargs):
+                 section_surface_form=None, disambiguation_data=None, insight_model_data=None, **kwargs):
         """
         Initialize a Procedure object.
         :param str id: (optional)
@@ -5160,6 +5882,7 @@ class Procedure(object):
         :param str procedure_normalized_name: (optional)
         :param str section_surface_form: (optional)
         :param Disambiguation disambiguation_data: (optional)
+        :param InsightModelData insight_model_data: (optional)
         :param **kwargs: (optional) Any additional properties.
         """
         self.id = id
@@ -5178,6 +5901,7 @@ class Procedure(object):
         self.procedure_normalized_name = procedure_normalized_name
         self.section_surface_form = section_surface_form
         self.disambiguation_data = disambiguation_data
+        self.insight_model_data = insight_model_data
         for _key, _value in kwargs.items():
             setattr(self, _key, _value)
 
@@ -5234,6 +5958,9 @@ class Procedure(object):
         if 'disambiguationData' in _dict:
             args['disambiguation_data'] = Disambiguation._from_dict(_dict['disambiguationData'])
             del xtra['disambiguationData']
+        if 'insightModelData' in _dict:
+            args['insight_model_data'] = InsightModelData._from_dict(_dict['insightModelData'])
+            del xtra['insightModelData']
         args.update(xtra)
         return cls(**args)
 
@@ -5277,6 +6004,8 @@ class Procedure(object):
             _dict['sectionSurfaceForm'] = self.section_surface_form
         if hasattr(self, 'disambiguation_data') and self.disambiguation_data is not None:
             _dict['disambiguationData'] = self.disambiguation_data._to_dict()
+        if hasattr(self, 'insight_model_data') and self.insight_model_data is not None:
+            _dict['insightModelData'] = self.insight_model_data._to_dict()
         if hasattr(self, '_additionalProperties'):
             for _key in self._additionalProperties:
                 _value = getattr(self, _key, None)
@@ -5291,7 +6020,7 @@ class Procedure(object):
     def __setattr__(self, name, value):
         properties = ({'id', 'type', 'uid', 'begin', 'end', 'covered_text', 'negated', 'hypothetical', 'cui',
                        'section_normalized_name', 'date_in_milliseconds', 'snomed_concept_id', 'procedure_surface_form',
-                       'procedure_normalized_name', 'section_surface_form', 'disambiguation_data'})
+                       'procedure_normalized_name', 'section_surface_form', 'disambiguation_data', 'insight_model_data'})
         if not hasattr(self, '_additionalProperties'):
             super(Procedure, self).__setattr__('_additionalProperties', set())
         if name not in properties:
@@ -5742,7 +6471,7 @@ class ServiceError():
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
 
-    
+
     class LevelEnum(Enum):
         """
         error severity level.
@@ -5812,7 +6541,7 @@ class ServiceStatus():
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
 
-    
+
     class ServiceStateEnum(Enum):
         """
         scurrent service state.
@@ -6257,13 +6986,14 @@ class SymptomDisease(object):
     :attr str icd9_code: (optional)
     :attr str hcc_code: (optional)
     :attr Disambiguation disambiguation_data: (optional)
+    :attr InsightModelData insight_model_data: (optional)
     """
 
     def __init__(self, id=None, type=None, uid=None, begin=None, end=None, covered_text=None, negated=None,
                  hypothetical=None, cui=None, icd10_code=None, section_normalized_name=None, modality=None,
                  symptom_disease_surface_form=None, date_in_milliseconds=None, snomed_concept_id=None, ccs_code=None,
                  symptom_disease_normalized_name=None, section_surface_form=None, icd9_code=None, hcc_code=None,
-                 disambiguation_data=None, **kwargs):
+                 disambiguation_data=None, insight_model_data=None, **kwargs):
         """
         Initialize a SymptomDisease object.
         :param str id: (optional)
@@ -6287,6 +7017,7 @@ class SymptomDisease(object):
         :param str icd9_code: (optional)
         :param str hcc_code: (optional)
         :param Disambiguation disambiguation_data: (optional)
+        :param InsightModelData insight_model_data: (optional)
         :param **kwargs: (optional) Any additional properties.
         """
         self.id = id
@@ -6310,6 +7041,7 @@ class SymptomDisease(object):
         self.icd9_code = icd9_code
         self.hcc_code = hcc_code
         self.disambiguation_data = disambiguation_data
+        self.insight_model_data = insight_model_data
         for _key, _value in kwargs.items():
             setattr(self, _key, _value)
 
@@ -6381,6 +7113,9 @@ class SymptomDisease(object):
         if 'disambiguationData' in _dict:
             args['disambiguation_data'] = Disambiguation._from_dict(_dict['disambiguationData'])
             del xtra['disambiguationData']
+        if 'insightModelData' in _dict:
+            args['insight_model_data'] = InsightModelData._from_dict(_dict['insightModelData'])
+            del xtra['insightModelData']
         args.update(xtra)
         return cls(**args)
 
@@ -6434,6 +7169,8 @@ class SymptomDisease(object):
             _dict['hccCode'] = self.hcc_code
         if hasattr(self, 'disambiguation_data') and self.disambiguation_data is not None:
             _dict['disambiguationData'] = self.disambiguation_data._to_dict()
+        if hasattr(self, 'insight_model_data') and self.insight_model_data is not None:
+            _dict['insightModelData'] = self.insight_model_data._to_dict()
         if hasattr(self, '_additionalProperties'):
             for _key in self._additionalProperties:
                 _value = getattr(self, _key, None)
@@ -6449,7 +7186,7 @@ class SymptomDisease(object):
         properties = ({'id', 'type', 'uid', 'begin', 'end', 'covered_text', 'negated', 'hypothetical', 'cui',
                        'icd10_code', 'section_normalized_name', 'modality', 'symptom_disease_surface_form',
                        'date_in_milliseconds', 'snomed_concept_id', 'ccs_code', 'symptom_disease_normalized_name',
-                       'section_surface_form', 'icd9_code', 'hcc_code', 'disambiguation_data'})
+                       'section_surface_form', 'icd9_code', 'hcc_code', 'disambiguation_data', 'insight_model_data'})
         if not hasattr(self, '_additionalProperties'):
             super(SymptomDisease, self).__setattr__('_additionalProperties', set())
         if name not in properties:

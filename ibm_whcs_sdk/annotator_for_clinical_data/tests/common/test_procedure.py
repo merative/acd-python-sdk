@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from ibm_whcs_sdk.annotator_for_clinical_data.tests.common import test_insight_model as ti
+
 class TestProcedureAnnotation(object):
 
     @staticmethod
@@ -45,3 +47,5 @@ class TestProcedureAnnotation(object):
                     assert len(annotation.section_surface_form) > 0
                 if annotation.disambiguation_data is not None:
                     assert annotation.disambiguation_data.validity is not None
+                if annotation.insight_model_data is not None:
+                    ti.TestInsightModel.test_insight_model_data(annotation.insight_model_data)

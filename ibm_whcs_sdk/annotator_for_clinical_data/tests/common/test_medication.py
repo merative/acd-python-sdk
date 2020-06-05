@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from ibm_whcs_sdk.annotator_for_clinical_data.tests.common import test_insight_model as ti
+
 class TestMedicationAnnotation(object):
 
     @staticmethod
@@ -38,3 +40,5 @@ class TestMedicationAnnotation(object):
                 if annotation.drug is not None:
                     for drug_obj in annotation.drug:
                         assert drug_obj is not None
+                if annotation.insight_model_data is not None:
+                    ti.TestInsightModel.test_insight_model_data(annotation.insight_model_data)
