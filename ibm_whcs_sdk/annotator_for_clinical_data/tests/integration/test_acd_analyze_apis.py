@@ -16,7 +16,7 @@
 import configparser
 from ibm_cloud_sdk_core.authenticators.iam_authenticator import IAMAuthenticator
 import ibm_whcs_sdk.annotator_for_clinical_data as wh
-import test_unstructured_container as tuc
+from ibm_whcs_sdk.annotator_for_clinical_data.tests.common import test_unstructured_container as tuc
 
 CONFIG = configparser.RawConfigParser()
 CONFIG.read('./ibm_whcs_sdk/annotator_for_clinical_data/tests/config.ini')

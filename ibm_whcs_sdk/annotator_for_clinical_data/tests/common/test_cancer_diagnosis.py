@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import test_disambiguation as td
+from ibm_whcs_sdk.annotator_for_clinical_data.tests.common import test_disambiguation as td
 
 class TestCancerDiagnosisAnnotation(object):
 
