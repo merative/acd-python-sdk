@@ -4851,7 +4851,7 @@ class InsightModelDataProcedure(object):
         Initialize an InsightModelData Procedure object.
         :param InsightModelDataUsage usage: (optional)
         :param InsightModelDataTask task: (optional)
-        :param InsightModelData type: (optional)
+        :param InsightModelDataType type: (optional)
         :param **kwargs: (optional) Any additional properties.
         """
         self.usage = usage
