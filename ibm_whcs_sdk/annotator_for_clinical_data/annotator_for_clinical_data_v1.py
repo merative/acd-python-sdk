@@ -2624,13 +2624,18 @@ class AttributeValueAnnotation(object):
     :attr str cpt_code: (optional)
     :attr Disambiguation disambiguation_data: (optional)
     :attr InsightModelData insight_model_data: (optional)
+    :attr str ccs_code: (optional)
+    :attr str hcc_code: (optional)
+    :attr str rule_id: (optional)
+    :attr list[Concept] derived_from: (optional)
     """
 
     def __init__(self, id=None, type=None, uid=None, begin=None, end=None, covered_text=None, negated=None,
                  hypothetical=None, preferred_name=None, values=None, source=None, source_version=None,
                  concept=None, name=None, icd9_code=None, icd10_code=None, nci_code=None, snomed_concept_id=None,
                  mesh_id=None, rx_norm_id=None, loinc_id=None, vocabs=None, section_normalized_name=None,
-                 section_surface_form=None, cpt_code=None, disambiguation_data=None, insight_model_data=None, **kwargs):
+                 section_surface_form=None, cpt_code=None, disambiguation_data=None, insight_model_data=None,
+                 ccs_code=None, hcc_code=None, rule_id=None, derived_from=None, **kwargs):
         """
         Initialize a AttributeValueAnnotation object.
         :param str id: (optional)
@@ -2659,7 +2664,11 @@ class AttributeValueAnnotation(object):
         :param str section_surface_form: (optional)
         :param str cpt_code: (optional)
         :param Disambiguation disambiguation_data: (optional)
-        "param InsightModelData insight_model_data: (optional)
+        :param InsightModelData insight_model_data: (optional)
+        :param str ccs_code: (optional)
+        :param str hcc_code: (optional)
+        :param str rule_id: (optional)
+        :param list[Concept] derived_from: (optional)
         :param **kwargs: (optional) Any additional properties.
         """
         self.id = id
@@ -2689,6 +2698,10 @@ class AttributeValueAnnotation(object):
         self.cpt_code = cpt_code
         self.disambiguation_data = disambiguation_data
         self.insight_model_data = insight_model_data
+        self.ccs_code = ccs_code
+        self.hcc_code = hcc_code
+        self.rule_id = rule_id
+        self.derived_from = derived_from
         for _key, _value in kwargs.items():
             setattr(self, _key, _value)
 
@@ -2782,6 +2795,18 @@ class AttributeValueAnnotation(object):
         if 'insightModelData' in _dict:
             args['insight_model_data'] = InsightModelData._from_dict(_dict['insightModelData'])
             del xtra['insightModelData']
+        if 'ccsCode' in _dict:
+            args['ccs_code'] = _dict['ccsCode']
+            del xtra['ccsCode']
+        if 'hccCode' in _dict:
+            args['hcc_code'] = _dict['hccCode']
+            del xtra['hccCode']
+        if 'ruleId' in _dict:
+            args['rule_id'] = _dict['ruleId']
+            del xtra['ruleId']
+        if 'derivedFrom' in _dict:
+            args['derived_from'] = [Concept._from_dict(entry) for entry in _dict['derivedFrom']]
+            del xtra['derivedFrom']
         args.update(xtra)
         return cls(**args)
 
@@ -2847,6 +2872,14 @@ class AttributeValueAnnotation(object):
             _dict['disambiguationData'] = self.disambiguation_data._to_dict()
         if hasattr(self, 'insight_model_data') and self.insight_model_data is not None:
             _dict['insightModelData'] = self.insight_model_data._to_dict()
+        if hasattr(self, 'ccs_code') and self.ccs_code is not None:
+            _dict['ccsCode'] = self.ccs_code
+        if hasattr(self, 'hcc_code') and self.hcc_code is not None:
+            _dict['hccCode'] = self.hcc_code
+        if hasattr(self, 'rule_id') and self.rule_id is not None:
+            _dict['ruleId'] = self.rule_id
+        if hasattr(self, 'derived_from') and self.derived_from is not None:
+            _dict['derivedFrom'] = [entry._to_dict() for entry in self.derived_from]
         if hasattr(self, '_additionalProperties'):
             for _key in self._additionalProperties:
                 _value = getattr(self, _key, None)
@@ -2862,7 +2895,8 @@ class AttributeValueAnnotation(object):
         properties = ({'id', 'type', 'uid', 'begin', 'end', 'covered_text', 'negated', 'hypothetical', 'preferred_name',
                        'values', 'source', 'source_version', 'concept', 'name', 'icd9_code', 'icd10_code', 'nci_code',
                        'snomed_concept_id', 'mesh_id', 'rx_norm_id', 'loinc_id', 'vocabs', 'section_normalized_name',
-                       'section_surface_form', 'cpt_code', 'disambiguation_data', 'insight_model_data'})
+                       'section_surface_form', 'cpt_code', 'disambiguation_data', 'insight_model_data', 'ccs_code',
+                       'hcc_code', 'rule_id', 'derived_from'})
         if not hasattr(self, '_additionalProperties'):
             super(AttributeValueAnnotation, self).__setattr__('_additionalProperties', set())
         if name not in properties:
@@ -3071,13 +3105,16 @@ class Concept(object):
     :attr str section_surface_form: (optional)
     :attr str cpt_code: (optional)
     :attr InsightModelData insight_model_data: (optional)
+    :attr str rule_id: (optional)
+    :attr list[Concept] derived_from: (optional)
     """
 
     def __init__(self, id=None, type=None, uid=None, begin=None, end=None, covered_text=None, negated=None,
                  hypothetical=None, cui=None, preferred_name=None, semantic_type=None, source=None,
                  source_version=None, disambiguation_data=None, icd9_code=None, icd10_code=None, nci_code=None,
                  snomed_concept_id=None, mesh_id=None, rx_norm_id=None, loinc_id=None, vocabs=None,
-                 section_normalized_name=None, section_surface_form=None, cpt_code=None, insight_model_data=None, **kwargs):
+                 section_normalized_name=None, section_surface_form=None, cpt_code=None, insight_model_data=None,
+                 rule_id=None, derived_from=None, **kwargs):
         """
         Initialize a Concept object.
         :param str id: (optional)
@@ -3106,6 +3143,8 @@ class Concept(object):
         :param str section_surface_form: (optional)
         :param str cpt_code: (optional)
         :param InsightModelData insight_model_data: (optional)
+        :param str rule_id: (optional)
+        :param list[Concept] derived_from: (optional)
         :param **kwargs: (optional) Any additional properties.
         """
         self.id = id
@@ -3134,6 +3173,8 @@ class Concept(object):
         self.section_surface_form = section_surface_form
         self.cpt_code = cpt_code
         self.insight_model_data = insight_model_data
+        self.rule_id = rule_id
+        self.derived_from = derived_from
         for _key, _value in kwargs.items():
             setattr(self, _key, _value)
 
@@ -3224,6 +3265,12 @@ class Concept(object):
         if 'insightModelData' in _dict:
             args['insight_model_data'] = InsightModelData._from_dict(_dict['insightModelData'])
             del xtra['insightModelData']
+        if 'ruleId' in _dict:
+            args['rule_id'] = _dict['ruleId']
+            del xtra['ruleId']
+        if 'derivedFrom' in _dict:
+            args['derived_from'] = [Concept._from_dict(entry) for entry in _dict['derivedFrom']]
+            del xtra['derivedFrom']
         args.update(xtra)
         return cls(**args)
 
@@ -3287,6 +3334,10 @@ class Concept(object):
             _dict['cptCode'] = self.cpt_code
         if hasattr(self, 'insight_model_data') and self.insight_model_data is not None:
             _dict['insightModelData'] = self.insight_model_data._to_dict()
+        if hasattr(self, 'rule_id') and self.rule_id is not None:
+            _dict['ruleId'] = self.rule_id
+        if hasattr(self, 'derived_from') and self.derived_from is not None:
+            _dict['derivedFrom'] = [entry._to_dict() for entry in self.derived_from]
         if hasattr(self, '_additionalProperties'):
             for _key in self._additionalProperties:
                 _value = getattr(self, _key, None)
@@ -3303,7 +3354,7 @@ class Concept(object):
                        'preferred_name', 'semantic_type', 'source', 'source_version', 'disambiguation_data',
                        'icd9_code', 'icd10_code', 'nci_code', 'snomed_concept_id', 'mesh_id', 'rx_norm_id',
                        'loinc_id', 'vocabs', 'section_normalized_name', 'section_surface_form', 'cpt_code',
-                       'insight_model_data'})
+                       'insight_model_data', 'rule_id', 'derived_from'})
         if not hasattr(self, '_additionalProperties'):
             super(Concept, self).__setattr__('_additionalProperties', set())
         if name not in properties:
