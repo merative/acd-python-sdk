@@ -67,3 +67,8 @@ class TestConceptAnnotation(object):
                     assert annotation.disambiguation_data.validity is not None
                 if annotation.insight_model_data is not None:
                     ti.TestInsightModel.test_insight_model_data(annotation.insight_model_data)
+                if annotation.rule_id is not None:
+                    assert len(annotation.rule_id) > 0
+                if annotation.derived_from is not None:
+                    for entry in annotation.derived_from:
+                        assert entry is not None

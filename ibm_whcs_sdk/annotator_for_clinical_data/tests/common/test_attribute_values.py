@@ -72,3 +72,12 @@ class TestAttributeValueAnnotation(object):
                     td.TestDisambiguation.test_disambiguation_data(annotation.disambiguation_data)
                 if annotation.insight_model_data is not None:
                     ti.TestInsightModel.test_insight_model_data(annotation.insight_model_data)
+                if annotation.ccs_code is not None:
+                    assert len(annotation.ccs_code) > 0
+                if annotation.hcc_code is not None:
+                    assert len(annotation.hcc_code) > 0
+                if annotation.rule_id is not None:
+                    assert len(annotation.rule_id) > 0
+                if annotation.derived_from is not None:
+                    for entry in annotation.derived_from:
+                        assert entry is not None
