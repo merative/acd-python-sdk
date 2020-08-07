@@ -67,7 +67,7 @@ class TestAttributeValueAnnotation(object):
                     for value in annotation.values:
                         assert value is not None
                 if annotation.concept is not None:
-                    tc.TestConceptAnnotation.test_concept_annotation(annotation.concept)
+                    assert annotation.concept.uid > 0
                 if annotation.disambiguation_data is not None:
                     td.TestDisambiguation.test_disambiguation_data(annotation.disambiguation_data)
                 if annotation.insight_model_data is not None:

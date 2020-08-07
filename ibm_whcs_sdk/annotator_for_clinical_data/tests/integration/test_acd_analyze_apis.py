@@ -42,8 +42,9 @@ LINE3 = 'The lab values were: white blood cell count 4.6, hemoglobin 12.2.  '
 LINE4 = 'Echocardiogram demonstrated ejection fraction of approx 60%.  '
 LINE5 = 'Patient cannot dress or feed without help as the patient can not see.  Patient may die soon but has not '
 LINE6 = 'died yet.  Patient smoked for 20 years.  Patient can not clean up after defacating in toilet.  '
-LINE7 = 'Jone Doe was seen at Baylor Hospitall in Austin, TX.  Johndoe@testaddress.com - (555) 555-5555'
-TEXT = LINE1 + LINE2 + LINE3 + LINE4 + LINE5 + LINE6 + LINE7
+LINE7 = 'Jone Doe was seen at Baylor Hospitall in Austin, TX.  Johndoe@testaddress.com - (555) 555-5555 '
+LINE8 = 'The patient started on metformin because his blood sugar was too high.'
+TEXT = LINE1 + LINE2 + LINE3 + LINE4 + LINE5 + LINE6 + LINE7 + LINE8
 
 def test_analyze_flow():
     data = ACD.analyze_with_flow(FLOW, TEXT)
