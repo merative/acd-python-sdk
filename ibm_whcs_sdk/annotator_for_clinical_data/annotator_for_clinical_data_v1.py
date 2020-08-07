@@ -4446,10 +4446,12 @@ class InsightModelDataUsage(object):
     :attr float patient_reported_score: (optional)
     :attr float discussed_score: (optional)
     :attr float lab_measurement_score: (optional)
+    :attr float pending_score: (optional)
     """
 
     def __init__(self, taken_score=None, explicit_score=None, implicit_score=None, considering_score=None,
-                 patient_reported_score=None, discussed_score=None, lab_measurement_score=None, **kwargs):
+                 patient_reported_score=None, discussed_score=None, lab_measurement_score=None, 
+                 pending_score=None, **kwargs):
         """
         Initialize an InsightModelData Usage object.
         :param float taken_score: (optional)
@@ -4459,6 +4461,7 @@ class InsightModelDataUsage(object):
         :param float patient_reported_score: (optional)
         :param float discussed_score: (optional)
         :param float lab_measurement_score: (optional)
+        :param float pending_score: (optional)
         :param **kwargs: (optional) Any additional properties.
         """
         self.taken_score = taken_score
@@ -4468,6 +4471,7 @@ class InsightModelDataUsage(object):
         self.patient_reported_score = patient_reported_score
         self.discussed_score = discussed_score
         self.lab_measurement_score = lab_measurement_score
+        self.pending_score = pending_score
         for _key, _value in kwargs.items():
             setattr(self, _key, _value)
 
@@ -4497,6 +4501,9 @@ class InsightModelDataUsage(object):
         if 'labMeasurementScore' in _dict:
             args['lab_measurement_score'] = _dict['labMeasurementScore']
             del xtra['labMeasurementScore']
+        if 'pendingScore' in _dict:
+            args['pending_score'] = _dict['pendingScore']
+            del xtra['pendingScore']
         args.update(xtra)
         return cls(**args)
 
@@ -4522,6 +4529,8 @@ class InsightModelDataUsage(object):
             _dict['discussedScore'] = self.discussed_score
         if hasattr(self, 'lab_measurement_score') and self.lab_measurement_score is not None:
             _dict['labMeasurementScore'] = self.lab_measurement_score
+        if hasattr(self, 'pending_score') and self.pending_score is not None:
+            _dict['pendingScore'] = self.pending_score
         if hasattr(self, '_additionalProperties'):
             for _key in self._additionalProperties:
                 _value = getattr(self, _key, None)
@@ -4534,7 +4543,7 @@ class InsightModelDataUsage(object):
         return self.to_dict()
 
     def __setattr__(self, name, value):
-        properties = ({'taken_score', 'explicit_score', 'implicit_score', 'considering_score', 'patient_reported_score', 'discussed_score', 'lab_measurement_score'})
+        properties = ({'taken_score', 'explicit_score', 'implicit_score', 'considering_score', 'patient_reported_score', 'discussed_score', 'lab_measurement_score', 'pending_score'})
         if not hasattr(self, '_additionalProperties'):
             super(InsightModelDataUsage, self).__setattr__('_additionalProperties', set())
         if name not in properties:
@@ -4736,7 +4745,7 @@ class InsightModelDataEvent(object):
     :attr InsightModelDataUsage usage: (optional)
     """
 
-    def __init__(self, score=None, usage=None, *kwargs):
+    def __init__(self, score=None, usage=None, **kwargs):
         """
         Initialize an InsightModelData Event object.
         :param float score: (optional)
@@ -4795,6 +4804,166 @@ class InsightModelDataEvent(object):
 
     def __str__(self):
         """Return a `str` version of this InsightModelData Event object."""
+        return json.dumps(self._to_dict(), indent=2)
+
+class InsightModelDataNormalityUsage(object):
+    """
+    InsightModelData Normality Usage.
+    :attr float normal_score: (optional)
+    :attr float abnormal_score: (optional)
+    :attr float unknown_score: (optional)
+    :attr float non_finding_score: (optional)
+    """
+
+    def __init__(self, normal_score=None, abnormal_score=None, unknown_score=None, non_finding_score=None, **kwargs):
+        """
+        Initialize an InsightModelData Normality Usage object.
+        :param float normal_score: (optional)
+        :param float abnormal_score: (optional)
+        :param float unknown_score: (optional)
+        :param float non_finding_score: (optional)
+        :param **kwargs: (optional) Any additional properties.
+        """
+        self.normal_score = normal_score
+        self.abnormal_score = abnormal_score
+        self.unknown_score = unknown_score
+        self.non_finding_score = non_finding_score
+        for _key, _value in kwargs.items():
+            setattr(self, _key, _value)
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize an InsightModelData Normality Usage object from a json dictionary."""
+        args = {}
+        xtra = _dict.copy()
+        if 'normalScore' in _dict:
+            args['normal_score'] = _dict['normalScore']
+            del xtra['normalScore']
+        if 'abnormalScore' in _dict:
+            args['abnormal_score'] = _dict['abnormalScore']
+            del xtra['abnormalScore']
+        if 'unknownScore' in _dict:
+            args['unknown_score'] = _dict['unknownScore']
+            del xtra['unknownScore']
+        if 'nonFindingScore' in _dict:
+            args['non_finding_score'] = _dict['nonFindingScore']
+            del xtra['nonFindingScore']
+        args.update(xtra)
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a InsightModelData Normality Usage object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'normal_score') and self.normal_score is not None:
+            _dict['normalScore'] = self.normal_score
+        if hasattr(self, 'abnormal_score') and self.abnormal_score is not None:
+            _dict['abnormalScore'] = self.abnormal_score
+        if hasattr(self, 'unknown_score') and self.unknown_score is not None:
+            _dict['unknownScore'] = self.unknown_score
+        if hasattr(self, 'non_finding_score') and self.non_finding_score is not None:
+            _dict['nonFindingScore'] = self.non_finding_score
+        if hasattr(self, '_additionalProperties'):
+            for _key in self._additionalProperties:
+                _value = getattr(self, _key, None)
+                if _value is not None:
+                    _dict[_key] = _value
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __setattr__(self, name, value):
+        properties = ({'normal_score', 'abnormal_score', 'unknown_score', 'non_finding_score'})
+        if not hasattr(self, '_additionalProperties'):
+            super(InsightModelDataNormalityUsage, self).__setattr__('_additionalProperties', set())
+        if name not in properties:
+            self._additionalProperties.add(name)
+        super(InsightModelDataNormalityUsage, self).__setattr__(name, value)
+
+    def __str__(self):
+        """Return a `str` version of this InsightModelData Normality Usage object."""
+        return json.dumps(self._to_dict(), indent=2)
+
+class InsightModelDataEvidence(object):
+    """
+    InsightModelData Evidence.
+    :attr int begin: (optional)
+    :attr int end: (optional)
+    :attr str covered_text: (optional)
+    """ 
+        
+    def __init__(self, begin=None, end=None, covered_text=None, **kwargs):
+        """
+        Initialize an InsightModelData Evidence object.
+        :param int begin: (optional)
+        :param int end: (optional)
+        :param str covered_text: (optional)
+        :param **kwargs: (optional) Any additional properties.
+        """
+        self.begin = begin
+        self.end = end
+        self.covered_text = covered_text
+        for _key, _value in kwargs.items():
+            setattr(self, _key, _value)
+    
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize an InsightModelData Evidence object from a json dictionary."""
+        args = {}
+        xtra = _dict.copy()
+        if 'begin' in _dict:
+            args['begin'] = _dict['begin']
+            del xtra['begin']
+        if 'end' in _dict:
+            args['end'] = _dict['end']
+            del xtra['end']
+        if 'coveredText' in _dict:
+            args['covered_text'] = _dict['coveredText']
+            del xtra['coveredText'] 
+        args.update(xtra)
+        return cls(**args)
+    
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a InsightModelData Evidence object from a json dictionary."""
+        return cls.from_dict(_dict)
+        
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'begin') and self.begin is not None:
+            _dict['begin'] = self.begin
+        if hasattr(self, 'end') and self.end is not None:
+            _dict['end'] = self.end
+        if hasattr(self, 'covered_text') and self.covered_text is not None:
+            _dict['coveredText'] = self.covered_text
+        if hasattr(self, '_additionalProperties'):
+            for _key in self._additionalProperties:
+                _value = getattr(self, _key, None)
+                if _value is not None:
+                    _dict[_key] = _value
+        return _dict
+        
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+        
+    def __setattr__(self, name, value):
+        properties = ({'begin', 'end', 'covered_text'})
+        if not hasattr(self, '_additionalProperties'):
+            super(InsightModelDataEvidence, self).__setattr__('_additionalProperties', set())
+        if name not in properties:
+            self._additionalProperties.add(name)
+        super(InsightModelDataEvidence, self).__setattr__(name, value)
+
+    def __str__(self):
+        """Return a `str` version of this InsightModelData Evidence object."""
         return json.dumps(self._to_dict(), indent=2)
 
 class InsightModelDataMedication(object):
@@ -5057,25 +5226,96 @@ class InsightModelDataDiagnosis(object):
         """Return a `str` version of this InsightModelData Diagnosis object."""
         return json.dumps(self._to_dict(), indent=2)
 
+class InsightModelDataNormality(object):
+    """
+    InsightModelData Normality.
+    :attr InsightModelDataNormalityUsage usage: (optional)
+    :attr list[InsightModelDataEvidence] evidence: (optional)
+    """
+
+    def __init__(self, usage=None, evidence=None, **kwargs):
+        """
+        Initialize an InsightModelData Normality object.
+        :param InsightModelDataNormalityUsage usage: (optional)
+        :param list[InsightModelDataEvidence] evidence: (optional)
+        :param **kwargs: (optional) Any additional properties.
+        """
+        self.usage = usage
+        self.evidence = evidence
+        for _key, _value in kwargs.items():
+            setattr(self, _key, _value)
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize an InsightModelData Normality object from a json dictionary."""
+        args = {}
+        xtra = _dict.copy()
+        if 'usage' in _dict:
+            args['usage'] = InsightModelDataNormalityUsage._from_dict(_dict['usage'])
+            del xtra['usage']
+        if 'evidence' in _dict:
+            args['evidence'] = [InsightModelDataEvidence._from_dict(entry) for entry in _dict['evidence']]
+            del xtra['evidence']
+        args.update(xtra)
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a InsightModelData Normality object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'usage') and self.usage is not None:
+            _dict['usage'] = self.usage._to_dict()
+        if hasattr(self, 'evidence') and self.evidence is not None:
+            _dict['evidence'] = [entry._to_dict() for entry in self.evidence]
+        if hasattr(self, '_additionalProperties'):
+            for _key in self._additionalProperties:
+                _value = getattr(self, _key, None)
+                if _value is not None:
+                    _dict[_key] = _value
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __setattr__(self, name, value):
+            properties = ({'usage', 'evidence'})
+            if not hasattr(self, '_additionalProperties'):
+                super(InsightModelDataNormality, self).__setattr__('_additionalProperties', set())
+            if name not in properties:
+                self._additionalProperties.add(name)
+            super(InsightModelDataNormality, self).__setattr__(name, value)
+
+    def __str__(self):
+        """Return a `str` version of this InsightModelData Normality object."""
+        return json.dumps(self._to_dict(), indent=2)
+
 class InsightModelData(object):
     """
     InsightModelData.
     :attr InsightModelDataMedication medication: (optional)
     :attr InsightModelDataProcedure procedure: (optional)
     :attr InsightModelDataDiagnosis diagnosis: (optional)
+    :attr InsightModelDataNormality normality: (optional)
     """
 
-    def __init__(self, medication=None, procedure=None, diagnosis=None, **kwargs):
+    def __init__(self, medication=None, procedure=None, diagnosis=None, normality=None, **kwargs):
         """
         Initialize an InsightModelData object.
         :param InsightModelDataMedication medication: (optional)
         :param InsightModelDataProcedure procedure: (optional)
         :param InsightModelDataDiagnosis diagnosis: (optional)
+        :param InsightModelDataNormality normality: (optional)
         :param **kwargs: (optional) Any additional properties.
         """
         self.medication = medication
         self.procedure = procedure
         self.diagnosis = diagnosis
+        self.normality = normality
         for _key, _value in kwargs.items():
             setattr(self, _key, _value)
 
@@ -5093,6 +5333,9 @@ class InsightModelData(object):
         if 'diagnosis' in _dict:
             args['diagnosis'] = InsightModelDataDiagnosis._from_dict(_dict['diagnosis'])
             del xtra['diagnosis']
+        if 'normality' in _dict:
+            args['normality'] = InsightModelDataNormality._from_dict(_dict['normality'])
+            del xtra['normality']
         args.update(xtra)
         return cls(**args)
 
@@ -5110,6 +5353,8 @@ class InsightModelData(object):
             _dict['procedure'] = self.procedure._to_dict()
         if hasattr(self, 'diagnosis') and self.diagnosis is not None:
             _dict['diagnosis'] = self.diagnosis._to_dict()
+        if hasattr(self, 'normality') and self.normality is not None:
+            _dict['normality'] = self.normality._to_dict()
         if hasattr(self, '_additionalProperties'):
             for _key in self._additionalProperties:
                 _value = getattr(self, _key, None)
@@ -5122,7 +5367,7 @@ class InsightModelData(object):
         return self.to_dict()
 
     def __setattr__(self, name, value):
-        properties = ({'medication', 'procedure', 'diagnosis'})
+        properties = ({'medication', 'procedure', 'diagnosis', 'normality'})
         if not hasattr(self, '_additionalProperties'):
             super(InsightModelData, self).__setattr__('_additionalProperties', set())
         if name not in properties:
