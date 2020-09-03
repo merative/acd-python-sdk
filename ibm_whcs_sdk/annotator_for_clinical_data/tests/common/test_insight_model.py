@@ -24,6 +24,8 @@ class TestInsightModel(object):
                 assert len(data.diagnosis._to_dict()) > 0
                 if data.diagnosis.usage is not None:
                     assert len(data.diagnosis.usage._to_dict()) > 0
+                if data.diagnosis.modifiers is not None:
+                    assert len(data.diagnosis.modifiers._to_dict()) > 0
             if data.procedure is not None:
                 assert len(data.procedure._to_dict()) > 0
                 if data.procedure.usage is not None:
@@ -32,6 +34,8 @@ class TestInsightModel(object):
                     assert len(data.procedure.task._to_dict()) > 0
                 if data.procedure.type is not None:
                     assert len(data.procedure.type._to_dict()) > 0
+                if data.procedure.modifiers is not None:
+                    assert len(data.procedure.modifiers._to_dict()) > 0
             if data.medication is not None:
                 assert len(data.medication._to_dict()) > 0
                 if data.medication.usage is not None:
@@ -43,4 +47,11 @@ class TestInsightModel(object):
                 if data.medication.dose_changed is not None:
                     assert len(data.medication.dose_changed._to_dict()) > 0
                 if data.medication.adverse is not None:
-                    assert len(data.medication.adverse._to_dict()) > 0   
+                    assert len(data.medication.adverse._to_dict()) > 0
+            if data.normality is not None:
+               assert len(data.normality._to_dict()) > 0
+               if data.normality.usage is not None:
+                   assert len(data.normality.usage._to_dict()) > 0
+               if data.normality.evidence is not None:
+                   for entry in data.normality.evidence:
+                        assert entry is not None
