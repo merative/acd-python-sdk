@@ -55,5 +55,3 @@ class TestInsightModel(object):
                if data.normality.evidence is not None:
                    for entry in data.normality.evidence:
                         assert entry is not None
-               if data.normality.directly_affected_score is not None:
-                   assert len(data.normality.directly_affected_score._to_dict()) > 0
