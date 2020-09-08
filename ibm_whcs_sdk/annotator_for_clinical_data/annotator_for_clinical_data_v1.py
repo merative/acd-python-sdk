@@ -5206,7 +5206,7 @@ class InsightModelDataProcedureModifier(object):
     :attr list[InsightModelDataSite] sites: (optional)
     """
 
-    def __init__(self, associated_diagnosis=None, site=None, **kwargs):
+    def __init__(self, associated_diagnosis=None, sites=None, **kwargs):
         """
         Initialize an InsightModelData Procedure Modifier object.
         :param list[InsightModelDataEvidence] associated_diagnosis: (optional)
@@ -5446,7 +5446,7 @@ class InsightModelDataDiagnosisModifier(object):
     :attr list[InsightModelDataSite] sites: (optional)
     """
 
-    def __init__(self, associated_procedures=None, site=None, **kwargs):
+    def __init__(self, associated_procedures=None, sites=None, **kwargs):
         """
         Initialize an InsightModelData Diagnosis Modifier object.
         :param list[InsightModelDataEvidence] associated_procedures: (optional)
