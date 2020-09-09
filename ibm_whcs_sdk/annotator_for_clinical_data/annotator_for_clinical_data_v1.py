@@ -4759,7 +4759,7 @@ class InsightModelDataType(object):
         if hasattr(self, 'material_score') and self.material_score is not None:
             _dict['materialScore'] = self.material_score
         if hasattr(self, 'medication_score') and self.medication_score is not None:
-            _dict['medication_score'] = self.medication_score
+            _dict['medicationScore'] = self.medication_score
         if hasattr(self, 'procedure_score') and self.procedure_score is not None:
             _dict['procedureScore'] = self.procedure_score
         if hasattr(self, 'condition_management_score') and self.condition_management_score is not None:
