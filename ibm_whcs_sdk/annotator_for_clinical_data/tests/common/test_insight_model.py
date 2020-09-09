@@ -49,9 +49,9 @@ class TestInsightModel(object):
                 if data.medication.adverse is not None:
                     assert len(data.medication.adverse._to_dict()) > 0
             if data.normality is not None:
-               assert len(data.normality._to_dict()) > 0
-               if data.normality.usage is not None:
-                   assert len(data.normality.usage._to_dict()) > 0
-               if data.normality.evidence is not None:
-                   for entry in data.normality.evidence:
+                assert len(data.normality._to_dict()) > 0
+                if data.normality.usage is not None:
+                    assert len(data.normality.usage._to_dict()) > 0
+                if data.normality.evidence is not None:
+                    for entry in data.normality.evidence:
                         assert entry is not None
