@@ -72,3 +72,6 @@ class TestConceptAnnotation(object):
                 if annotation.derived_from is not None:
                     for entry in annotation.derived_from:
                         assert entry is not None
+                if annotation.temporal is not None:
+                    for entry in annotation.temporal:
+                        assert entry is not None

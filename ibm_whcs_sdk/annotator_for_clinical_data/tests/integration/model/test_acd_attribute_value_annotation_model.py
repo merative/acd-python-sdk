@@ -21,6 +21,7 @@ def test_AttributeValueAnnotation_model():
     disambiguation = wh.Disambiguation()
     insight_data = wh.InsightModelData()
     derived_from_list = []
+    temporal_list = []
     model = wh.AttributeValueAnnotation(id="id", type="type", uid=1, begin=2, end=3, covered_text="covered",
                                         negated=False, hypothetical=False, preferred_name="preferred",
                                         values=value_list, source="source", source_version="sv", name="name",
@@ -29,5 +30,5 @@ def test_AttributeValueAnnotation_model():
                                         section_normalized_name="snn", section_surface_form="ssf", cpt_code="cpt",
                                         disambiguation_data=disambiguation, insight_model_data=insight_data, 
                                         ccs_code="ccs", hcc_code="hcc", rule_id="rule", derived_from=derived_from_list, 
-                                        extra="more")
+                                        temporal=temporal_list, extra="more")
     assert model.__str__() is not None

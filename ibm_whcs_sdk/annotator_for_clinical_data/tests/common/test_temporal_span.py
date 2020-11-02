@@ -14,13 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import ibm_whcs_sdk.annotator_for_clinical_data as wh
+class TestTemporalSpanAnnotation(object):
 
-def test_MedicationAnnotation_model():
-    drug_list = []
-    temporal_list = []
-    model = wh.MedicationAnnotation(id="name", type="type", uid=123, begin=1, end=2,
-                                    covered_text="We got you covered", negated=False, hypothetical=False, cui=234,
-                                    drug=drug_list, section_normalized_name="snn", section_surface_form="ssf",
-                                    temporal=temporal_list, extra="more")
-    assert model.__str__() is not None
+    @staticmethod
+    def test_temporal_span(annotation_list=None):
+        if annotation_list is not None:
+            for annotation in annotation_list:
+                assert annotation.begin is not None
+                assert annotation.end is not None
+                assert annotation.covered_text is not None
+                assert annotation.temporal_type is not None

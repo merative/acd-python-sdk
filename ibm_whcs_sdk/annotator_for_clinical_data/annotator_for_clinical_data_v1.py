@@ -2333,6 +2333,8 @@ class Name(object):
     SECTION = "section"
     # nlu.
     NLU = "nlu"
+    #model_broker
+    MODEL_BROKER = "model_broker"
 
 
 class AssistanceAnnotation(object):
@@ -2628,6 +2630,7 @@ class AttributeValueAnnotation(object):
     :attr str hcc_code: (optional)
     :attr str rule_id: (optional)
     :attr list[Concept] derived_from: (optional)
+    :attr list[Temporal] temporal: (optional)
     """
 
     def __init__(self, id=None, type=None, uid=None, begin=None, end=None, covered_text=None, negated=None,
@@ -2635,7 +2638,7 @@ class AttributeValueAnnotation(object):
                  concept=None, name=None, icd9_code=None, icd10_code=None, nci_code=None, snomed_concept_id=None,
                  mesh_id=None, rx_norm_id=None, loinc_id=None, vocabs=None, section_normalized_name=None,
                  section_surface_form=None, cpt_code=None, disambiguation_data=None, insight_model_data=None,
-                 ccs_code=None, hcc_code=None, rule_id=None, derived_from=None, **kwargs):
+                 ccs_code=None, hcc_code=None, rule_id=None, derived_from=None, temporal=None, **kwargs):
         """
         Initialize a AttributeValueAnnotation object.
         :param str id: (optional)
@@ -2669,6 +2672,7 @@ class AttributeValueAnnotation(object):
         :param str hcc_code: (optional)
         :param str rule_id: (optional)
         :param list[Concept] derived_from: (optional)
+        :param list[Temporal] temporal: (optional)
         :param **kwargs: (optional) Any additional properties.
         """
         self.id = id
@@ -2702,6 +2706,7 @@ class AttributeValueAnnotation(object):
         self.hcc_code = hcc_code
         self.rule_id = rule_id
         self.derived_from = derived_from
+        self.temporal = temporal
         for _key, _value in kwargs.items():
             setattr(self, _key, _value)
 
@@ -2807,6 +2812,9 @@ class AttributeValueAnnotation(object):
         if 'derivedFrom' in _dict:
             args['derived_from'] = [Concept._from_dict(entry) for entry in _dict['derivedFrom']]
             del xtra['derivedFrom']
+        if 'temporal' in _dict:
+            args['temporal'] = [Temporal._from_dict(entry) for entry in _dict['temporal']]
+            del xtra['temporal']
         args.update(xtra)
         return cls(**args)
 
@@ -2880,6 +2888,8 @@ class AttributeValueAnnotation(object):
             _dict['ruleId'] = self.rule_id
         if hasattr(self, 'derived_from') and self.derived_from is not None:
             _dict['derivedFrom'] = [entry._to_dict() for entry in self.derived_from]
+        if hasattr(self, 'temporal') and self.temporal is not None:
+            _dict['temporal'] = [entry._to_dict() for entry in self.temporal]
         if hasattr(self, '_additionalProperties'):
             for _key in self._additionalProperties:
                 _value = getattr(self, _key, None)
@@ -2896,7 +2906,7 @@ class AttributeValueAnnotation(object):
                        'values', 'source', 'source_version', 'concept', 'name', 'icd9_code', 'icd10_code', 'nci_code',
                        'snomed_concept_id', 'mesh_id', 'rx_norm_id', 'loinc_id', 'vocabs', 'section_normalized_name',
                        'section_surface_form', 'cpt_code', 'disambiguation_data', 'insight_model_data', 'ccs_code',
-                       'hcc_code', 'rule_id', 'derived_from'})
+                       'hcc_code', 'rule_id', 'derived_from', 'temporal'})
         if not hasattr(self, '_additionalProperties'):
             super(AttributeValueAnnotation, self).__setattr__('_additionalProperties', set())
         if name not in properties:
@@ -3107,6 +3117,7 @@ class Concept(object):
     :attr InsightModelData insight_model_data: (optional)
     :attr str rule_id: (optional)
     :attr list[Concept] derived_from: (optional)
+    :attr list[Temporal] temporal: (optional)
     """
 
     def __init__(self, id=None, type=None, uid=None, begin=None, end=None, covered_text=None, negated=None,
@@ -3114,7 +3125,7 @@ class Concept(object):
                  source_version=None, disambiguation_data=None, icd9_code=None, icd10_code=None, nci_code=None,
                  snomed_concept_id=None, mesh_id=None, rx_norm_id=None, loinc_id=None, vocabs=None,
                  section_normalized_name=None, section_surface_form=None, cpt_code=None, insight_model_data=None,
-                 rule_id=None, derived_from=None, **kwargs):
+                 rule_id=None, derived_from=None, temporal=None, **kwargs):
         """
         Initialize a Concept object.
         :param str id: (optional)
@@ -3145,6 +3156,7 @@ class Concept(object):
         :param InsightModelData insight_model_data: (optional)
         :param str rule_id: (optional)
         :param list[Concept] derived_from: (optional)
+        :param list[Temporal] temporal: (optional)
         :param **kwargs: (optional) Any additional properties.
         """
         self.id = id
@@ -3175,6 +3187,7 @@ class Concept(object):
         self.insight_model_data = insight_model_data
         self.rule_id = rule_id
         self.derived_from = derived_from
+        self.temporal = temporal
         for _key, _value in kwargs.items():
             setattr(self, _key, _value)
 
@@ -3271,6 +3284,9 @@ class Concept(object):
         if 'derivedFrom' in _dict:
             args['derived_from'] = [Concept._from_dict(entry) for entry in _dict['derivedFrom']]
             del xtra['derivedFrom']
+        if 'temporal' in _dict:
+            args['temporal'] = [Temporal._from_dict(entry) for entry in _dict['temporal']]
+            del xtra['temporal']
         args.update(xtra)
         return cls(**args)
 
@@ -3338,6 +3354,8 @@ class Concept(object):
             _dict['ruleId'] = self.rule_id
         if hasattr(self, 'derived_from') and self.derived_from is not None:
             _dict['derivedFrom'] = [entry._to_dict() for entry in self.derived_from]
+        if hasattr(self, 'temporal') and self.temporal is not None:
+            _dict['temporal'] = [entry._to_dict() for entry in self.temporal]
         if hasattr(self, '_additionalProperties'):
             for _key in self._additionalProperties:
                 _value = getattr(self, _key, None)
@@ -3354,7 +3372,7 @@ class Concept(object):
                        'preferred_name', 'semantic_type', 'source', 'source_version', 'disambiguation_data',
                        'icd9_code', 'icd10_code', 'nci_code', 'snomed_concept_id', 'mesh_id', 'rx_norm_id',
                        'loinc_id', 'vocabs', 'section_normalized_name', 'section_surface_form', 'cpt_code',
-                       'insight_model_data', 'rule_id', 'derived_from'})
+                       'insight_model_data', 'rule_id', 'derived_from', 'temporal'})
         if not hasattr(self, '_additionalProperties'):
             super(Concept, self).__setattr__('_additionalProperties', set())
         if name not in properties:
@@ -3708,6 +3726,7 @@ class ContainerAnnotation(object):
     :attr list[Relations] relations: (optional)
     :attr list[SpellingCorrection]: (optional)
     :attr list[SpellCorrectedText] spell_corrected_text: (optional)
+    :attr list[Temporal] temporal_spans: (optional)
     """
 
     def __init__(self, allergy_ind=None, allergy_medication_ind=None, attribute_values=None,
@@ -3718,7 +3737,7 @@ class ContainerAnnotation(object):
                  medical_institution_ind=None, organization_ind=None, negated_spans=None, procedure_ind=None,
                  seeing_assistance_ind=None, smoking_ind=None, symptom_disease_ind=None, toileting_assistance_ind=None,
                  walking_assistance_ind=None, sections=None, nlu_entities=None, relations=None,
-                 spelling_corrections=None, spell_corrected_text=None):
+                 spelling_corrections=None, spell_corrected_text=None, temporal_spans=None):
         """
         Initialize a ContainerAnnotation object.
         :param list[Annotation] allergy_ind: (optional)
@@ -3752,6 +3771,7 @@ class ContainerAnnotation(object):
         :param list[Relations] relations: (optional)
         :param list[SpellingCorrection] spelling_correction: (optional)
         :param list[SpellCorrectedText] spell_corrected_text: (optional)
+        :param list[Temporal] temporal_spans: (optional)
         """
         self.allergy_ind = allergy_ind
         self.allergy_medication_ind = allergy_medication_ind
@@ -3784,6 +3804,7 @@ class ContainerAnnotation(object):
         self.relations = relations
         self.spelling_corrections = spelling_corrections
         self.spell_corrected_text = spell_corrected_text
+        self.temporal_spans = temporal_spans
 
     @classmethod
     def from_dict(cls, _dict):
@@ -3856,6 +3877,8 @@ class ContainerAnnotation(object):
             args['spelling_corrections'] = [SpellingCorrection._from_dict(x) for x in _dict['spellingCorrections']]
         if 'spellCorrectedText' in _dict:
             args['spell_corrected_text'] = [SpellCorrectedText._from_dict(x) for x in _dict['spellCorrectedText']]
+        if 'temporalSpans' in _dict:
+            args['temporal_spans'] = [Temporal._from_dict(x) for x in _dict['temporalSpans']]
         return cls(**args)
 
     @classmethod
@@ -3928,6 +3951,8 @@ class ContainerAnnotation(object):
             _dict['spellingCorrections'] = [x._to_dict() for x in self.spelling_corrections]
         if hasattr(self, 'spell_corrected_text') and self.spell_corrected_text is not None:
             _dict['spellCorrectedText'] = [x._to_dict() for x in self.spell_corrected_text]
+        if hasattr(self, 'temporal_spans') and self.temporal_spans is not None:
+            _dict['temporalSpans'] = [x._to_dict() for x in self.temporal_spans]
         return _dict
 
     def _to_dict(self):
@@ -5922,11 +5947,12 @@ class MedicationAnnotation(object):
     :attr list[object] drug: (optional)
     :attr str section_surface_form: (optional)
     :attr InsightModelData insight_model_data: (optional)
+    :attr list[Temporal] temporal: (optional)
     """
 
     def __init__(self, id=None, type=None, uid=None, begin=None, end=None, covered_text=None, negated=None,
                  hypothetical=None, section_normalized_name=None, cui=None, drug=None, section_surface_form=None,
-                 insight_model_data=None, **kwargs):
+                 insight_model_data=None, temporal=None, **kwargs):
         """
         Initialize a MedicationAnnotation object.
         :param str id: (optional)
@@ -5942,6 +5968,7 @@ class MedicationAnnotation(object):
         :param list[object] drug: (optional)
         :param str section_surface_form: (optional)
         :param InsightModelData insight_model_data: (optional)
+        :param list[Temporal] temporal: (optional)
         :param **kwargs: (optional) Any additional properties.
         """
         self.id = id
@@ -5957,6 +5984,7 @@ class MedicationAnnotation(object):
         self.drug = drug
         self.section_surface_form = section_surface_form
         self.insight_model_data = insight_model_data
+        self.temporal = temporal
         for _key, _value in kwargs.items():
             setattr(self, _key, _value)
 
@@ -6004,6 +6032,10 @@ class MedicationAnnotation(object):
         if 'insightModelData' in _dict:
             args['insight_model_data'] = InsightModelData._from_dict(_dict['insightModelData'])
             del xtra['insightModelData']
+        if 'temporal' in _dict:
+            args['temporal'] = [Temporal._from_dict(entry) for entry in _dict['temporal']]
+            del xtra['temporal']
+        
         args.update(xtra)
         return cls(**args)
 
@@ -6041,6 +6073,8 @@ class MedicationAnnotation(object):
             _dict['sectionSurfaceForm'] = self.section_surface_form
         if hasattr(self, 'insight_model_data') and self.insight_model_data is not None:
             _dict['insightModelData'] = self.insight_model_data._to_dict()
+        if hasattr(self, 'temporal') and self.temporal is not None:
+            _dict['temporal'] = [entry._to_dict() for entry in self.temporal]
         if hasattr(self, '_additionalProperties'):
             for _key in self._additionalProperties:
                 _value = getattr(self, _key, None)
@@ -6054,7 +6088,8 @@ class MedicationAnnotation(object):
 
     def __setattr__(self, name, value):
         properties = ({'id', 'type', 'uid', 'begin', 'end', 'covered_text', 'negated', 'hypothetical',
-                       'section_normalized_name', 'cui', 'drug', 'section_surface_form', 'insight_model_data'})
+                       'section_normalized_name', 'cui', 'drug', 'section_surface_form', 
+                       'insight_model_data', 'temporal'})
         if not hasattr(self, '_additionalProperties'):
             super(MedicationAnnotation, self).__setattr__('_additionalProperties', set())
         if name not in properties:
@@ -6442,12 +6477,14 @@ class Procedure(object):
     :attr str section_surface_form: (optional)
     :attr Disambiguation disambiguation_data: (optional)
     :attr InsightModelData insight_model_data: (optional)
+    :attr list[Temporal] temporal: (optional)
     """
 
     def __init__(self, id=None, type=None, uid=None, begin=None, end=None, covered_text=None, negated=None,
                  hypothetical=None, cui=None, section_normalized_name=None, date_in_milliseconds=None,
                  snomed_concept_id=None, procedure_surface_form=None, procedure_normalized_name=None,
-                 section_surface_form=None, disambiguation_data=None, insight_model_data=None, **kwargs):
+                 section_surface_form=None, disambiguation_data=None, insight_model_data=None, 
+                 temporal=None, **kwargs):
         """
         Initialize a Procedure object.
         :param str id: (optional)
@@ -6467,6 +6504,7 @@ class Procedure(object):
         :param str section_surface_form: (optional)
         :param Disambiguation disambiguation_data: (optional)
         :param InsightModelData insight_model_data: (optional)
+        :param list[Temporal] temporal: (optional)
         :param **kwargs: (optional) Any additional properties.
         """
         self.id = id
@@ -6486,6 +6524,7 @@ class Procedure(object):
         self.section_surface_form = section_surface_form
         self.disambiguation_data = disambiguation_data
         self.insight_model_data = insight_model_data
+        self.temporal = temporal
         for _key, _value in kwargs.items():
             setattr(self, _key, _value)
 
@@ -6545,6 +6584,9 @@ class Procedure(object):
         if 'insightModelData' in _dict:
             args['insight_model_data'] = InsightModelData._from_dict(_dict['insightModelData'])
             del xtra['insightModelData']
+        if 'temporal' in _dict:
+            args['temporal'] = [Temporal._from_dict(entry) for entry in _dict['temporal']]
+            del xtra['temporal']
         args.update(xtra)
         return cls(**args)
 
@@ -6590,6 +6632,8 @@ class Procedure(object):
             _dict['disambiguationData'] = self.disambiguation_data._to_dict()
         if hasattr(self, 'insight_model_data') and self.insight_model_data is not None:
             _dict['insightModelData'] = self.insight_model_data._to_dict()
+        if hasattr(self, 'temporal') and self.temporal is not None:
+            _dict['temporal'] = [entry._to_dict() for entry in self.temporal]
         if hasattr(self, '_additionalProperties'):
             for _key in self._additionalProperties:
                 _value = getattr(self, _key, None)
@@ -6604,7 +6648,8 @@ class Procedure(object):
     def __setattr__(self, name, value):
         properties = ({'id', 'type', 'uid', 'begin', 'end', 'covered_text', 'negated', 'hypothetical', 'cui',
                        'section_normalized_name', 'date_in_milliseconds', 'snomed_concept_id', 'procedure_surface_form',
-                       'procedure_normalized_name', 'section_surface_form', 'disambiguation_data', 'insight_model_data'})
+                       'procedure_normalized_name', 'section_surface_form', 'disambiguation_data', 'insight_model_data',
+                       'temporal'})
         if not hasattr(self, '_additionalProperties'):
             super(Procedure, self).__setattr__('_additionalProperties', set())
         if name not in properties:
@@ -7571,13 +7616,14 @@ class SymptomDisease(object):
     :attr str hcc_code: (optional)
     :attr Disambiguation disambiguation_data: (optional)
     :attr InsightModelData insight_model_data: (optional)
+    :attr list[Temporal] temporal: (optional)
     """
 
     def __init__(self, id=None, type=None, uid=None, begin=None, end=None, covered_text=None, negated=None,
                  hypothetical=None, cui=None, icd10_code=None, section_normalized_name=None, modality=None,
                  symptom_disease_surface_form=None, date_in_milliseconds=None, snomed_concept_id=None, ccs_code=None,
                  symptom_disease_normalized_name=None, section_surface_form=None, icd9_code=None, hcc_code=None,
-                 disambiguation_data=None, insight_model_data=None, **kwargs):
+                 disambiguation_data=None, insight_model_data=None, temporal=None, **kwargs):
         """
         Initialize a SymptomDisease object.
         :param str id: (optional)
@@ -7602,6 +7648,7 @@ class SymptomDisease(object):
         :param str hcc_code: (optional)
         :param Disambiguation disambiguation_data: (optional)
         :param InsightModelData insight_model_data: (optional)
+        :param list[Temporal] temporal: (optional)
         :param **kwargs: (optional) Any additional properties.
         """
         self.id = id
@@ -7626,6 +7673,7 @@ class SymptomDisease(object):
         self.hcc_code = hcc_code
         self.disambiguation_data = disambiguation_data
         self.insight_model_data = insight_model_data
+        self.temporal = temporal
         for _key, _value in kwargs.items():
             setattr(self, _key, _value)
 
@@ -7700,6 +7748,9 @@ class SymptomDisease(object):
         if 'insightModelData' in _dict:
             args['insight_model_data'] = InsightModelData._from_dict(_dict['insightModelData'])
             del xtra['insightModelData']
+        if 'temporal' in _dict:
+            args['temporal'] = [Temporal._from_dict(entry) for entry in _dict['temporal']]
+            del xtra['temporal']
         args.update(xtra)
         return cls(**args)
 
@@ -7755,6 +7806,8 @@ class SymptomDisease(object):
             _dict['disambiguationData'] = self.disambiguation_data._to_dict()
         if hasattr(self, 'insight_model_data') and self.insight_model_data is not None:
             _dict['insightModelData'] = self.insight_model_data._to_dict()
+        if hasattr(self, 'temporal') and self.temporal is not None:
+            _dict['temporal'] = [entry._to_dict() for entry in self.temporal]
         if hasattr(self, '_additionalProperties'):
             for _key in self._additionalProperties:
                 _value = getattr(self, _key, None)
@@ -7770,7 +7823,8 @@ class SymptomDisease(object):
         properties = ({'id', 'type', 'uid', 'begin', 'end', 'covered_text', 'negated', 'hypothetical', 'cui',
                        'icd10_code', 'section_normalized_name', 'modality', 'symptom_disease_surface_form',
                        'date_in_milliseconds', 'snomed_concept_id', 'ccs_code', 'symptom_disease_normalized_name',
-                       'section_surface_form', 'icd9_code', 'hcc_code', 'disambiguation_data', 'insight_model_data'})
+                       'section_surface_form', 'icd9_code', 'hcc_code', 'disambiguation_data', 'insight_model_data',
+                       'temporal'})
         if not hasattr(self, '_additionalProperties'):
             super(SymptomDisease, self).__setattr__('_additionalProperties', set())
         if name not in properties:
@@ -7779,6 +7833,100 @@ class SymptomDisease(object):
 
     def __str__(self):
         """Return a `str` version of this SymptomDisease object."""
+        return json.dumps(self._to_dict(), indent=2)
+
+
+class Temporal(object):
+    """
+    Temporal.
+    :attr int begin:
+    :attr int end:
+    :attr str covered_text:
+    :attr object temporal_type: (optional)
+    :attr object relation_types: (optional)
+    """
+    def __init__(self, begin=None, end=None, covered_text=None, temporal_type=None, relation_types=None, **kwargs):
+        """
+        Initializes a temporal
+        :param int begin:
+        :param int end:
+        :param str covered_text:
+        :param object temporal_type:
+        :param object relation_types:
+        :param **kwargs: (optional) Any additional properties.
+        """
+        self.begin = begin
+        self.end = end
+        self.covered_text = covered_text
+        self.temporal_type = temporal_type
+        self.relation_types = relation_types 
+        for _key, _value in kwargs.items():
+            setattr(self, _key, _value)
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize a Temporal object from a json dictionary."""
+        args = {}
+        xtra = _dict.copy()
+
+        if 'begin' in _dict:
+            args['begin'] = _dict['begin']
+            del xtra['begin']
+        if 'end' in _dict:
+            args['end'] = _dict['end']
+            del xtra['end']
+        if 'coveredText' in _dict:
+            args['covered_text'] = _dict['coveredText']
+            del xtra['coveredText']
+        if 'temporalType' in _dict:
+            args['temporal_type'] = _dict['temporalType']
+            del xtra['temporalType']
+        if 'relationTypes' in _dict:
+            args['relation_types'] = _dict['relationTypes']
+            del xtra['relationTypes']
+
+        args.update(xtra)
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a Temporal object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this temporal model."""
+        _dict = {}
+        if hasattr(self, 'begin') and self.begin is not None:
+            _dict['begin'] = self.begin
+        if hasattr(self, 'end') and self.end is not None:
+            _dict['end'] = self.end
+        if hasattr(self, 'covered_text') and self.covered_text is not None:
+            _dict['coveredText'] = self.covered_text
+        if hasattr(self, 'temporal_type') and self.temporal_type is not None:
+            _dict['temporalType'] = self.temporal_type
+        if hasattr(self, 'relation_types') and self.relation_types is not None:
+            _dict['relationTypes'] = self.relation_types
+        if hasattr(self, '_additionalProperties'):
+            for _key in self._additionalProperties:
+                _value = getattr(self, _key, None)
+                if _value is not None:
+                    _dict[_key] = _value
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __setattr__(self, name, value):
+        properties = {'begin', 'end', 'covered_text', 'temporal_type', 'relation_types'}
+        if not hasattr(self, '_additionalProperties'):
+            super(Temporal, self).__setattr__('_additionalProperties', set())
+        if name not in properties:
+            self._additionalProperties.add(name)
+        super(Temporal, self).__setattr__(name, value)
+
+    def __str__(self):
+        """Return a `str` version of this Temporal object."""
         return json.dumps(self._to_dict(), indent=2)
 
 
