@@ -44,7 +44,9 @@ LINE5 = 'Patient cannot dress or feed without help as the patient can not see.  
 LINE6 = 'died yet.  Patient smoked for 20 years.  Patient can not clean up after defacating in toilet.  '
 LINE7 = 'Jone Doe was seen at Baylor Hospitall in Austin, TX.  Johndoe@testaddress.com - (555) 555-5555 '
 LINE8 = 'The patient started on metformin because his blood sugar was too high.'
-TEXT = LINE1 + LINE2 + LINE3 + LINE4 + LINE5 + LINE6 + LINE7 + LINE8
+LINE9 = 'CT scan showed a tumor in his lung.'
+LINE10 = 'She had gallbladder removal September 19 2020'
+TEXT = LINE1 + LINE2 + LINE3 + LINE4 + LINE5 + LINE6 + LINE7 + LINE8 + LINE9 + LINE10
 
 def test_analyze_flow():
     data = ACD.analyze_with_flow(FLOW, TEXT)
@@ -134,6 +136,7 @@ def test_analyze_org():
     toileting_annotator = wh.Annotator(name=wh.Name.TOILETING_ASSISTANCE)
     walking_annotator = wh.Annotator(name=wh.Name.WALKING_ASSISTANCE)
     section = wh.Annotator(name=wh.Name.SECTION)
+    model_broker = wh.Annotator(name=wh.Name.MODEL_BROKER)
 
     flow_entries = []
     flow_entries.append(wh.FlowEntry(allergy_annotator))
@@ -158,6 +161,7 @@ def test_analyze_org():
     flow_entries.append(wh.FlowEntry(toileting_annotator))
     flow_entries.append(wh.FlowEntry(walking_annotator))
     flow_entries.append(wh.FlowEntry(section))
+    flow_entries.append(wh.FlowEntry(model_broker))
 
     flow = wh.Flow(elements = flow_entries, async_ = False)
     annotator_flow = wh.AnnotatorFlow(flow=flow)
@@ -206,6 +210,7 @@ def test_analyze():
     toileting_annotator = wh.Annotator(name=wh.Name.TOILETING_ASSISTANCE)
     walking_annotator = wh.Annotator(name=wh.Name.WALKING_ASSISTANCE)
     section = wh.Annotator(name=wh.Name.SECTION)
+    model_broker = wh.Annotator(name=wh.Name.MODEL_BROKER)
 
     flow_entries = []
     flow_entries.append(wh.FlowEntry(allergy_annotator))
@@ -230,6 +235,7 @@ def test_analyze():
     flow_entries.append(wh.FlowEntry(toileting_annotator))
     flow_entries.append(wh.FlowEntry(walking_annotator))
     flow_entries.append(wh.FlowEntry(section))
+    flow_entries.append(wh.FlowEntry(model_broker))
     flow = wh.Flow(elements = flow_entries, async_ = False)
     annotator_flow = wh.AnnotatorFlow(flow)
 
@@ -265,6 +271,7 @@ def test_analyze_text_array():
     toileting_annotator = wh.Annotator(name=wh.Name.TOILETING_ASSISTANCE)
     walking_annotator = wh.Annotator(name=wh.Name.WALKING_ASSISTANCE)
     section = wh.Annotator(name=wh.Name.SECTION)
+    model_broker = wh.Annotator(name=wh.Name.MODEL_BROKER)
 
     flow_entries = []
     flow_entries.append(wh.FlowEntry(allergy_annotator))
@@ -289,6 +296,7 @@ def test_analyze_text_array():
     flow_entries.append(wh.FlowEntry(toileting_annotator))
     flow_entries.append(wh.FlowEntry(walking_annotator))
     flow_entries.append(wh.FlowEntry(section))
+    flow_entries.append(wh.FlowEntry(model_broker))
     flow = wh.Flow(elements = flow_entries, async_ = False)
     annotator_flow = wh.AnnotatorFlow(flow)
 

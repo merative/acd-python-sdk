@@ -57,3 +57,6 @@ class TestSymptomDiseaseAnnotation(object):
                     assert len(annotation.section_surface_form) > 0
                 if annotation.insight_model_data is not None:
                     ti.TestInsightModel.test_insight_model_data(annotation.insight_model_data)
+                if annotation.temporal is not None:
+                    for entry in annotation.temporal:
+                        assert entry is not None

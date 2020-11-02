@@ -32,6 +32,7 @@ from ibm_whcs_sdk.annotator_for_clinical_data.tests.common import test_nlu_entit
 from ibm_whcs_sdk.annotator_for_clinical_data.tests.common import test_relation as tr
 #import tests.functional.test_spell_correction as tsc
 from ibm_whcs_sdk.annotator_for_clinical_data.tests.common import test_spell_corrected_text as tsct
+from ibm_whcs_sdk.annotator_for_clinical_data.tests.common import test_temporal_span as tts
 
 class TestUnstructuredContainer(object):
 
@@ -98,3 +99,5 @@ class TestUnstructuredContainer(object):
                 tr.TestRelationAnnotation.test_relation_annotation(data.relations)
             if data.spell_corrected_text is not None:
                 tsct.TestSpellCorrectedText.test_spell_corrected_text(data.spell_corrected_text)
+            if data.temporal_spans is not None:
+                tts.TestTemporalSpanAnnotation.test_temporal_span(data.temporal_spans)
