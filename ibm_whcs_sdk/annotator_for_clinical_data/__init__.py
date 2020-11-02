@@ -58,6 +58,7 @@ from .annotator_for_clinical_data_v1 import SymptomDisease
 from .annotator_for_clinical_data_v1 import UnstructuredContainer
 from .annotator_for_clinical_data_v1 import ACDException
 from .annotator_for_clinical_data_v1 import InsightModelData
+from .annotator_for_clinical_data_v1 import Temporal
 
 #from .util import CustomDeserializer
 #from .util import CustomCollection
