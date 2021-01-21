@@ -33,6 +33,7 @@ ACD = wh.AnnotatorForClinicalDataV1(
     version=VERSION
     )
 ACD.set_service_url(BASE_URL)
+ACD.set_disable_ssl_verification(DISABLE_SSL)
 
 def test_get_flows():
     response = ACD.get_flows()
