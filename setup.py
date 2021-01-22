@@ -24,10 +24,10 @@ __version__ = '1.9.0'
 PACKAGE_NAME = 'ibm_whcs_sdk'
 PACKAGE_DESC = 'This is the Watson Health Cognitive Services Python SDK containing ACD and IML',
 
-#with open('requirements.txt') as f:
-#    install_requires = [str(req) for req in pkg_resources.parse_requirements(f)]
-#with open('requirements-dev.txt') as f:
-#    tests_require = [str(req) for req in pkg_resources.parse_requirements(f)]
+with open('requirements.txt') as f:
+    install_requires = [str(req) for req in pkg_resources.parse_requirements(f)]
+with open('requirements-dev.txt') as f:
+    tests_require = [str(req) for req in pkg_resources.parse_requirements(f)]
 
 if sys.argv[-1] == 'publish':
     # test server
@@ -66,8 +66,8 @@ setup(name=PACKAGE_NAME.replace('_', '-'),
       version=__version__,
       description=PACKAGE_DESC,
       license='Apache 2.0',
-      install_requires=['requests>=2.0,<3.0', 'python_dateutil>=2.5.3', 'websocket_client>=0.48.0', 'ibm_cloud_sdk_core>=1.7.1'],
-      tests_require=['pytest', 'responses', 'pylint', 'tox', 'coverage', 'codecov', 'pytest-cov', 'bumpversion'],
+      install_requires=install_requires,
+      tests_require=tests_require,
       cmdclass={'test': PyTest, 'test_unit': PyTestUnit, 'test_integration': PyTestIntegration},
       author='IBM',
       author_email='dcweber@us.ibm.com',
@@ -89,8 +89,7 @@ setup(name=PACKAGE_NAME.replace('_', '-'),
            'License :: OSI Approved :: Apache Software License',
            'Operating System :: OS Independent',
            'Topic :: Software Development :: Libraries :: Python Modules',
-           'Topic :: Software Development :: Libraries :: Application '
-           'Frameworks',
+           'Topic :: Software Development :: Libraries :: Application Frameworks',
       ],
       zip_safe=True
     )
