@@ -20,6 +20,7 @@ before_install:
 install:
 - pip install tox-travis
 
+# 
 # before_script:
 # - 'openssl aes-256-cbc -K $ghost_key -iv $ghost_iv -in .ghostenv.enc -out .ghostenv -d || true'
 
