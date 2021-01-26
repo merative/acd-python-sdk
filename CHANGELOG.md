@@ -1,3 +1,10 @@
+## [1.10.1](https://github.com/IBM/whcs-python-sdk/compare/v1.10.0...v1.10.1) (2021-01-26)
+
+
+### Bug Fixes
+
+* indicate PyJWT version ([6dff566](https://github.com/IBM/whcs-python-sdk/commit/6dff566e8ca4b13dd930e38367baf326f3d8e4f6))
+
 # [1.10.0](https://github.com/IBM/whcs-python-sdk/compare/v1.9.1...v1.10.0) (2021-01-22)
 
 
