@@ -1,3 +1,10 @@
+## [1.10.2](https://github.com/IBM/whcs-python-sdk/compare/v1.10.1...v1.10.2) (2021-01-26)
+
+
+### Bug Fixes
+
+* **build:** deply to pypi org from 3.6 ([cd0db54](https://github.com/IBM/whcs-python-sdk/commit/cd0db5495ec669bd5b840cd87f705dc2122d7cb2))
+
 ## [1.10.1](https://github.com/IBM/whcs-python-sdk/compare/v1.10.0...v1.10.1) (2021-01-26)
 
 
