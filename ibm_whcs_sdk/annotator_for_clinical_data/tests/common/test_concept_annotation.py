@@ -26,7 +26,7 @@ class TestConceptAnnotation(object):
                     assert len(annotation.id) > 0
                 if annotation.type is not None:
                     assert len(annotation.type) > 0
-                assert annotation.begin > 0
+                assert annotation.begin >= 0
                 assert annotation.end > annotation.begin
                 assert annotation.covered_text is not None
                 if annotation.semantic_type is not None:
