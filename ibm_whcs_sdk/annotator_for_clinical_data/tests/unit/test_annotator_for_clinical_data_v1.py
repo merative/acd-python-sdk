@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from ibm_whcs_sdk.annotator_for_clinical_data.tests.common import test_annotation
 from ibm_cloud_sdk_core.authenticators.no_auth_authenticator import NoAuthAuthenticator
 import inspect
 import io
@@ -2477,6 +2478,20 @@ class TestUnstructuredContainer():
         # Convert model instance back to dict and verify no loss of data
         unstructured_container_model_json2 = unstructured_container_model.to_dict()
 #        assert unstructured_container_model_json2 == unstructured_container_model_json
+
+#-----------------------------------------------------------------------------
+# Test Class for Annotation
+#-----------------------------------------------------------------------------
+class TestUnstructuredContainer():
+
+    #--------------------------------------------------------
+    # Test serialization/deserialization for UnstructuredContainer
+    #--------------------------------------------------------
+    def test_unstructured_container_serialization(self):
+
+        # Construct a basic Annotation and make sure it passes sanity test
+        annotation_model = Annotation(cui='testString', begin=0, end=1, covered_text='a')
+        test_annotation.TestAnnotation.test_annotation(annotation_list=[annotation_model])
 
 #-----------------------------------------------------------------------------
 # Test Class for ServiceError

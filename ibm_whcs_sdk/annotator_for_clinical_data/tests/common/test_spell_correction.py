@@ -22,7 +22,7 @@ class TestSpellCorrectionAnnotation(object):
     def test_spelling_correction(annotation_list=None):
         if annotation_list is not None:
             for annotation in annotation_list:
-                assert annotation.begin > 0
+                assert annotation.begin >= 0
                 assert annotation.end > annotation.begin
                 assert annotation.covered_text is not None
                 for suggestion in annotation.suggestions:

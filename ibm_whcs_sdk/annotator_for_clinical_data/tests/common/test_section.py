@@ -23,13 +23,13 @@ class TestSectionAnnotation(object):
                 assert annotation.type is not None
                 if annotation.section_type is not None:
                     assert len(annotation.section_type) > 0
-                assert annotation.begin > 0
+                assert annotation.begin >= 0
                 assert annotation.end > annotation.begin
                 if annotation.covered_text is not None:
                     assert len(annotation.covered_text) > 0
                 if annotation.trigger is not None:
                     section_trigger = annotation.trigger
-                    assert section_trigger.begin > 0
+                    assert section_trigger.begin >= 0
                     assert section_trigger.end > section_trigger.begin
                     assert section_trigger.covered_text is not None
                     assert section_trigger.source is not None
