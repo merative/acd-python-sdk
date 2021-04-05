@@ -22,7 +22,7 @@ class TestNluEntitiesAnnotation(object):
             for annotation in annotation_list:
                 assert annotation.type is not None
                 assert annotation.source is not None
-                assert annotation.begin > 0
+                assert annotation.begin >= 0
                 assert annotation.end > annotation.begin
                 assert annotation.relevance > 0
                 if annotation.uid is not None:
