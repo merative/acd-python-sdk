@@ -1,3 +1,10 @@
+## [1.10.3](https://github.com/IBM/whcs-python-sdk/compare/v1.10.2...v1.10.3) (2021-05-12)
+
+
+### Bug Fixes
+
+* upgrade to lodash ([8fef59c](https://github.com/IBM/whcs-python-sdk/commit/8fef59c53efa0b4b53e7a715e9b1ea359b8c6d7c))
+
 ## [1.10.2](https://github.com/IBM/whcs-python-sdk/compare/v1.10.1...v1.10.2) (2021-01-26)
 
 
