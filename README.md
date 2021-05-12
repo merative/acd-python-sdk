@@ -1,5 +1,5 @@
 
-# IBM Watson Health Cognitive Services Python SDK Version 1.10.2
+# IBM Watson Health Cognitive Services Python SDK Version 1.10.3
 
 ## Overview
 
