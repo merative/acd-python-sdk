@@ -18,8 +18,10 @@ before_install:
 
 install:
   - pip install tox-travis
+  - pip install "pip==20.1.1"
 
 script:
+  - pip -V
   - make deps dev_deps install_project
 
 before_deploy:
