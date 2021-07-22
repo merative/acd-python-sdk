@@ -2,14 +2,13 @@ language: python
 
 matrix:
   include:
-    - python: 3.5
-    - python: 3.6
     - python: 3.7
     - python: 3.8
+    - python: 3.9
 
 dist: xenial
 
-cache: pip
+cache: false
 
 before_install:
 - npm install npm@latest -g
@@ -18,14 +17,12 @@ before_install:
 - pip install pypandoc
 
 install:
-- pip install tox-travis
-
-# 
-# before_script:
-# - 'openssl aes-256-cbc -K $ghost_key -iv $ghost_iv -in .ghostenv.enc -out .ghostenv -d || true'
+  - pip install --upgrade pip
+  - pip -V
+  - pip install tox-travis
 
 script:
-- tox
+  - make deps dev_deps install_project
 
 before_deploy:
 - pip install bump2version
