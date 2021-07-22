@@ -26,7 +26,7 @@ install:
 # - 'openssl aes-256-cbc -K $ghost_key -iv $ghost_iv -in .ghostenv.enc -out .ghostenv -d || true'
 
 script:
-- tox
+- tox -v
 
 before_deploy:
 - pip install bump2version
