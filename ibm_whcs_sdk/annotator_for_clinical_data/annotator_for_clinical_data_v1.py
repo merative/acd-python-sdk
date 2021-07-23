@@ -39,16 +39,18 @@ class ACDException(ApiException):
     :param int code: The HTTP status code returned.
     :param str message: A message describing the error.
     :param str correlationId: A code to associate to the ACD error
+    :param str errDescription: A description of the error if available.
     """
 
-    def __init__(self, code, message=None, correlation_id=None):
+    def __init__(self, code, message=None, correlation_id=None, err_description=None):
         self.message = message
         self.code = code
         self.correlation_id = correlation_id
+        self.err_description = err_description
 
     def __str__(self):
         msg = ('Error: ' + str(self.message) + ', Code: ' + str(self.code)
-               + ', CorrelationId: ' + str(self.correlation_id))
+               + ', CorrelationId: ' + str(self.correlation_id) + ', Description: ' + str(self.err_description))
         return msg
 
 ##############################################################################
@@ -134,9 +136,15 @@ class AnnotatorForClinicalDataV1(BaseService):
                 and api_except.http_response.headers.get('x-correlation-id') is not None
                 ):
                 correlation_id = api_except.http_response.headers.get('x-correlation-id')
+                try:
+                    http_resp_json = api_except.http_response.json()
+                    err_description = http_resp_json['description']
+                except:
+                    err_description = "None"
             else:
                 correlation_id = "None"
-            raise ACDException(status_code, error_message, correlation_id)
+                err_description = "None"
+            raise ACDException(status_code, error_message, correlation_id, err_description)
 
         return final
 
