@@ -1,6 +1,6 @@
 # coding: utf-8
 
-# (C) Copyright IBM Corp. 2020.
+# (C) Copyright IBM Corp. 2021.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -3126,6 +3126,7 @@ class Concept(object):
     :attr str rule_id: (optional)
     :attr list[Concept] derived_from: (optional)
     :attr list[Temporal] temporal: (optional)
+    :attr str selection_label: (optional)
     """
 
     def __init__(self, id=None, type=None, uid=None, begin=None, end=None, covered_text=None, negated=None,
@@ -3133,7 +3134,7 @@ class Concept(object):
                  source_version=None, disambiguation_data=None, icd9_code=None, icd10_code=None, nci_code=None,
                  snomed_concept_id=None, mesh_id=None, rx_norm_id=None, loinc_id=None, vocabs=None,
                  section_normalized_name=None, section_surface_form=None, cpt_code=None, insight_model_data=None,
-                 rule_id=None, derived_from=None, temporal=None, **kwargs):
+                 rule_id=None, derived_from=None, temporal=None, selection_label=None, **kwargs):
         """
         Initialize a Concept object.
         :param str id: (optional)
@@ -3165,6 +3166,7 @@ class Concept(object):
         :param str rule_id: (optional)
         :param list[Concept] derived_from: (optional)
         :param list[Temporal] temporal: (optional)
+        :param str selection_label: (optional)
         :param **kwargs: (optional) Any additional properties.
         """
         self.id = id
@@ -3196,6 +3198,7 @@ class Concept(object):
         self.rule_id = rule_id
         self.derived_from = derived_from
         self.temporal = temporal
+        self.selection_label = selection_label
         for _key, _value in kwargs.items():
             setattr(self, _key, _value)
 
@@ -3295,6 +3298,9 @@ class Concept(object):
         if 'temporal' in _dict:
             args['temporal'] = [Temporal._from_dict(entry) for entry in _dict['temporal']]
             del xtra['temporal']
+        if 'selectionLabel' in _dict:
+            args['selection_label'] = _dict['selectionLabel']
+            del xtra['selectionLabel']
         args.update(xtra)
         return cls(**args)
 
@@ -3364,6 +3370,8 @@ class Concept(object):
             _dict['derivedFrom'] = [entry._to_dict() for entry in self.derived_from]
         if hasattr(self, 'temporal') and self.temporal is not None:
             _dict['temporal'] = [entry._to_dict() for entry in self.temporal]
+        if hasattr(self, 'selection_label') and self.selection_label is not None:
+            _dict['selectionLabel'] = self.selection_label
         if hasattr(self, '_additionalProperties'):
             for _key in self._additionalProperties:
                 _value = getattr(self, _key, None)
@@ -3380,7 +3388,7 @@ class Concept(object):
                        'preferred_name', 'semantic_type', 'source', 'source_version', 'disambiguation_data',
                        'icd9_code', 'icd10_code', 'nci_code', 'snomed_concept_id', 'mesh_id', 'rx_norm_id',
                        'loinc_id', 'vocabs', 'section_normalized_name', 'section_surface_form', 'cpt_code',
-                       'insight_model_data', 'rule_id', 'derived_from', 'temporal'})
+                       'insight_model_data', 'rule_id', 'derived_from', 'temporal', 'selection_label'})
         if not hasattr(self, '_additionalProperties'):
             super(Concept, self).__setattr__('_additionalProperties', set())
         if name not in properties:
