@@ -1,3 +1,11 @@
+## [1.10.5](https://github.com/IBM/whcs-python-sdk/compare/v1.10.4...v1.10.5) (2021-09-08)
+
+
+### Bug Fixes
+
+* support evidence spans feature ([124180b](https://github.com/IBM/whcs-python-sdk/commit/124180b440e90877740ec4ffbb88486ad10d391f))
+* support selection_label feature ([a2913cf](https://github.com/IBM/whcs-python-sdk/commit/a2913cf72e582d3f62164d083b9d35834f8f5b77))
+
 ## [1.10.4](https://github.com/IBM/whcs-python-sdk/compare/v1.10.3...v1.10.4) (2021-07-23)
 
 
