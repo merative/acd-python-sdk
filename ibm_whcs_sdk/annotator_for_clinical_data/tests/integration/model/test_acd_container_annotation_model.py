@@ -1,6 +1,6 @@
 # coding: utf-8
 
-# Copyright 2018 IBM All Rights Reserved.
+# Copyright 2021 IBM All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -49,6 +49,9 @@ def test_ContainerAnnotation_model():
     spelling_corrections = []
     spell_corrected_text = []
     temporal_spans = []
+    lines = []
+    sentences = []
+    paragraphs = []
     model = wh.ContainerAnnotation(allergy_ind=allergy_ind, allergy_medication_ind=allergy_medication_ind,
                                    attribute_values=attribute_values, bathing_assistance_ind=bathing_assistance_ind,
                                    ica_cancer_diagnosis_ind=ica_cancer_diagnosis_ind, concepts=concepts,
@@ -66,5 +69,5 @@ def test_ContainerAnnotation_model():
                                    walking_assistance_ind=walking_assistance_ind, sections=sections,
                                    nlu_entities=nlu_entities, relations=relations,
                                    spelling_corrections=spelling_corrections, spell_corrected_text=spell_corrected_text,
-                                   temporal_spans=temporal_spans)
+                                   temporal_spans=temporal_spans, lines=lines, sentences=sentences, paragraphs=paragraphs)
     assert model.__str__() is not None
