@@ -1,6 +1,6 @@
 # coding: utf-8
 
-# Copyright 2018 IBM All Rights Reserved.
+# Copyright 2021 IBM All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -101,3 +101,9 @@ class TestUnstructuredContainer(object):
                 tsct.TestSpellCorrectedText.test_spell_corrected_text(data.spell_corrected_text)
             if data.temporal_spans is not None:
                 tts.TestTemporalSpanAnnotation.test_temporal_span(data.temporal_spans)
+            if data.lines is not None:
+                ta.TestAnnotation.test_annotation(data.lines)
+            if data.sentences is not None:
+                ta.TestAnnotation.test_annotation(data.sentences)
+            if data.paragraphs is not None:
+                ta.TestAnnotation.test_annotation(data.paragraphs)

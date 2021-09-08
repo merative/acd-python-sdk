@@ -1,6 +1,6 @@
 # coding: utf-8
 
-# Copyright 2018 IBM All Rights Reserved.
+# Copyright 2021 IBM All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -81,6 +81,15 @@ class TestAttributeValueAnnotation(object):
                 if annotation.derived_from is not None:
                     for entry in annotation.derived_from:
                         assert entry is not None
+                        if entry.uid is not None:
+                            assert entry.uid > 0
+                        if entry.value_index is not None:
+                            assert entry.value_index >= 0
                 if annotation.temporal is not None:
                     for entry in annotation.temporal:
                         assert entry is not None
+                if annotation.evidence_spans is not None:
+                    for entry in annotation.evidence_spans:
+                        assert entry is not None
+                        if entry.uid is not None:
+                            assert entry.uid > 0

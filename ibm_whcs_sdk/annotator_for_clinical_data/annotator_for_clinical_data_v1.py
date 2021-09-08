@@ -2639,6 +2639,7 @@ class AttributeValueAnnotation(object):
     :attr str rule_id: (optional)
     :attr list[Concept] derived_from: (optional)
     :attr list[Temporal] temporal: (optional)
+    :attr list[Reference] evidence_spans: (optional)
     """
 
     def __init__(self, id=None, type=None, uid=None, begin=None, end=None, covered_text=None, negated=None,
@@ -2646,7 +2647,7 @@ class AttributeValueAnnotation(object):
                  concept=None, name=None, icd9_code=None, icd10_code=None, nci_code=None, snomed_concept_id=None,
                  mesh_id=None, rx_norm_id=None, loinc_id=None, vocabs=None, section_normalized_name=None,
                  section_surface_form=None, cpt_code=None, disambiguation_data=None, insight_model_data=None,
-                 ccs_code=None, hcc_code=None, rule_id=None, derived_from=None, temporal=None, **kwargs):
+                 ccs_code=None, hcc_code=None, rule_id=None, derived_from=None, temporal=None, evidence_spans=None, **kwargs):
         """
         Initialize a AttributeValueAnnotation object.
         :param str id: (optional)
@@ -2681,6 +2682,7 @@ class AttributeValueAnnotation(object):
         :param str rule_id: (optional)
         :param list[Concept] derived_from: (optional)
         :param list[Temporal] temporal: (optional)
+        :param list[Reference] evidence_spans: (optional)
         :param **kwargs: (optional) Any additional properties.
         """
         self.id = id
@@ -2715,6 +2717,7 @@ class AttributeValueAnnotation(object):
         self.rule_id = rule_id
         self.derived_from = derived_from
         self.temporal = temporal
+        self.evidence_spans = evidence_spans
         for _key, _value in kwargs.items():
             setattr(self, _key, _value)
 
@@ -2823,6 +2826,9 @@ class AttributeValueAnnotation(object):
         if 'temporal' in _dict:
             args['temporal'] = [Temporal._from_dict(entry) for entry in _dict['temporal']]
             del xtra['temporal']
+        if 'evidenceSpans' in _dict:
+            args['evidence_spans'] = [Reference._from_dict(entry) for entry in _dict['evidenceSpans']]
+            del xtra['evidenceSpans']
         args.update(xtra)
         return cls(**args)
 
@@ -2898,6 +2904,8 @@ class AttributeValueAnnotation(object):
             _dict['derivedFrom'] = [entry._to_dict() for entry in self.derived_from]
         if hasattr(self, 'temporal') and self.temporal is not None:
             _dict['temporal'] = [entry._to_dict() for entry in self.temporal]
+        if hasattr(self, 'evidence_spans') and self.evidence_spans is not None:
+            _dict['evidenceSpans'] = [entry._to_dict() for entry in self.evidence_spans]
         if hasattr(self, '_additionalProperties'):
             for _key in self._additionalProperties:
                 _value = getattr(self, _key, None)
@@ -2914,7 +2922,7 @@ class AttributeValueAnnotation(object):
                        'values', 'source', 'source_version', 'concept', 'name', 'icd9_code', 'icd10_code', 'nci_code',
                        'snomed_concept_id', 'mesh_id', 'rx_norm_id', 'loinc_id', 'vocabs', 'section_normalized_name',
                        'section_surface_form', 'cpt_code', 'disambiguation_data', 'insight_model_data', 'ccs_code',
-                       'hcc_code', 'rule_id', 'derived_from', 'temporal'})
+                       'hcc_code', 'rule_id', 'derived_from', 'temporal', 'evidence_spans'})
         if not hasattr(self, '_additionalProperties'):
             super(AttributeValueAnnotation, self).__setattr__('_additionalProperties', set())
         if name not in properties:
@@ -3127,6 +3135,7 @@ class Concept(object):
     :attr list[Concept] derived_from: (optional)
     :attr list[Temporal] temporal: (optional)
     :attr str selection_label: (optional)
+    :attr int value_index: (optional)
     """
 
     def __init__(self, id=None, type=None, uid=None, begin=None, end=None, covered_text=None, negated=None,
@@ -3134,7 +3143,7 @@ class Concept(object):
                  source_version=None, disambiguation_data=None, icd9_code=None, icd10_code=None, nci_code=None,
                  snomed_concept_id=None, mesh_id=None, rx_norm_id=None, loinc_id=None, vocabs=None,
                  section_normalized_name=None, section_surface_form=None, cpt_code=None, insight_model_data=None,
-                 rule_id=None, derived_from=None, temporal=None, selection_label=None, **kwargs):
+                 rule_id=None, derived_from=None, temporal=None, selection_label=None, value_index=None, **kwargs):
         """
         Initialize a Concept object.
         :param str id: (optional)
@@ -3167,6 +3176,7 @@ class Concept(object):
         :param list[Concept] derived_from: (optional)
         :param list[Temporal] temporal: (optional)
         :param str selection_label: (optional)
+        :param int value_index: (optional)
         :param **kwargs: (optional) Any additional properties.
         """
         self.id = id
@@ -3199,6 +3209,7 @@ class Concept(object):
         self.derived_from = derived_from
         self.temporal = temporal
         self.selection_label = selection_label
+        self.value_index = value_index
         for _key, _value in kwargs.items():
             setattr(self, _key, _value)
 
@@ -3301,6 +3312,9 @@ class Concept(object):
         if 'selectionLabel' in _dict:
             args['selection_label'] = _dict['selectionLabel']
             del xtra['selectionLabel']
+        if 'valueIndex' in _dict:
+            args['value_index'] = _dict['valueIndex']
+            del xtra['valueIndex']
         args.update(xtra)
         return cls(**args)
 
@@ -3372,6 +3386,8 @@ class Concept(object):
             _dict['temporal'] = [entry._to_dict() for entry in self.temporal]
         if hasattr(self, 'selection_label') and self.selection_label is not None:
             _dict['selectionLabel'] = self.selection_label
+        if hasattr(self, 'value_index') and self.value_index is not None:
+            _dict['valueIndex'] = self.value_index
         if hasattr(self, '_additionalProperties'):
             for _key in self._additionalProperties:
                 _value = getattr(self, _key, None)
@@ -3388,7 +3404,7 @@ class Concept(object):
                        'preferred_name', 'semantic_type', 'source', 'source_version', 'disambiguation_data',
                        'icd9_code', 'icd10_code', 'nci_code', 'snomed_concept_id', 'mesh_id', 'rx_norm_id',
                        'loinc_id', 'vocabs', 'section_normalized_name', 'section_surface_form', 'cpt_code',
-                       'insight_model_data', 'rule_id', 'derived_from', 'temporal', 'selection_label'})
+                       'insight_model_data', 'rule_id', 'derived_from', 'temporal', 'selection_label', 'value_index'})
         if not hasattr(self, '_additionalProperties'):
             super(Concept, self).__setattr__('_additionalProperties', set())
         if name not in properties:
@@ -3743,6 +3759,9 @@ class ContainerAnnotation(object):
     :attr list[SpellingCorrection]: (optional)
     :attr list[SpellCorrectedText] spell_corrected_text: (optional)
     :attr list[Temporal] temporal_spans: (optional)
+    :attr list[Annotation] lines: (optional)
+    :attr list[Annotation] sentences: (optional)
+    :attr list[Annotation] paragraphs: (optional)
     """
 
     def __init__(self, allergy_ind=None, allergy_medication_ind=None, attribute_values=None,
@@ -3753,7 +3772,8 @@ class ContainerAnnotation(object):
                  medical_institution_ind=None, organization_ind=None, negated_spans=None, procedure_ind=None,
                  seeing_assistance_ind=None, smoking_ind=None, symptom_disease_ind=None, toileting_assistance_ind=None,
                  walking_assistance_ind=None, sections=None, nlu_entities=None, relations=None,
-                 spelling_corrections=None, spell_corrected_text=None, temporal_spans=None):
+                 spelling_corrections=None, spell_corrected_text=None, temporal_spans=None, lines=None, sentences=None,
+                 paragraphs=None):
         """
         Initialize a ContainerAnnotation object.
         :param list[Annotation] allergy_ind: (optional)
@@ -3788,6 +3808,9 @@ class ContainerAnnotation(object):
         :param list[SpellingCorrection] spelling_correction: (optional)
         :param list[SpellCorrectedText] spell_corrected_text: (optional)
         :param list[Temporal] temporal_spans: (optional)
+        :param list[Annotation] lines: (optional)
+        :param list[Annotation] sentences: (optional)
+        :param list[Annotation] paragraphs: (optional)
         """
         self.allergy_ind = allergy_ind
         self.allergy_medication_ind = allergy_medication_ind
@@ -3821,6 +3844,9 @@ class ContainerAnnotation(object):
         self.spelling_corrections = spelling_corrections
         self.spell_corrected_text = spell_corrected_text
         self.temporal_spans = temporal_spans
+        self.lines = lines
+        self.sentences = sentences
+        self.paragraphs = paragraphs
 
     @classmethod
     def from_dict(cls, _dict):
@@ -3895,6 +3921,12 @@ class ContainerAnnotation(object):
             args['spell_corrected_text'] = [SpellCorrectedText._from_dict(x) for x in _dict['spellCorrectedText']]
         if 'temporalSpans' in _dict:
             args['temporal_spans'] = [Temporal._from_dict(x) for x in _dict['temporalSpans']]
+        if 'lines' in _dict:
+            args['lines'] = [Annotation._from_dict(x) for x in _dict['lines']]
+        if 'sentences' in _dict:
+            args['sentences'] = [Annotation._from_dict(x) for x in _dict['sentences']]
+        if 'paragraphs' in _dict:
+            args['paragraphs'] = [Annotation._from_dict(x) for x in _dict['paragraphs']]
         return cls(**args)
 
     @classmethod
@@ -3969,6 +4001,12 @@ class ContainerAnnotation(object):
             _dict['spellCorrectedText'] = [x._to_dict() for x in self.spell_corrected_text]
         if hasattr(self, 'temporal_spans') and self.temporal_spans is not None:
             _dict['temporalSpans'] = [x._to_dict() for x in self.temporal_spans]
+        if hasattr(self, 'lines') and self.lines is not None:
+            _dict['lines'] = [x._to_dict() for x in self.lines]
+        if hasattr(self, 'sentences') and self.sentences is not None:
+            _dict['sentences'] = [x._to_dict() for x in self.sentences]
+        if hasattr(self, 'paragraphs') and self.paragraphs is not None:
+            _dict['paragraphs'] = [x._to_dict() for x in self.paragraphs]
         return _dict
 
     def _to_dict(self):
@@ -6674,6 +6712,83 @@ class Procedure(object):
 
     def __str__(self):
         """Return a `str` version of this Procedure object."""
+        return json.dumps(self._to_dict(), indent=2)
+
+
+class Reference(object):
+    """
+    Reference to another annotation object.
+    :attr int uid: (optional)
+    :attr str selection_label: (optional)
+    :attr int value_index: (optional)
+    """
+
+    def __init__(self, uid=None, selection_label=None, value_index=None, **kwargs):
+        """
+        Initialize a Reference object.
+        :param int uid: (optional)
+        :param str selection_label: (optional)
+        :param int value_index: (optional)
+        :param **kwargs: (optional) Any additional properties.
+        """
+        self.uid = uid
+        self.selection_label = selection_label
+        self.value_index = value_index
+        for _key, _value in kwargs.items():
+            setattr(self, _key, _value)
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize a Reference object from a json dictionary."""
+        args = {}
+        xtra = _dict.copy()
+        if 'uid' in _dict:
+            args['uid'] = _dict['uid']
+            del xtra['uid']
+        if 'selectionLabel' in _dict:
+            args['selection_label'] = _dict['selectionLabel']
+            del xtra['selectionLabel']
+        if 'valueIndex' in _dict:
+            args['value_index'] = _dict['valueIndex']
+            del xtra['valueIndex']
+        args.update(xtra)
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a Reference object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'uid') and self.uid is not None:
+            _dict['uid'] = self.uid
+        if hasattr(self, 'selection_label') and self.selection_label is not None:
+            _dict['selectionLabel'] = self.selection_label
+        if hasattr(self, 'value_index') and self.value_index is not None:
+            _dict['valueIndex'] = self.value_index
+        if hasattr(self, '_additionalProperties'):
+            for _key in self._additionalProperties:
+                _value = getattr(self, _key, None)
+                if _value is not None:
+                    _dict[_key] = _value
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __setattr__(self, name, value):
+        properties = ({'uid', 'selection_label', 'value_index'})
+        if not hasattr(self, '_additionalProperties'):
+            super(Reference, self).__setattr__('_additionalProperties', set())
+        if name not in properties:
+            self._additionalProperties.add(name)
+        super(Reference, self).__setattr__(name, value)
+
+    def __str__(self):
+        """Return a `str` version of this Reference object."""
         return json.dumps(self._to_dict(), indent=2)
 
 

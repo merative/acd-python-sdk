@@ -1,6 +1,6 @@
 # coding: utf-8
 
-# Copyright 2018 IBM All Rights Reserved.
+# Copyright 2021 IBM All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -46,7 +46,8 @@ LINE7 = 'Jone Doe was seen at Baylor Hospitall in Austin, TX.  Johndoe@testaddre
 LINE8 = 'The patient started on metformin because his blood sugar was too high.'
 LINE9 = 'CT scan showed a tumor in his lung.'
 LINE10 = 'She had gallbladder removal September 19 2020'
-TEXT = LINE1 + LINE2 + LINE3 + LINE4 + LINE5 + LINE6 + LINE7 + LINE8 + LINE9 + LINE10
+LINE11 = 'Her father had lung cancer. Her mother had asthma and diabetes.'
+TEXT = LINE1 + LINE2 + LINE3 + LINE4 + LINE5 + LINE6 + LINE7 + LINE8 + LINE9 + LINE10 + LINE11
 
 def test_analyze_flow():
     data = ACD.analyze_with_flow(FLOW, TEXT)

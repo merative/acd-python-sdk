@@ -1,6 +1,6 @@
 # coding: utf-8
 
-# Copyright 2018 IBM All Rights Reserved.
+# Copyright 2021 IBM All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ def test_AttributeValueAnnotation_model():
     insight_data = wh.InsightModelData()
     derived_from_list = []
     temporal_list = []
+    evidence_spans_list = []
     model = wh.AttributeValueAnnotation(id="id", type="type", uid=1, begin=2, end=3, covered_text="covered",
                                         negated=False, hypothetical=False, preferred_name="preferred",
                                         values=value_list, source="source", source_version="sv", name="name",
@@ -30,5 +31,5 @@ def test_AttributeValueAnnotation_model():
                                         section_normalized_name="snn", section_surface_form="ssf", cpt_code="cpt",
                                         disambiguation_data=disambiguation, insight_model_data=insight_data, 
                                         ccs_code="ccs", hcc_code="hcc", rule_id="rule", derived_from=derived_from_list, 
-                                        temporal=temporal_list, extra="more")
+                                        temporal=temporal_list, evidence_spans=evidence_spans_list, extra="more")
     assert model.__str__() is not None

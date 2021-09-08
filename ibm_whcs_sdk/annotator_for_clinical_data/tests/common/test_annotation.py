@@ -1,6 +1,6 @@
 # coding: utf-8
 
-# Copyright 2018 IBM All Rights Reserved.
+# Copyright 2021 IBM All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,7 +26,8 @@ class TestAnnotation(object):
                     assert len(annotation.type) > 0
                 assert annotation.begin is not None
                 assert annotation.end is not None
-                assert annotation.covered_text is not None
+                if annotation.covered_text is not None:
+                    assert len(annotation.covered_text) > 0
                 if annotation.uid is not None:
                     assert annotation.uid > 0
                 if annotation.section_normalized_name is not None:
