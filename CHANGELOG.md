@@ -1,3 +1,13 @@
+## [1.10.6](https://github.com/IBM/whcs-python-sdk/compare/v1.10.5...v1.10.6) (2021-11-16)
+
+
+### Bug Fixes
+
+* **build:** use node 14 for semantic-release ([d6430d7](https://github.com/IBM/whcs-python-sdk/commit/d6430d72a37f54bfefcf24a38782aae46f5eb9b4))
+* **deps:** python 3.6 as minimum supported level ([69ed288](https://github.com/IBM/whcs-python-sdk/commit/69ed288bbf7eb952e59ef7fc7c3676f3a46486d3))
+* **deps:** update requirements-dev.txt ([24334cb](https://github.com/IBM/whcs-python-sdk/commit/24334cb4e53fb5263fc913d85e9192b9e3395aca))
+* update sdk core to 3.13.0 ([1bfaf8f](https://github.com/IBM/whcs-python-sdk/commit/1bfaf8f7b35e11d72e44debc250e321137587b0d))
+
 ## [1.10.5](https://github.com/IBM/whcs-python-sdk/compare/v1.10.4...v1.10.5) (2021-09-08)
 
 
