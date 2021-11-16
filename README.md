@@ -17,7 +17,7 @@ NOTE:  You must be signed in to IBM Cloud to see the docs.
 
 * An [IBM Cloud][ibm-cloud-onboarding] account.
 * An IAM API key to allow the SDK to access your provisioned service instance. For instructions about copying the credentials of an existing service instance, or creating a new service instance, refer to Getting Started [here](https://cloud.ibm.com/docs/wh-acd?topic=wh-acd-getting-started).
-* Python 3.5 or above
+* Python 3.6 or above
 
 ## Installation
 

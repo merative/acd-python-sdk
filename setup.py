@@ -43,47 +43,27 @@ if sys.argv[-1] == 'publish':
 with open("README.md", "r") as fh:
     readme = fh.read()
 
-class PyTest(TestCommand):
-    def finalize_options(self):
-        TestCommand.finalize_options(self)
-        self.test_args = ['--strict', '--verbose', '--tb=long', 'tests/integration']
-        self.test_suite = True
-
-    def run_tests(self):
-        import pytest
-        errcode = pytest.main(self.test_args)
-        sys.exit(errcode)
-
-class PyTestUnit(PyTest):
-    def finalize_options(self):
-        self.test_args = ['--strict', '--verbose', '--tb=long', 'tests/unit']
-
-class PyTestIntegration(PyTest):
-    def finalize_options(self):
-        self.test_args = ['--strict', '--verbose', '--tb=long', 'tests/integration']
-
 setup(name=PACKAGE_NAME.replace('_', '-'),
       version=__version__,
       description=PACKAGE_DESC,
       license='Apache 2.0',
       install_requires=install_requires,
       tests_require=tests_require,
-      cmdclass={'test': PyTest, 'test_unit': PyTestUnit, 'test_integration': PyTestIntegration},
       author='IBM',
       author_email='dcweber@us.ibm.com',
       long_description=readme,
       long_description_content_type='text/markdown',
       url='https://github.com/IBM/whcs-python-sdk',
-      packages=find_packages(),
+      packages=[PACKAGE_NAME],
       include_package_data=True,
       keywords='PACKAGE_NAME',
       classifiers=[
            'Programming Language :: Python',
            'Programming Language :: Python :: 3',
-           'Programming Language :: Python :: 3.5',
            'Programming Language :: Python :: 3.6',
            'Programming Language :: Python :: 3.7',
            'Programming Language :: Python :: 3.8',
+           'Programming Language :: Python :: 3.9',
            'Development Status :: 4 - Beta',
            'Intended Audience :: Developers',
            'License :: OSI Approved :: Apache Software License',
