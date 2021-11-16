@@ -12,7 +12,6 @@ dist: xenial
 cache: pip
 
 before_install:
-- npm install npm@latest -g
 - sudo apt-get update
 - sudo apt-get install pandoc
 - pip install pypandoc
@@ -28,13 +27,13 @@ script:
 - tox
 
 before_deploy:
-- pip install bump2version
-- nvm install 12
+- nvm install 14
+- npm install npm@latest -g
 - npm install @semantic-release/changelog
 - npm install @semantic-release/exec
 - npm install @semantic-release/git
 - npm install @semantic-release/github
-
+- pip install bump2version
 
 deploy:
 - provider: script
