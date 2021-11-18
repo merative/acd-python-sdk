@@ -25,7 +25,7 @@ APIKEY = CONFIG.get('settings', 'key')
 IAMURL = CONFIG.get('settings', 'iam_url')
 VERSION = CONFIG.get('settings', 'version')
 LEVEL = CONFIG.get('settings', 'logging_level')
-DISABLE_SSL = CONFIG.get('settings', 'disable_ssl')
+DISABLE_SSL = (CONFIG.get('settings', 'disable_ssl')=='True)
 
 ACD = wh.AnnotatorForClinicalDataV1(
     authenticator=IAMAuthenticator(apikey=APIKEY, url=IAMURL, disable_ssl_verification=DISABLE_SSL),
