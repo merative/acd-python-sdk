@@ -1,6 +1,6 @@
 # coding: utf-8
 
-# Copyright 2021 IBM All Rights Reserved.
+# Copyright 2018, 2021 IBM All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ class TestConceptAnnotation(object):
                     assert len(annotation.id) > 0
                 if annotation.type is not None:
                     assert len(annotation.type) > 0
-                assert annotation.begin > 0
+                assert annotation.begin >= 0
                 assert annotation.end > annotation.begin
                 assert annotation.covered_text is not None
                 if annotation.semantic_type is not None:

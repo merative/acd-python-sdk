@@ -1,6 +1,6 @@
 # coding: utf-8
 
-# Copyright 2018 IBM All Rights Reserved.
+# Copyright 2018, 2021 IBM All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -55,3 +55,29 @@ class TestInsightModel(object):
                 if data.normality.evidence is not None:
                     for entry in data.normality.evidence:
                         assert entry is not None
+            if data.tobacco is not None:
+                assert len(data.tobacco._to_dict()) > 0
+                if data.tobacco.usage is not None:
+                    assert len(data.tobacco.usage._to_dict()) > 0
+                if data.tobacco.use_status is not None:
+                    assert len(data.tobacco.use_status._to_dict()) > 0
+            if data.alcohol is not None:
+                assert len(data.alcohol._to_dict()) > 0
+                if data.alcohol.usage is not None:
+                    assert len(data.alcohol.usage._to_dict()) > 0
+                if data.alcohol.use_status is not None:
+                    assert len(data.alcohol.use_status._to_dict()) > 0
+                if data.alcohol.use_qualifier is not None:
+                    assert len(data.alcohol.use_qualifier._to_dict()) > 0
+            if data.illicit_drug is not None:
+                assert len(data.illicit_drug._to_dict()) > 0
+                if data.illicit_drug.usage is not None:
+                    assert len(data.illicit_drug.usage._to_dict()) > 0
+                if data.illicit_drug.use_status is not None:
+                    assert len(data.illicit_drug.use_status._to_dict()) > 0
+                if data.illicit_drug.use_dimension is not None:
+                    assert len(data.illicit_drug.use_dimension._to_dict()) > 0
+            if data.substance is not None:
+                assert len(data.substance._to_dict()) > 0
+                if data.substance.treatment is not None:
+                    assert len(data.substance.treatment._to_dict()) > 0
