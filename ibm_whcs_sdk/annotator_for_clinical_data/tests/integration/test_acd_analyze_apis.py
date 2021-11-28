@@ -1,6 +1,6 @@
 # coding: utf-8
 
-# Copyright 2021 IBM All Rights Reserved.
+# Copyright 2018, 2021 IBM All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -47,7 +47,10 @@ LINE8 = 'The patient started on metformin because his blood sugar was too high.'
 LINE9 = 'CT scan showed a tumor in his lung.'
 LINE10 = 'She had gallbladder removal September 19 2020'
 LINE11 = 'Her father had lung cancer. Her mother had asthma and diabetes.'
-TEXT = LINE1 + LINE2 + LINE3 + LINE4 + LINE5 + LINE6 + LINE7 + LINE8 + LINE9 + LINE10 + LINE11
+LINE12 = 'Past addictions history: by report, pt with history of ETOH abuse; BAL 147.\n'
+LINE13 = 'Allergic to penicillin.  Patient had a colonoscopy in 2009.'
+LINE14 = 'Patient abuses vodka and smokes cigarettes and marijuana. Patiet attends monthly AA meetings.'
+TEXT = LINE1 + LINE2 + LINE3 + LINE4 + LINE5 + LINE6 + LINE7 + LINE8 + LINE9 + LINE10 + LINE11 + LINE12 + LINE13 + LINE14
 
 def test_analyze_flow():
     data = ACD.analyze_with_flow(FLOW, TEXT)

@@ -1,6 +1,6 @@
 # coding: utf-8
 
-# Copyright 2018 IBM All Rights Reserved.
+# Copyright 2018, 2021 IBM All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -45,3 +45,5 @@ class TestMedicationAnnotation(object):
                 if annotation.temporal is not None:
                     for entry in annotation.temporal:
                         assert entry is not None
+                if annotation.disambiguation_data is not None:
+                    assert annotation.disambiguation_data.validity is not None

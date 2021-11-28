@@ -1,6 +1,6 @@
 # coding: utf-8
 
-# (C) Copyright IBM Corp. 2021.
+# (C) Copyright IBM Corp. 2018, 2021.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -4564,6 +4564,270 @@ class FlowEntry():
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
 
+class InsightModelAlcoholUsage(object):
+    """
+    InsightModelData Alcohol Usage.
+    :attr float use_score: (optional)
+    :attr float none_score: (optional)
+    :attr float unknown_score: (optional)
+    :attr float discussed_score: (optional)
+    """
+
+    def __init__(self, use_score=None, none_score=None, unknown_score=None, discussed_score=None, **kwargs):
+        """
+        Initialize an InsightModelData Alcohol Usage object.
+        :param float use_score: (optional)
+        :param float none_score: (optional)
+        :param float unknown_score: (optional)
+        :param float discussed_score: (optional)
+        :param **kwargs: (optional) Any additional properties.
+        """
+        self.use_score = use_score
+        self.none_score = none_score
+        self.unknown_score = unknown_score
+        self.discussed_score = discussed_score
+        for _key, _value in kwargs.items():
+            setattr(self, _key, _value)
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize an InsightModelData Alcohol Usage object from a json dictionary."""
+        args = {}
+        xtra = _dict.copy()
+        if 'useScore' in _dict:
+            args['use_score'] = _dict['useScore']
+            del xtra['useScore']
+        if 'noneScore' in _dict:
+            args['none_score'] = _dict['noneScore']
+            del xtra['noneScore']
+        if 'unknownScore' in _dict:
+            args['unknown_score'] = _dict['unknownScore']
+            del xtra['unknownScore']
+        if 'discussedScore' in _dict:
+            args['discussed_score'] = _dict['discussedScore']
+            del xtra['discussedScore']
+        args.update(xtra)
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a InsightModelData Alcohol Usage object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'use_score') and self.use_score is not None:
+            _dict['useScore'] = self.use_score
+        if hasattr(self, 'none_score') and self.none_score is not None:
+            _dict['noneScore'] = self.none_score
+        if hasattr(self, 'unknown_score') and self.unknown_score is not None:
+            _dict['unknownScore'] = self.unknown_score
+        if hasattr(self, 'discussed_score') and self.discussed_score is not None:
+            _dict['discussedScore'] = self.discussed_score
+        if hasattr(self, '_additionalProperties'):
+            for _key in self._additionalProperties:
+                _value = getattr(self, _key, None)
+                if _value is not None:
+                    _dict[_key] = _value
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __setattr__(self, name, value):
+        properties = ({'use_score', 'none_score', 'unknown_score', 'discussed_score'})
+        if not hasattr(self, '_additionalProperties'):
+            super(InsightModelAlcoholUsage, self).__setattr__('_additionalProperties', set())
+        if name not in properties:
+            self._additionalProperties.add(name)
+        super(InsightModelAlcoholUsage, self).__setattr__(name, value)
+
+    def __str__(self):
+        """Return a `str` version of this InsightModelData Alcohol Usage object."""
+        return json.dumps(self._to_dict(), indent=2)
+
+
+class InsightModelIllicitDrugUsage(object):
+    """
+    InsightModelData Illicit Drug Usage.
+    :attr float use_score: (optional)
+    :attr float none_score: (optional)
+    :attr float unknown_score: (optional)
+    :attr float discussed_score: (optional)
+    :attr float treatment_score: (optional)
+    """
+
+    def __init__(self, use_score=None, none_score=None, unknown_score=None, discussed_score=None, treatment_score=None, **kwargs):
+        """
+        Initialize an InsightModelData Illicit Drug Usage object.
+        :param float use_score: (optional)
+        :param float none_score: (optional)
+        :param float unknown_score: (optional)
+        :param float discussed_score: (optional)
+        :param float treatment_score: (optional)
+        :param **kwargs: (optional) Any additional properties.
+        """
+        self.use_score = use_score
+        self.none_score = none_score
+        self.unknown_score = unknown_score
+        self.discussed_score = discussed_score
+        self.treatment_score = treatment_score
+        for _key, _value in kwargs.items():
+            setattr(self, _key, _value)
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize an InsightModelData Illicit Drug Usage object from a json dictionary."""
+        args = {}
+        xtra = _dict.copy()
+        if 'useScore' in _dict:
+            args['use_score'] = _dict['useScore']
+            del xtra['useScore']
+        if 'noneScore' in _dict:
+            args['none_score'] = _dict['noneScore']
+            del xtra['noneScore']
+        if 'unknownScore' in _dict:
+            args['unknown_score'] = _dict['unknownScore']
+            del xtra['unknownScore']
+        if 'discussedScore' in _dict:
+            args['discussed_score'] = _dict['discussedScore']
+            del xtra['discussedScore']
+        if 'treatmentScore' in _dict:
+            args['treatment_score'] = _dict['treatmentScore']
+            del xtra['treatmentScore']
+        args.update(xtra)
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a InsightModelData Illicit Drug Usage object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'use_score') and self.use_score is not None:
+            _dict['useScore'] = self.use_score
+        if hasattr(self, 'none_score') and self.none_score is not None:
+            _dict['noneScore'] = self.none_score
+        if hasattr(self, 'unknown_score') and self.unknown_score is not None:
+            _dict['unknownScore'] = self.unknown_score
+        if hasattr(self, 'discussed_score') and self.discussed_score is not None:
+            _dict['discussedScore'] = self.discussed_score
+        if hasattr(self, 'treatment_score') and self.treatment_score is not None:
+            _dict['treatmentScore'] = self.treatment_score
+        if hasattr(self, '_additionalProperties'):
+            for _key in self._additionalProperties:
+                _value = getattr(self, _key, None)
+                if _value is not None:
+                    _dict[_key] = _value
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __setattr__(self, name, value):
+        properties = ({'use_score', 'none_score', 'unknown_score', 'discussed_score', 'treatment_score'})
+        if not hasattr(self, '_additionalProperties'):
+            super(InsightModelIllicitDrugUsage, self).__setattr__('_additionalProperties', set())
+        if name not in properties:
+            self._additionalProperties.add(name)
+        super(InsightModelIllicitDrugUsage, self).__setattr__(name, value)
+
+    def __str__(self):
+        """Return a `str` version of this InsightModelData Illicit Drug Usage object."""
+        return json.dumps(self._to_dict(), indent=2)
+
+
+class InsightModelTobaccoUsage(object):
+    """
+    InsightModelData Tobacco Usage.
+    :attr float use_score: (optional)
+    :attr float none_score: (optional)
+    :attr float unknown_score: (optional)
+    :attr float discussed_score: (optional)
+    """
+
+    def __init__(self, use_score=None, none_score=None, unknown_score=None, discussed_score=None, **kwargs):
+        """
+        Initialize an InsightModelData Tobacco Usage object.
+        :param float use_score: (optional)
+        :param float none_score: (optional)
+        :param float unknown_score: (optional)
+        :param float discussed_score: (optional)
+        :param **kwargs: (optional) Any additional properties.
+        """
+        self.use_score = use_score
+        self.none_score = none_score
+        self.unknown_score = unknown_score
+        self.discussed_score = discussed_score
+        for _key, _value in kwargs.items():
+            setattr(self, _key, _value)
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize an InsightModelData Tobacco Usage object from a json dictionary."""
+        args = {}
+        xtra = _dict.copy()
+        if 'useScore' in _dict:
+            args['use_score'] = _dict['useScore']
+            del xtra['useScore']
+        if 'noneScore' in _dict:
+            args['none_score'] = _dict['noneScore']
+            del xtra['noneScore']
+        if 'unknownScore' in _dict:
+            args['unknown_score'] = _dict['unknownScore']
+            del xtra['unknownScore']
+        if 'discussedScore' in _dict:
+            args['discussed_score'] = _dict['discussedScore']
+            del xtra['discussedScore']
+        args.update(xtra)
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a InsightModelData Tobacco Usage object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'use_score') and self.use_score is not None:
+            _dict['useScore'] = self.use_score
+        if hasattr(self, 'none_score') and self.none_score is not None:
+            _dict['noneScore'] = self.none_score
+        if hasattr(self, 'unknown_score') and self.unknown_score is not None:
+            _dict['unknownScore'] = self.unknown_score
+        if hasattr(self, 'discussed_score') and self.discussed_score is not None:
+            _dict['discussedScore'] = self.discussed_score
+        if hasattr(self, '_additionalProperties'):
+            for _key in self._additionalProperties:
+                _value = getattr(self, _key, None)
+                if _value is not None:
+                    _dict[_key] = _value
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __setattr__(self, name, value):
+        properties = ({'use_score', 'none_score', 'unknown_score', 'discussed_score'})
+        if not hasattr(self, '_additionalProperties'):
+            super(InsightModelTobaccoUsage, self).__setattr__('_additionalProperties', set())
+        if name not in properties:
+            self._additionalProperties.add(name)
+        super(InsightModelTobaccoUsage, self).__setattr__(name, value)
+
+    def __str__(self):
+        """Return a `str` version of this InsightModelData Tobacco Usage object."""
+        return json.dumps(self._to_dict(), indent=2)
+
+
+
 class InsightModelDataUsage(object):
     """
     InsightModelData Usage.
@@ -5584,7 +5848,469 @@ class InsightModelDataDiagnosisModifier(object):
     def __str__(self):
         """Return a `str` version of this InsightModelData Diagnosis Modifier object."""
         return json.dumps(self._to_dict(), indent=2)
+    
+    
+class InsightModelAlcoholUseQualifier(object):
+    """
+    InsightModelData Alcohol Use Qualifier.
+    :attr float light_score: (optional)
+    :attr float moderate_score: (optional)
+    :attr float heavy_score: (optional)
+    :attr float abuse_score: (optional)
+    """
 
+    def __init__(self, light_score=None, moderate_score=None, heavy_score=None, abuse_score=None, **kwargs):
+        """
+        Initialize an InsightModelData Alcohol Use Qualifier object.
+        :param float light_score: (optional)
+        :param float moderate_score: (optional)
+        :param float heavy_score: (optional)
+        :param float abuse_score: (optional)
+        :param **kwargs: (optional) Any additional properties.
+        """
+        self.light_score = light_score
+        self.moderate_score = moderate_score
+        self.heavy_score = heavy_score
+        self.abuse_score = abuse_score
+        for _key, _value in kwargs.items():
+            setattr(self, _key, _value)
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize an InsightModelData Alcohol Use Qualifier object from a json dictionary."""
+        args = {}
+        xtra = _dict.copy()
+        if 'lightScore' in _dict:
+            args['light_score'] = _dict['lightScore']
+            del xtra['lightScore']
+        if 'moderateScore' in _dict:
+            args['moderate_score'] = _dict['moderateScore']
+            del xtra['moderateScore']
+        if 'heavyScore' in _dict:
+            args['heavy_score'] = _dict['heavyScore']
+            del xtra['heavyScore']
+        if 'abuseScore' in _dict:
+            args['abuse_score'] = _dict['abuseScore']
+            del xtra['abuseScore']
+        args.update(xtra)
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a InsightModelData Alcohol Use Qualifier object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'light_score') and self.light_score is not None:
+            _dict['lightScore'] = self.light_score
+        if hasattr(self, 'moderate_score') and self.moderate_score is not None:
+            _dict['moderateScore'] = self.moderate_score
+        if hasattr(self, 'heavy_score') and self.heavy_score is not None:
+            _dict['heavyScore'] = self.heavy_score
+        if hasattr(self, 'abuse_score') and self.abuse_score is not None:
+            _dict['abuseScore'] = self.abuse_score
+        if hasattr(self, '_additionalProperties'):
+            for _key in self._additionalProperties:
+                _value = getattr(self, _key, None)
+                if _value is not None:
+                    _dict[_key] = _value
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __setattr__(self, name, value):
+            properties = ({'light_score', 'moderate_score', 'heavy_score', 'abuse_score'})
+            if not hasattr(self, '_additionalProperties'):
+                super(InsightModelAlcoholUseQualifier, self).__setattr__('_additionalProperties', set())
+            if name not in properties:
+                self._additionalProperties.add(name)
+            super(InsightModelAlcoholUseQualifier, self).__setattr__(name, value)
+
+    def __str__(self):
+        """Return a `str` version of this InsightModelData Alcohol Use Qualifier object."""
+        return json.dumps(self._to_dict(), indent=2) 
+   
+class InsightModelIllicitDrugUseQualifier(object):
+    """
+    InsightModelData Illicit Drug Use Qualifier.
+    :attr float light_score: (optional)
+    :attr float moderate_score: (optional)
+    :attr float heavy_score: (optional)
+    """
+
+    def __init__(self, light_score=None, moderate_score=None, heavy_score=None, **kwargs):
+        """
+        Initialize an InsightModelData Illicit Drug Use Qualifier object.
+        :param float light_score: (optional)
+        :param float moderate_score: (optional)
+        :param float heavy_score: (optional)
+        :param **kwargs: (optional) Any additional properties.
+        """
+        self.light_score = light_score
+        self.moderate_score = moderate_score
+        self.heavy_score = heavy_score
+        for _key, _value in kwargs.items():
+            setattr(self, _key, _value)
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize an InsightModelData Illicit Drug Use Qualifier object from a json dictionary."""
+        args = {}
+        xtra = _dict.copy()
+        if 'lightScore' in _dict:
+            args['light_score'] = _dict['lightScore']
+            del xtra['lightScore']
+        if 'moderateScore' in _dict:
+            args['moderate_score'] = _dict['moderateScore']
+            del xtra['moderateScore']
+        if 'heavyScore' in _dict:
+            args['heavy_score'] = _dict['heavyScore']
+            del xtra['heavyScore']
+        args.update(xtra)
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a InsightModelData Illicit Drug Use Qualifier object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'light_score') and self.light_score is not None:
+            _dict['lightScore'] = self.light_score
+        if hasattr(self, 'moderate_score') and self.moderate_score is not None:
+            _dict['moderateScore'] = self.moderate_score
+        if hasattr(self, 'heavy_score') and self.heavy_score is not None:
+            _dict['heavyScore'] = self.heavy_score
+        if hasattr(self, '_additionalProperties'):
+            for _key in self._additionalProperties:
+                _value = getattr(self, _key, None)
+                if _value is not None:
+                    _dict[_key] = _value
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __setattr__(self, name, value):
+            properties = ({'light_score', 'moderate_score', 'heavy_score'})
+            if not hasattr(self, '_additionalProperties'):
+                super(InsightModelIllicitDrugUseQualifier, self).__setattr__('_additionalProperties', set())
+            if name not in properties:
+                self._additionalProperties.add(name)
+            super(InsightModelIllicitDrugUseQualifier, self).__setattr__(name, value)
+
+    def __str__(self):
+        """Return a `str` version of this InsightModelData Illicit Drug Use Qualifier object."""
+        return json.dumps(self._to_dict(), indent=2)
+
+
+class InsightModelIllicitDrugUseDimension(object):
+    """
+    InsightModelData Illicit Drug Use Dimension.
+    :attr float abuse_score: (optional)
+    :attr float medical_score: (optional)
+    """
+
+    def __init__(self, abuse_score=None, medical_score=None, **kwargs):
+        """
+        Initialize an InsightModelData Illicit Drug Use Dimension object.
+        :param float abuse_score: (optional)
+        :param float medical_score: (optional)
+        :param **kwargs: (optional) Any additional properties.
+        """
+        self.abuse_score = abuse_score
+        self.medical_score = medical_score
+        for _key, _value in kwargs.items():
+            setattr(self, _key, _value)
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize an InsightModelData Illicit Drug Use Dimension object from a json dictionary."""
+        args = {}
+        xtra = _dict.copy()
+        if 'abuseScore' in _dict:
+            args['abuse_score'] = _dict['abuseScore']
+            del xtra['abuseScore']
+        if 'medicalScore' in _dict:
+            args['medical_score'] = _dict['medicalScore']
+            del xtra['medicalScore']
+        args.update(xtra)
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a InsightModelData Illicit Drug Use Dimension object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'abuse_score') and self.abuse_score is not None:
+            _dict['abuseScore'] = self.abuse_score
+        if hasattr(self, 'medical_score') and self.medical_score is not None:
+            _dict['medicalScore'] = self.medical_score
+        if hasattr(self, '_additionalProperties'):
+            for _key in self._additionalProperties:
+                _value = getattr(self, _key, None)
+                if _value is not None:
+                    _dict[_key] = _value
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __setattr__(self, name, value):
+            properties = ({'abuse_score', 'medical_score'})
+            if not hasattr(self, '_additionalProperties'):
+                super(InsightModelIllicitDrugUseDimension, self).__setattr__('_additionalProperties', set())
+            if name not in properties:
+                self._additionalProperties.add(name)
+            super(InsightModelIllicitDrugUseDimension, self).__setattr__(name, value)
+
+    def __str__(self):
+        """Return a `str` version of this InsightModelData Illicit Drug Use Dimension object."""
+        return json.dumps(self._to_dict(), indent=2)
+
+
+class InsightModelAlcoholUseStatus(object):
+    """
+    InsightModelData Alcohol Use Status.
+    :attr float stopped_score: (optional)
+    :attr float never_score: (optional)
+    """
+
+    def __init__(self, stopped_score=None, never_score=None, **kwargs):
+        """
+        Initialize an InsightModelData Alcohol Use Status object.
+        :param float stopped_score: (optional)
+        :param float never_score: (optional)
+        :param **kwargs: (optional) Any additional properties.
+        """
+        self.stopped_score = stopped_score
+        self.never_score = never_score
+        for _key, _value in kwargs.items():
+            setattr(self, _key, _value)
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize an InsightModelData Alcohol Use Status object from a json dictionary."""
+        args = {}
+        xtra = _dict.copy()
+        if 'stoppedScore' in _dict:
+            args['stopped_score'] = _dict['stoppedScore']
+            del xtra['stoppedScore']
+        if 'neverScore' in _dict:
+            args['never_score'] = _dict['neverScore']
+            del xtra['neverScore']
+        args.update(xtra)
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a InsightModelData Alcohol Use Status object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'stopped_score') and self.stopped_score is not None:
+            _dict['stoppedScore'] = self.stopped_score
+        if hasattr(self, 'never_score') and self.never_score is not None:
+            _dict['neverScore'] = self.never_score
+        if hasattr(self, '_additionalProperties'):
+            for _key in self._additionalProperties:
+                _value = getattr(self, _key, None)
+                if _value is not None:
+                    _dict[_key] = _value
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __setattr__(self, name, value):
+            properties = ({'stopped_score', 'never_score'})
+            if not hasattr(self, '_additionalProperties'):
+                super(InsightModelAlcoholUseStatus, self).__setattr__('_additionalProperties', set())
+            if name not in properties:
+                self._additionalProperties.add(name)
+            super(InsightModelAlcoholUseStatus, self).__setattr__(name, value)
+
+    def __str__(self):
+        """Return a `str` version of this InsightModelData Alcohol Use Status object."""
+        return json.dumps(self._to_dict(), indent=2)
+
+
+class InsightModelIllicitDrugUseStatus(object):
+    """
+    InsightModelData Illicit Drug Use Status.
+    :attr float current_score: (optional)
+    :attr float stopped_score: (optional)
+    :attr float never_score: (optional)
+    :attr float compliance_score: (optional)
+    """
+
+    def __init__(self, current_score=None, stopped_score=None, never_score=None, compliance_score=None, **kwargs):
+        """
+        Initialize an InsightModelData Illicit Drug Use Status object.
+        :param float current_score: (optional)
+        :param float stopped_score: (optional)
+        :param float never_score: (optional)
+        :param float compliance_score: (optional)
+        :param **kwargs: (optional) Any additional properties.
+        """
+        self.current_score = current_score
+        self.stopped_score = stopped_score
+        self.never_score = never_score
+        self.compliance_score = compliance_score
+        for _key, _value in kwargs.items():
+            setattr(self, _key, _value)
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize an InsightModelData Illicit Drug Use Status object from a json dictionary."""
+        args = {}
+        xtra = _dict.copy()
+        if 'currentScore' in _dict:
+            args['current_score'] = _dict['currentScore']
+            del xtra['currentScore']
+        if 'stoppedScore' in _dict:
+            args['stopped_score'] = _dict['stoppedScore']
+            del xtra['stoppedScore']
+        if 'neverScore' in _dict:
+            args['never_score'] = _dict['neverScore']
+            del xtra['neverScore']
+        if 'complianceScore' in _dict:
+            args['compliance_score'] = _dict['complianceScore']
+            del xtra['complianceScore']
+        args.update(xtra)
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a InsightModelData Illicit Drug Use Status object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'current_score') and self.current_score is not None:
+            _dict['currentScore'] = self.current_score
+        if hasattr(self, 'stopped_score') and self.stopped_score is not None:
+            _dict['stoppedScore'] = self.stopped_score
+        if hasattr(self, 'never_score') and self.never_score is not None:
+            _dict['neverScore'] = self.never_score
+        if hasattr(self, 'compliance_score') and self.compliance_score is not None:
+            _dict['complianceScore'] = self.compliance_score
+        if hasattr(self, '_additionalProperties'):
+            for _key in self._additionalProperties:
+                _value = getattr(self, _key, None)
+                if _value is not None:
+                    _dict[_key] = _value
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __setattr__(self, name, value):
+            properties = ({'current_score', 'stopped_score', 'never_score', 'compliance_score'})
+            if not hasattr(self, '_additionalProperties'):
+                super(InsightModelIllicitDrugUseStatus, self).__setattr__('_additionalProperties', set())
+            if name not in properties:
+                self._additionalProperties.add(name)
+            super(InsightModelIllicitDrugUseStatus, self).__setattr__(name, value)
+
+    def __str__(self):
+        """Return a `str` version of this InsightModelData Illicit Drug Use Status object."""
+        return json.dumps(self._to_dict(), indent=2)
+
+
+class InsightModelTobaccoUseStatus(object):
+    """
+    InsightModelData Tobacco Use Status.
+    :attr float current_score: (optional)
+    :attr float stopped_score: (optional)
+    :attr float never_score: (optional)
+    """
+
+    def __init__(self, current_score=None, stopped_score=None, never_score=None, **kwargs):
+        """
+        Initialize an InsightModelData Tobacco Use Status object.
+        :param float current_score: (optional)
+        :param float stopped_score: (optional)
+        :param float never_score: (optional)
+        :param **kwargs: (optional) Any additional properties.
+        """
+        self.current_score = current_score
+        self.stopped_score = stopped_score
+        self.never_score = never_score
+        for _key, _value in kwargs.items():
+            setattr(self, _key, _value)
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize an InsightModelData Tobacco Use Status object from a json dictionary."""
+        args = {}
+        xtra = _dict.copy()
+        if 'currentScore' in _dict:
+            args['current_score'] = _dict['currentScore']
+            del xtra['currentScore']
+        if 'stoppedScore' in _dict:
+            args['stopped_score'] = _dict['stoppedScore']
+            del xtra['stoppedScore']
+        if 'neverScore' in _dict:
+            args['never_score'] = _dict['neverScore']
+            del xtra['neverScore']
+        args.update(xtra)
+        return cls(**args)
+    
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a InsightModelData Tobacco Use Status object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'current_score') and self.current_score is not None:
+            _dict['currentScore'] = self.current_score
+        if hasattr(self, 'stopped_score') and self.stopped_score is not None:
+            _dict['stoppedScore'] = self.stopped_score
+        if hasattr(self, 'never_score') and self.never_score is not None:
+            _dict['neverScore'] = self.never_score
+        if hasattr(self, '_additionalProperties'):
+            for _key in self._additionalProperties:
+                _value = getattr(self, _key, None)
+                if _value is not None:
+                    _dict[_key] = _value
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __setattr__(self, name, value):
+            properties = ({'current_score', 'stopped_score', 'never_score'})
+            if not hasattr(self, '_additionalProperties'):
+                super(InsightModelTobaccoUseStatus, self).__setattr__('_additionalProperties', set())
+            if name not in properties:
+                self._additionalProperties.add(name)
+            super(InsightModelTobaccoUseStatus, self).__setattr__(name, value)
+
+    def __str__(self):
+        """Return a `str` version of this InsightModelData Tobacco Use Status object."""
+        return json.dumps(self._to_dict(), indent=2)
+
+ 
 class InsightModelDataNormality(object):
     """
     InsightModelData Normality.
@@ -5661,6 +6387,459 @@ class InsightModelDataNormality(object):
         """Return a `str` version of this InsightModelData Normality object."""
         return json.dumps(self._to_dict(), indent=2)
 
+
+class InsightModelAlcohol(object):
+    """
+    InsightModelData Alcohol.
+    :attr InsightModelAlcoholUsage usage: (optional)
+    :attr InsightModelAlcoholUseStatus use_status: (optional)
+    :attr InsightModelAlcoholUseQualifier use_qualifier: (optional)
+    :attr float exposure_score: (optional)
+    :attr float non_patient_score: (optional)
+    :attr float treatment_score: (optional)
+    """
+
+    def __init__(self, usage=None, use_status=None, use_qualifier=None, exposure_score=None, non_patient_score=None, treatment_score=None, **kwargs):
+        """
+        Initialize an InsightModelData Alcohol object.
+        :param InsightModelAlcoholUsage usage: (optional)
+        :param InsightModelAlcoholUseStatus use_status: (optional)
+        :param InsightModelAlcoholUseQualifier use_qualifier: (optional)
+        :param float exposure_score: (optional)
+        :param float non_patient_score: (optional)
+        :param float treatment_score: (optional)
+        :param **kwargs: (optional) Any additional properties.
+        """
+        self.usage = usage
+        self.use_status = use_status
+        self.use_qualifier = use_qualifier
+        self.exposure_score = exposure_score
+        self.non_patient_score = non_patient_score
+        self.treatment_score = treatment_score
+        for _key, _value in kwargs.items():
+            setattr(self, _key, _value)
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize an InsightModelData Alcohol object from a json dictionary."""
+        args = {}
+        xtra = _dict.copy()
+        if 'usage' in _dict:
+            args['usage'] = InsightModelAlcoholUsage._from_dict(_dict['usage'])
+            del xtra['usage']
+        if 'useStatus' in _dict:
+            args['use_status'] = InsightModelAlcoholUseStatus._from_dict(_dict['useStatus'])
+            del xtra['useStatus']
+        if 'useQualifier' in _dict:
+            args['use_qualifier'] = InsightModelAlcoholUseQualifier._from_dict(_dict['useQualifier'])
+            del xtra['useQualifier']
+        if 'exposureScore' in _dict:
+            args['exposure_score'] = _dict['exposureScore']
+            del xtra['exposureScore']
+        if 'nonPatientScore' in _dict:
+            args['non_patient_score'] = _dict['nonPatientScore']
+            del xtra['nonPatientScore']
+        if 'treatmentScore' in _dict:
+            args['treatment_score'] = _dict['treatmentScore']
+            del xtra['treatmentScore']
+        args.update(xtra)
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a InsightModelData Alcohol object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'usage') and self.usage is not None:
+            _dict['usage'] = self.usage._to_dict()
+        if hasattr(self, 'use_status') and self.use_status is not None:
+            _dict['useStatus'] = self.use_status._to_dict()
+        if hasattr(self, 'use_qualifier') and self.use_qualifier is not None:
+            _dict['useQualifier'] = self.use_qualifier._to_dict()
+        if hasattr(self, 'exposure_score') and self.exposure_score is not None:
+            _dict['exposureScore'] = self.exposure_score
+        if hasattr(self, 'non_patient_score') and self.non_patient_score is not None:
+            _dict['nonPatientScore'] = self.non_patient_score
+        if hasattr(self, 'treatment_score') and self.treatment_score is not None:
+            _dict['treatmentScore'] = self.treatment_score
+        if hasattr(self, '_additionalProperties'):
+            for _key in self._additionalProperties:
+                _value = getattr(self, _key, None)
+                if _value is not None:
+                    _dict[_key] = _value
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __setattr__(self, name, value):
+            properties = ({'usage', 'use_status', 'use_qualifier', 'exposure_score', 'non_patient_score', 'treatment_score'})
+            if not hasattr(self, '_additionalProperties'):
+                super(InsightModelAlcohol, self).__setattr__('_additionalProperties', set())
+            if name not in properties:
+                self._additionalProperties.add(name)
+            super(InsightModelAlcohol, self).__setattr__(name, value)
+
+    def __str__(self):
+        """Return a `str` version of this InsightModelData Alcohol object."""
+        return json.dumps(self._to_dict(), indent=2)
+    
+class InsightModelTobacco(object):
+    """
+    InsightModelData Tobacco.
+    :attr InsightModelTobaccoUsage usage: (optional)
+    :attr InsightModelTobaccoUseStatus use_status: (optional)
+    :attr float exposure_score: (optional)
+    :attr float family_history_score: (optional)
+    :attr float non_patient_score: (optional)
+    :attr float treatment_score: (optional)
+    """
+
+    def __init__(self, usage=None, use_status=None, exposure_score=None, family_history_score=None, non_patient_score=None, treatment_score=None, **kwargs):
+        """
+        Initialize an InsightModelData Tobacco object.
+        :param InsightModelTobaccoUsage usage: (optional)
+        :param InsightModelTobaccoUseStatus use_status: (optional)
+        :param float exposure_score: (optional)
+        :param float family_history_score: (optional)
+        :param float non_patient_score: (optional)
+        :param float treatment_score: (optional)
+        :param **kwargs: (optional) Any additional properties.
+        """
+        self.usage = usage
+        self.use_status = use_status
+        self.exposure_score = exposure_score
+        self.family_history_score = family_history_score
+        self.non_patient_score = non_patient_score
+        self.treatment_score = treatment_score
+        for _key, _value in kwargs.items():
+            setattr(self, _key, _value)
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize an InsightModelData Tobacco object from a json dictionary."""
+        args = {}
+        xtra = _dict.copy()
+        if 'usage' in _dict:
+            args['usage'] = InsightModelTobaccoUsage._from_dict(_dict['usage'])
+            del xtra['usage']
+        if 'useStatus' in _dict:
+            args['use_status'] = InsightModelTobaccoUseStatus._from_dict(_dict['useStatus'])
+            del xtra['useStatus']
+        if 'exposureScore' in _dict:
+            args['exposure_score'] = _dict['exposureScore']
+            del xtra['exposureScore']
+        if 'familyHistoryScore' in _dict:
+            args['family_history_score'] = _dict['familyHistoryScore']
+            del xtra['familyHistoryScore']
+        if 'nonPatientScore' in _dict:
+            args['non_patient_score'] = _dict['nonPatientScore']
+            del xtra['nonPatientScore']
+        if 'treatmentScore' in _dict:
+            args['treatment_score'] = _dict['treatmentScore']
+            del xtra['treatmentScore']
+        args.update(xtra)
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a InsightModelData Tobacco object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'usage') and self.usage is not None:
+            _dict['usage'] = self.usage._to_dict()
+        if hasattr(self, 'use_status') and self.use_status is not None:
+            _dict['useStatus'] = self.use_status._to_dict()
+        if hasattr(self, 'exposure_score') and self.exposure_score is not None:
+            _dict['exposureScore'] = self.exposure_score
+        if hasattr(self, 'family_history_score') and self.family_history_score is not None:
+            _dict['familyHistoryScore'] = self.family_history_score
+        if hasattr(self, 'non_patient_score') and self.non_patient_score is not None:
+            _dict['nonPatientScore'] = self.non_patient_score
+        if hasattr(self, 'treatment_score') and self.treatment_score is not None:
+            _dict['treatmentScore'] = self.treatment_score
+        if hasattr(self, '_additionalProperties'):
+            for _key in self._additionalProperties:
+                _value = getattr(self, _key, None)
+                if _value is not None:
+                    _dict[_key] = _value
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __setattr__(self, name, value):
+            properties = ({'usage', 'use_status', 'exposure_score', 'family_history_score', 'non_patient_score', 'treatment_score'})
+            if not hasattr(self, '_additionalProperties'):
+                super(InsightModelTobacco, self).__setattr__('_additionalProperties', set())
+            if name not in properties:
+                self._additionalProperties.add(name)
+            super(InsightModelTobacco, self).__setattr__(name, value)
+
+    def __str__(self):
+        """Return a `str` version of this InsightModelData Tobacco object."""
+        return json.dumps(self._to_dict(), indent=2)                                   
+                                     
+class InsightModelIllicitDrug(object):
+    """
+    InsightModelData Illicit Drug.
+    :attr InsightModelIllicitDrugUsage usage: (optional)
+    :attr InsightModelIllicitDrugUseStatus use_status: (optional)
+    :attr InsightModelIllicitDrugUseQualifier use_qualifier: (optional)
+    :attr InsightModelIllicitDrugUseDimension use_dimension: (optional)
+    :attr float exposure_score: (optional)
+    :attr float non_patient_score: (optional)
+    :attr float treatment_score: (optional)
+    """
+
+    def __init__(self, usage=None, use_status=None, use_qualifier=None, use_dimension=None, exposure_score=None, non_patient_score=None, treatment_score=None, **kwargs):
+        """
+        Initialize an InsightModelData Illicit Drug object.
+        :param InsightModelIllicitDrugUsage usage: (optional)
+        :param InsightModelIllicitDrugUseStatus use_status: (optional)
+        :param InsightModelIllicitDrugUseQualifier use_qualifier: (optional)
+        :param InsightModelIllicitDrugUseDimension use_dimension: (optional)
+        :param float exposure_score: (optional)
+        :param float non_patient_score: (optional)
+        :param float treatment_score: (optional)
+        :param **kwargs: (optional) Any additional properties.
+        """
+        self.usage = usage
+        self.use_status = use_status
+        self.use_qualifier = use_qualifier
+        self.use_dimension = use_dimension
+        self.exposure_score = exposure_score
+        self.non_patient_score = non_patient_score
+        self.treatment_score = treatment_score
+        for _key, _value in kwargs.items():
+            setattr(self, _key, _value)
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize an InsightModelData Illicit Drug object from a json dictionary."""
+        args = {}
+        xtra = _dict.copy()
+        if 'usage' in _dict:
+            args['usage'] = InsightModelIllicitDrugUsage._from_dict(_dict['usage'])
+            del xtra['usage']
+        if 'useStatus' in _dict:
+            args['use_status'] = InsightModelIllicitDrugUseStatus._from_dict(_dict['useStatus'])
+            del xtra['useStatus']
+        if 'useQualifier' in _dict:
+            args['use_qualifier'] = InsightModelIllicitDrugUseQualifier._from_dict(_dict['useQualifier'])
+            del xtra['useQualifer']
+        if 'useDimension' in _dict:
+            args['use_dimension'] = InsightModelIllicitDrugUseDimension._from_dict(_dict['useDimension'])
+            del xtra['useDimension']
+        if 'exposureScore' in _dict:
+            args['exposure_score'] = _dict['exposureScore']
+            del xtra['exposureScore']
+        if 'nonPatientScore' in _dict:
+            args['non_patient_score'] = _dict['nonPatientScore']
+            del xtra['nonPatientScore']
+        if 'treatmentScore' in _dict:
+            args['treatment_score'] = _dict['treatmentScore']
+            del xtra['treatmentScore']
+        args.update(xtra)
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a InsightModelData Illicit Drug object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'usage') and self.usage is not None:
+            _dict['usage'] = self.usage._to_dict()
+        if hasattr(self, 'use_status') and self.use_status is not None:
+            _dict['useStatus'] = self.use_status._to_dict()
+        if hasattr(self, 'use_qualifier') and self.use_qualifier is not None:
+            _dict['useQualifier'] = self.use_qualifier._to_dict()
+        if hasattr(self, 'use_dimension') and self.use_dimension is not None:
+            _dict['useDimension'] = self.use_dimension._to_dict()
+        if hasattr(self, 'exposure_score') and self.exposure_score is not None:
+            _dict['exposureScore'] = self.exposure_score
+        if hasattr(self, 'non_patient_score') and self.non_patient_score is not None:
+            _dict['nonPatientScore'] = self.non_patient_score
+        if hasattr(self, 'treatment_score') and self.treatment_score is not None:
+            _dict['treatmentScore'] = self.treatment_score
+        if hasattr(self, '_additionalProperties'):
+            for _key in self._additionalProperties:
+                _value = getattr(self, _key, None)
+                if _value is not None:
+                    _dict[_key] = _value
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __setattr__(self, name, value):
+            properties = ({'usage', 'use_status', 'use_qualifier', 'use_dimension', 'exposure_score', 'non_patient_score', 'treatment_score'})
+            if not hasattr(self, '_additionalProperties'):
+                super(InsightModelIllicitDrug, self).__setattr__('_additionalProperties', set())
+            if name not in properties:
+                self._additionalProperties.add(name)
+            super(InsightModelIllicitDrug, self).__setattr__(name, value)
+
+    def __str__(self):
+        """Return a `str` version of this InsightModelData Illicit Drug object."""
+        return json.dumps(self._to_dict(), indent=2)
+                                  
+class InsightModelSubstanceAbuseTreatment(object):
+    """
+    InsightModelData Substance Abuse Treatment.
+    :attr float discussed_score: (optional)
+    :attr float compliance_score: (optional)
+    """
+
+    def __init__(self, discussed_score=None, compliance_score=None, **kwargs):
+        """
+        Initialize an InsightModelData Substance Abuse Treatment object.
+        :param float discussed_score: (optional)
+        :param float compliance_score: (optional)
+        :param **kwargs: (optional) Any additional properties.
+        """
+        self.discussed_score = discussed_score
+        self.compliance_score = compliance_score
+        for _key, _value in kwargs.items():
+            setattr(self, _key, _value)
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize an InsightModelData Substance Abuse Treatment object from a json dictionary."""
+        args = {}
+        xtra = _dict.copy()
+        if 'discussedScore' in _dict:
+            args['discussed_score'] = _dict['discussedScore']
+            del xtra['discussedScore']
+        if 'complianceScore' in _dict:
+            args['compliance_score'] = _dict['complianceScore']
+            del xtra['complianceScore']
+        args.update(xtra)
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a InsightModelData Substance Abuse Treatment object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'discussed_score') and self.discussed_score is not None:
+            _dict['discussedScore'] = self.discussed_score
+        if hasattr(self, 'compliance_score') and self.compliance_score is not None:
+            _dict['complianceScore'] = self.compliance_score
+        if hasattr(self, '_additionalProperties'):
+            for _key in self._additionalProperties:
+                _value = getattr(self, _key, None)
+                if _value is not None:
+                    _dict[_key] = _value
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __setattr__(self, name, value):
+            properties = ({'discussed_score', 'compliance_score'})
+            if not hasattr(self, '_additionalProperties'):
+                super(InsightModelSubstanceAbuseTreatment, self).__setattr__('_additionalProperties', set())
+            if name not in properties:
+                self._additionalProperties.add(name)
+            super(InsightModelSubstanceAbuseTreatment, self).__setattr__(name, value)
+
+    def __str__(self):
+        """Return a `str` version of this InsightModelData Substance Abuse Treatment object."""
+        return json.dumps(self._to_dict(), indent=2)
+
+class InsightModelSubstanceAbuse(object):
+    """
+    InsightModelData Substance Abuse.
+    :attr float treatment_score: (optional)
+    :attr float non_patient_score: (optional)
+    :attr InsightModelSubstanceAbuseTreatment treatment: (optional)
+    """
+
+    def __init__(self, treatment_score=None, non_patient_score=None, treatment=None, **kwargs):
+        """
+        Initialize an InsightModelData Substance Abuse object.
+        :param float treatment_score: (optional)
+        :param float non_patient_score: (optional)
+        :param InsightModelSubstanceAbuseTreatment treatment: (optional)
+        :param **kwargs: (optional) Any additional properties.
+        """
+        self.treatment_score = treatment_score
+        self.non_patient_score = non_patient_score
+        self.treatment = treatment
+        for _key, _value in kwargs.items():
+            setattr(self, _key, _value)
+
+    @classmethod
+    def from_dict(cls, _dict):
+        """Initialize an InsightModelData Substance Abuse object from a json dictionary."""
+        args = {}
+        xtra = _dict.copy()
+        if 'treatmentScore' in _dict:
+            args['treatment_score'] = _dict['treatmentScore']
+            del xtra['treatmentScore']
+        if 'nonPatientScore' in _dict:
+            args['non_patient_score'] = _dict['nonPatientScore']
+            del xtra['nonPatientScore']
+        if 'treatment' in _dict:
+            args['treatment'] = InsightModelSubstanceAbuseTreatment._from_dict(_dict['treatment'])
+            del xtra['treatment']
+        args.update(xtra)
+        return cls(**args)
+
+    @classmethod
+    def _from_dict(cls, _dict):
+        """Initialize a InsightModelData Substance Abuse object from a json dictionary."""
+        return cls.from_dict(_dict)
+
+    def to_dict(self):
+        """Return a json dictionary representing this model."""
+        _dict = {}
+        if hasattr(self, 'treatment_score') and self.treatment_score is not None:
+            _dict['treatmentScore'] = self.treatment_score
+        if hasattr(self, 'non_patient_score') and self.non_patient_score is not None:
+            _dict['nonPatientScore'] = self.non_patient_score
+        if hasattr(self, 'treatment') and self.treatment is not None:
+            _dict['treatment'] = self.treatment._to_dict()
+        if hasattr(self, '_additionalProperties'):
+            for _key in self._additionalProperties:
+                _value = getattr(self, _key, None)
+                if _value is not None:
+                    _dict[_key] = _value
+        return _dict
+
+    def _to_dict(self):
+        """Return a json dictionary representing this model."""
+        return self.to_dict()
+
+    def __setattr__(self, name, value):
+            properties = ({'treatment_score', 'non_patient_score', 'treatment'})
+            if not hasattr(self, '_additionalProperties'):
+                super(InsightModelSubstanceAbuse, self).__setattr__('_additionalProperties', set())
+            if name not in properties:
+                self._additionalProperties.add(name)
+            super(InsightModelSubstanceAbuse, self).__setattr__(name, value)
+
+    def __str__(self):
+        """Return a `str` version of this InsightModelData Substance Abuse object."""
+        return json.dumps(self._to_dict(), indent=2)
+
 class InsightModelData(object):
     """
     InsightModelData.
@@ -5668,21 +6847,33 @@ class InsightModelData(object):
     :attr InsightModelDataProcedure procedure: (optional)
     :attr InsightModelDataDiagnosis diagnosis: (optional)
     :attr InsightModelDataNormality normality: (optional)
+    :attr InsightModelTobacco tobacco: (optional)
+    :attr InsightModelAlcohol alcohol: (optional)
+    :attr InsightModelIllicitDrug illicit_drug: (optional)
+    :attr InsightModelSubstanceAbuse substance: (optional)
     """
 
-    def __init__(self, medication=None, procedure=None, diagnosis=None, normality=None, **kwargs):
+    def __init__(self, medication=None, procedure=None, diagnosis=None, normality=None, tobacco=None, alcohol=None, illicit_drug=None, substance=None, **kwargs):
         """
         Initialize an InsightModelData object.
         :param InsightModelDataMedication medication: (optional)
         :param InsightModelDataProcedure procedure: (optional)
         :param InsightModelDataDiagnosis diagnosis: (optional)
         :param InsightModelDataNormality normality: (optional)
+        :param InsightModelTobacco tobacco: (optional)
+        :param InsightModelAlcohol alcohol: (optional)
+        :param InsightModelIllicitDrug illicit_drug: (optional)
+        :param InsightModelSubstanceAbuse substance (optional)
         :param **kwargs: (optional) Any additional properties.
         """
         self.medication = medication
         self.procedure = procedure
         self.diagnosis = diagnosis
         self.normality = normality
+        self.tobacco = tobacco
+        self.alcohol = alcohol
+        self.illicit_drug = illicit_drug
+        self.substance = substance
         for _key, _value in kwargs.items():
             setattr(self, _key, _value)
 
@@ -5703,6 +6894,18 @@ class InsightModelData(object):
         if 'normality' in _dict:
             args['normality'] = InsightModelDataNormality._from_dict(_dict['normality'])
             del xtra['normality']
+        if 'tobacco' in _dict:
+            args['tobacco'] = InsightModelTobacco._from_dict(_dict['tobacco'])
+            del xtra['tobacco']
+        if 'alcohol' in _dict:
+            args['alcohol'] = InsightModelAlcohol._from_dict(_dict['alcohol'])
+            del xtra['alcohol']
+        if 'illicitDrug' in _dict:
+            args['illicit_drug'] = InsightModelIllicitDrug._from_dict(_dict['illicitDrug'])
+            del xtra['illicitDrug']
+        if 'substance' in _dict:
+            args['substance'] = InsightModelSubstanceAbuse._from_dict(_dict['substance'])
+            del xtra['substance']
         args.update(xtra)
         return cls(**args)
 
@@ -5722,6 +6925,14 @@ class InsightModelData(object):
             _dict['diagnosis'] = self.diagnosis._to_dict()
         if hasattr(self, 'normality') and self.normality is not None:
             _dict['normality'] = self.normality._to_dict()
+        if hasattr(self, 'tobacco') and self.tobacco is not None:
+            _dict['tobacco'] = self.tobacco._to_dict()
+        if hasattr(self, 'alcohol') and self.alcohol is not None:
+            _dict['alcohol'] = self.alcohol._to_dict()
+        if hasattr(self, 'illicit_drug') and self.illicit_drug is not None:
+            _dict['illicitDrug'] = self.illicit_drug._to_dict()
+        if hasattr(self, 'substance') and self.substance is not None:
+            _dict['substance'] = self.substance._to_dict()
         if hasattr(self, '_additionalProperties'):
             for _key in self._additionalProperties:
                 _value = getattr(self, _key, None)
@@ -5734,7 +6945,7 @@ class InsightModelData(object):
         return self.to_dict()
 
     def __setattr__(self, name, value):
-        properties = ({'medication', 'procedure', 'diagnosis', 'normality'})
+        properties = ({'medication', 'procedure', 'diagnosis', 'normality', 'tobacco', 'alcohol', 'illicit_drug', 'substance'})
         if not hasattr(self, '_additionalProperties'):
             super(InsightModelData, self).__setattr__('_additionalProperties', set())
         if name not in properties:
@@ -6002,11 +7213,12 @@ class MedicationAnnotation(object):
     :attr str section_surface_form: (optional)
     :attr InsightModelData insight_model_data: (optional)
     :attr list[Temporal] temporal: (optional)
+    :attr Disambiguation disambiguation_data: (optional)
     """
 
     def __init__(self, id=None, type=None, uid=None, begin=None, end=None, covered_text=None, negated=None,
                  hypothetical=None, section_normalized_name=None, cui=None, drug=None, section_surface_form=None,
-                 insight_model_data=None, temporal=None, **kwargs):
+                 insight_model_data=None, temporal=None, disambiguation_data=None, **kwargs):
         """
         Initialize a MedicationAnnotation object.
         :param str id: (optional)
@@ -6023,6 +7235,7 @@ class MedicationAnnotation(object):
         :param str section_surface_form: (optional)
         :param InsightModelData insight_model_data: (optional)
         :param list[Temporal] temporal: (optional)
+        :param Disambiguation disambiguation_data: (optional)
         :param **kwargs: (optional) Any additional properties.
         """
         self.id = id
@@ -6039,6 +7252,7 @@ class MedicationAnnotation(object):
         self.section_surface_form = section_surface_form
         self.insight_model_data = insight_model_data
         self.temporal = temporal
+        self.disambiguation_data = disambiguation_data
         for _key, _value in kwargs.items():
             setattr(self, _key, _value)
 
@@ -6089,7 +7303,9 @@ class MedicationAnnotation(object):
         if 'temporal' in _dict:
             args['temporal'] = [Temporal._from_dict(entry) for entry in _dict['temporal']]
             del xtra['temporal']
-        
+        if 'disambiguationData' in _dict:
+            args['disambiguation_data'] = Disambiguation._from_dict(_dict['disambiguationData'])
+            del xtra['disambiguationData']        
         args.update(xtra)
         return cls(**args)
 
@@ -6129,6 +7345,8 @@ class MedicationAnnotation(object):
             _dict['insightModelData'] = self.insight_model_data._to_dict()
         if hasattr(self, 'temporal') and self.temporal is not None:
             _dict['temporal'] = [entry._to_dict() for entry in self.temporal]
+        if hasattr(self, 'disambiguation_data') and self.disambiguation_data is not None:
+            _dict['disambiguationData'] = self.disambiguation_data._to_dict()
         if hasattr(self, '_additionalProperties'):
             for _key in self._additionalProperties:
                 _value = getattr(self, _key, None)
@@ -6143,7 +7361,7 @@ class MedicationAnnotation(object):
     def __setattr__(self, name, value):
         properties = ({'id', 'type', 'uid', 'begin', 'end', 'covered_text', 'negated', 'hypothetical',
                        'section_normalized_name', 'cui', 'drug', 'section_surface_form', 
-                       'insight_model_data', 'temporal'})
+                       'insight_model_data', 'temporal', 'disambiguation_data'})
         if not hasattr(self, '_additionalProperties'):
             super(MedicationAnnotation, self).__setattr__('_additionalProperties', set())
         if name not in properties:
