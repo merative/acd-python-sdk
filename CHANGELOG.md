@@ -1,3 +1,10 @@
+# [1.11.0](https://github.com/IBM/whcs-python-sdk/compare/v1.10.6...v1.11.0) (2021-11-28)
+
+
+### Features
+
+* Support SDoH v1 features ([d48dc24](https://github.com/IBM/whcs-python-sdk/commit/d48dc244772720136e84a0dddf002001c9e082b1))
+
 ## [1.10.6](https://github.com/IBM/whcs-python-sdk/compare/v1.10.5...v1.10.6) (2021-11-16)
 
 
