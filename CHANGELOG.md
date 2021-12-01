@@ -1,3 +1,10 @@
+## [1.11.1](https://github.com/IBM/whcs-python-sdk/compare/v1.11.0...v1.11.1) (2021-12-01)
+
+
+### Bug Fixes
+
+* Fix module not found ([6514693](https://github.com/IBM/whcs-python-sdk/commit/6514693c505e7865d050b792c21efd3bf740d35f))
+
 # [1.11.0](https://github.com/IBM/whcs-python-sdk/compare/v1.10.6...v1.11.0) (2021-11-28)
 
 
