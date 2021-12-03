@@ -1,6 +1,6 @@
 # coding: utf-8
 
-# Copyright 2018 IBM All Rights Reserved.
+# Copyright 2018, 2021 IBM All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ APIKEY = CONFIG.get('settings', 'key')
 IAMURL = CONFIG.get('settings', 'iam_url')
 VERSION = CONFIG.get('settings', 'version')
 LEVEL = CONFIG.get('settings', 'logging_level')
-DISABLE_SSL = (CONFIG.get('settings', 'disable_ssl')=='True)
+DISABLE_SSL = (CONFIG.get('settings', 'disable_ssl')=='True')
 FLOW = CONFIG.get('settings', 'flow')
 
 ACD = wh.AnnotatorForClinicalDataV1(
@@ -64,7 +64,7 @@ def test_get_bad_flows_id():
 
 def test_create_flow():
     test_elementList = []
-    test_anno = wh.Annotator(name = 'concept_detection')
+    test_anno = wh.Annotator(name = 'concept_detection', parameters = {"include_optional_fields": ["medical_codes", "source_vocabularies"]})
     test_flowEntry = wh.FlowEntry(annotator=test_anno)
     test_elementList.append(test_flowEntry)
     test_flow = wh.Flow(elements = test_elementList, async_ = False)
