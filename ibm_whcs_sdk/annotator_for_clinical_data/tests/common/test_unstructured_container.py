@@ -30,7 +30,7 @@ from ibm_whcs_sdk.annotator_for_clinical_data.tests.common import test_symptom_d
 from ibm_whcs_sdk.annotator_for_clinical_data.tests.common import test_section as tsec
 from ibm_whcs_sdk.annotator_for_clinical_data.tests.common import test_nlu_entities as tne
 from ibm_whcs_sdk.annotator_for_clinical_data.tests.common import test_relation as tr
-#import tests.functional.test_spell_correction as tsc
+from ibm_whcs_sdk.annotator_for_clinical_data.tests.common import test_spelling_correction as tsc
 from ibm_whcs_sdk.annotator_for_clinical_data.tests.common import test_spell_corrected_text as tsct
 from ibm_whcs_sdk.annotator_for_clinical_data.tests.common import test_temporal_span as tts
 
@@ -97,6 +97,8 @@ class TestUnstructuredContainer(object):
                 tne.TestNluEntitiesAnnotation.test_nlu_entities(data.nlu_entities)
             if data.relations is not None:
                 tr.TestRelationAnnotation.test_relation_annotation(data.relations)
+            if data.spelling_corrections is not None:
+                tsc.TestSpellingCorrection.test_spelling_correction(data.spelling_corrections)
             if data.spell_corrected_text is not None:
                 tsct.TestSpellCorrectedText.test_spell_corrected_text(data.spell_corrected_text)
             if data.temporal_spans is not None:

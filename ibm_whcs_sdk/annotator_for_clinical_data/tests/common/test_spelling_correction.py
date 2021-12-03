@@ -1,6 +1,6 @@
 # coding: utf-8
 
-# Copyright 2018 IBM All Rights Reserved.
+# Copyright 2018, 2021 IBM All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 from ibm_whcs_sdk.annotator_for_clinical_data.tests.common import test_suggestion as ts
 
-class TestSpellCorrectionAnnotation(object):
+class TestSpellingCorrection(object):
 
     @staticmethod
     def test_spelling_correction(annotation_list=None):
@@ -26,4 +26,4 @@ class TestSpellCorrectionAnnotation(object):
                 assert annotation.end > annotation.begin
                 assert annotation.covered_text is not None
                 for suggestion in annotation.suggestions:
-                    ts.TestSuggestion.test_spelling_suggestion(suggestion)
+                    ts.TestSuggestion.test_spelling_suggestions(suggestion)

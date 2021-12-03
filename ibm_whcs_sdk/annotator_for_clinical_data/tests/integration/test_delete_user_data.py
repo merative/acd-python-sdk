@@ -1,6 +1,6 @@
 # coding: utf-8
 
-# Copyright 2018 IBM All Rights Reserved.
+# Copyright 2018, 2021 IBM All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ APIKEY = CONFIG.get('settings', 'key')
 IAMURL = CONFIG.get('settings', 'iam_url')
 VERSION = CONFIG.get('settings', 'version')
 LEVEL = CONFIG.get('settings', 'logging_level')
-DISABLE_SSL = CONFIG.get('settings', 'disable_ssl')
+DISABLE_SSL = (CONFIG.get('settings', 'disable_ssl')=='True')
 PROFILE = CONFIG.get('settings', 'profile')
 
 ACD = wh.AnnotatorForClinicalDataV1(
