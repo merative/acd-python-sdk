@@ -20,7 +20,7 @@ import os
 import sys
 import pkg_resources
 
-__version__ = '1.11.1'
+__version__ = '1.11.2'
 PACKAGE_NAME = 'ibm_whcs_sdk'
 PACKAGE_DESC = 'This is the Watson Health Cognitive Services Python SDK containing ACD and IML',
 
