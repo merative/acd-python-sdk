@@ -1,3 +1,10 @@
+## [1.11.2](https://github.com/IBM/whcs-python-sdk/compare/v1.11.1...v1.11.2) (2021-12-03)
+
+
+### Bug Fixes
+
+* retrieve spelling corrections ([3631a05](https://github.com/IBM/whcs-python-sdk/commit/3631a050a6e3d6e4f7e2b265fcca1af6b945048e))
+
 ## [1.11.1](https://github.com/IBM/whcs-python-sdk/compare/v1.11.0...v1.11.1) (2021-12-01)
 
 
