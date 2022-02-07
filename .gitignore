@@ -49,11 +49,11 @@ coverage.xml
 
 # virtual env
 venv/
+venv*/
 # python 3 virtual env
 python3/
 
 *.env
-.env
 
 # resources
 resources/output.wav
@@ -73,3 +73,8 @@ test/__init__.py
 .openapi-generator-ignore
 /.pydevproject
 /.settings/
+
+# files produced by "npm install" commands during build
+package.json
+package-lock.json
+node_modules/
