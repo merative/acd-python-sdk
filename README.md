@@ -7,13 +7,13 @@ The IBM Watson Health Cognitive Services (WHCS) Python SDK allows developers to 
 
 | Service Name | Imported Class Name |
 |--------------|-------------|
-| [Annotator for Clinical data](https://ibm.github.io/acd-containers/) | AnnotatorForClinicalDataV1 |
+| [Annotator for Clinical data](https://merative.github.io/acd-containers/) | AnnotatorForClinicalDataV1 |
 
 ## Prerequisites
 
 * Refer to the IBM Watson Annotation for Clinical Data documentation:
-  * [Prerequisites](https://ibm.github.io/acd-containers/installing/prereqs/)
-  * [Software Development Kits](https://ibm.github.io/acd-containers/usage/sdks/)
+  * [Prerequisites](https://merative.github.io/acd-containers/installing/prereqs/)
+  * [Software Development Kits](https://merative.github.io/acd-containers/usage/sdks/)
 * Python 3.6 or above
 
 ## Installation
@@ -31,11 +31,11 @@ For general SDK usage information, please see [this link](https://github.com/IBM
 
 For questions, refer to:
   * [IBM Watson Annotator for Clinical Data product site](https://www.ibm.com/cloud/watson-annotator-for-clinical-data)
-  * [IBM Watson Annotator for Clinical Data documentation](https://ibm.github.io/acd-containers/)
+  * [IBM Watson Annotator for Clinical Data documentation](https://merative.github.io/acd-containers/)
 
 ## Issues
 If you encounter an issue with the project, you are welcome to submit a
-[bug report](https://github.com/IBM/whcs-python-sdk/issues).
+[bug report](https://github.com/merative/whcs-python-sdk/issues).
 Before that, please search for similar issues. It's possible that someone has already reported the problem.
 
 ## Open source @ IBM
