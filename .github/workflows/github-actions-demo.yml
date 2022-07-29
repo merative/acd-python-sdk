@@ -1,0 +1,30 @@
+name: GitHub Actions ACD Python SDK
+
+on:
+  push:
+    branches: [ '**' ]
+  pull_request:
+    branches: [ master ]
+
+  jobs:
+    build_test:
+      name: Build on python ${{ matrix.python-version }} using ${{ matrix.os }}
+      runs-on: ${{ matrix.os }}
+      strategy:
+        matrix:
+          python-version: ['3.7', '3.8', '3.9']
+          os: [ubuntu-latest]
+
+      steps:
+      - uses actions/checkout@v2
+      - name: Set up python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies (ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: pip install tox tox-gh-actions
+
+      - name: Test with tox 
+        run: tox
