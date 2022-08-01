@@ -24,7 +24,7 @@ jobs:
 
     - name: Install dependencies (ubuntu)
       if: matrix.os == 'ubuntu-latest'
-      run: pip install tox tox-gh-actions
+      run: pip install tox
 
     - name: Test with tox 
       run: tox -v
