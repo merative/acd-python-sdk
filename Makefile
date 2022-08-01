@@ -9,7 +9,7 @@ all: upgrade_pip setup test-unit lint
 ci: setup test-unit lint
 
 upgrade_pip:
-        python -m pip install --upgrade pip
+	python -m pip install --upgrade pip
 
 deps:
 	python -m pip install -r requirements.txt
@@ -24,11 +24,9 @@ test: test-unit test-int
 
 test-unit:
 	python -m pytest ibm-whcs-sdk/annotator-for-clinical-data/tests/unit
-	python -m pytest ibm-whcs-sdk/insights-for-medical-literature/tests/unit
 
 test-int:
 	python -m pytest ibm-whcs-sdk/annotator-for-clinical-data/tests/integration
-	python -m pytest ibm-whcs-sdk/insights-for-medical-literature/tests/integration
 
 lint:
 	./pylint.sh
