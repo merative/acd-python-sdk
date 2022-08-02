@@ -21,8 +21,8 @@ import sys
 import pkg_resources
 
 __version__ = '1.11.2'
-PACKAGE_NAME = 'ibm_whcs_sdk'
-PACKAGE_DESC = 'This is the Watson Health Cognitive Services Python SDK containing ACD and IML',
+PACKAGE_NAME = 'acd_sdk'
+PACKAGE_DESC = 'This is the Annotator for Clincial Data Python SDK',
 
 with open('requirements.txt') as f:
     install_requires = [str(req) for req in pkg_resources.parse_requirements(f)]
@@ -49,21 +49,21 @@ setup(name=PACKAGE_NAME.replace('_', '-'),
       license='Apache 2.0',
       install_requires=install_requires,
       tests_require=tests_require,
-      author='IBM',
-      author_email='dcweber@us.ibm.com',
+      author='Merative',
+      author_email='dlangst@merative.com',
       long_description=readme,
       long_description_content_type='text/markdown',
-      url='https://github.com/IBM/whcs-python-sdk',
+      url='https://github.com/Merative/whcs-python-sdk',
       packages=find_packages(),
       include_package_data=True,
       keywords='PACKAGE_NAME',
       classifiers=[
            'Programming Language :: Python',
            'Programming Language :: Python :: 3',
-           'Programming Language :: Python :: 3.6',
            'Programming Language :: Python :: 3.7',
            'Programming Language :: Python :: 3.8',
            'Programming Language :: Python :: 3.9',
+           'Programming Language :: Python :: 3.10',
            'Development Status :: 4 - Beta',
            'Intended Audience :: Developers',
            'License :: OSI Approved :: Apache Software License',
