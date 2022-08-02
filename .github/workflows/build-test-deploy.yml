@@ -85,9 +85,9 @@ jobs:
         pip install build 
         python -m build
 
-   - name: Publish to pypi
-     uses: pypa/gh-action-pypi-publish@release/v1
-     with:
-       user: ${{ secrets.PYPI_USER }}
-       password: ${{ secrets.PYPI_TOKEN }}
-       repository_url: https://upload.pypi.org/legacy/
+    - name: Publish to pypi
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        user: ${{ secrets.PYPI_USER }}
+        password: ${{ secrets.PYPI_TOKEN }}
+        repository_url: https://upload.pypi.org/legacy/
