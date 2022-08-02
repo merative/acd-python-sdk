@@ -27,4 +27,4 @@ jobs:
       run: pip install tox
 
     - name: Test with tox 
-      run: tox -v
+      run: tox -v -e py
