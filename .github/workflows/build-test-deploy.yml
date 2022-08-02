@@ -73,19 +73,31 @@ jobs:
         npm install -g @semantic-release/git
         npm install -g @semantic-release/github
 
-    - name: Publish to git releases and tags
+    - name: Get the next release from semantic release
+      id: next_release
       env:
         GH_TOKEN: ${{ secrets.GH_TOKEN }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: npx semantic-release #--dry-run
+      run: echo ::set-output name=NEXT_RELEASE::$(npx semantic-release --dry-run | grep -oP "Published release \K[0-9]+\.[0-9]+\.[0-9]+") #null if no published release
+
+    - name: Publish to git releases and tags
+      if: ${{ steps.next_release.outputs.NEXT_RELEASE != null }}
+      env:
+        GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        echo "The next release is ${{ steps.next_release.outputs.NEXT_RELEASE }}"
+        npx semantic-release
 
     - name: Build project
+      if: ${{ steps.next_release.outputs.NEXT_RELEASE != null }}
       run: |
         pip install -U pip
         pip install build 
         python -m build
 
     - name: Publish to pypi
+      if: ${{ steps.next_release.outputs.NEXT_RELEASE != null }}
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         user: ${{ secrets.PYPI_USER }}
