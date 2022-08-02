@@ -1,3 +1,12 @@
+## [1.11.3](https://github.com/merative/whcs-python-sdk/compare/v1.11.2...v1.11.3) (2022-08-02)
+
+
+### Bug Fixes
+
+* github actions dev ([1da85d6](https://github.com/merative/whcs-python-sdk/commit/1da85d6e4d1ca57cb25ac62d075b3042905e15c8))
+* package naming ([e7e6e51](https://github.com/merative/whcs-python-sdk/commit/e7e6e512ea6fcde7ef18729037a42a7f88f148a5))
+* test publish ([f0f1ac3](https://github.com/merative/whcs-python-sdk/commit/f0f1ac37b6863172ebfdafd291b45e391af9997d))
+
 ## [1.11.2](https://github.com/IBM/whcs-python-sdk/compare/v1.11.1...v1.11.2) (2021-12-03)
 
 
