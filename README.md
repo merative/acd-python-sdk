@@ -14,7 +14,7 @@ This Python SDK allows developers to programmatically interact with the followin
 * Refer to the Annotation for Clinical Data documentation:
   * [Prerequisites](https://merative.github.io/acd-containers/installing/prereqs/)
   * [Software Development Kits](https://merative.github.io/acd-containers/usage/sdks/)
-* Python 3.6 or above
+* Python 3.7 or above
 
 ## Installation
 
