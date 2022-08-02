@@ -21,7 +21,7 @@ This Python SDK allows developers to programmatically interact with the followin
 To install, use `pip`
 
 ```bash
-pip install --upgrade ibm-whcs-sdk
+pip install --upgrade acd-sdk
 ```
 
 ## Using the SDK
