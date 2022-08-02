@@ -1,5 +1,5 @@
 
-# Merative Annotator for Clinical Data Python SDK Version 1.11.2
+# Merative Annotator for Clinical Data Python SDK Version 1.11.3
 
 ## Overview
 
