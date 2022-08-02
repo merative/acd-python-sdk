@@ -77,4 +77,6 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.GH_TOKEN }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: npx semantic-release --dry-run
+      run: |
+        npx semantic-release --dry-run
+        echo "Ran semantic-release dry-run"
