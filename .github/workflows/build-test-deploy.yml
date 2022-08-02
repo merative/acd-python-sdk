@@ -77,6 +77,17 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.GH_TOKEN }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: npx semantic-release #--dry-run
+
+    - name: Build project
       run: |
-        npx semantic-release --dry-run
-        echo "Ran semantic-release dry-run"
+        pip install -U pip
+        pip install build 
+        python -m build
+
+    - name: Publish to pypi
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        user: ${{ secrets.PYPI_USER }}
+        password: ${{ secrets.PYPI_TOKEN }}
+        repository_url: https://upload.pypi.org/legacy/
