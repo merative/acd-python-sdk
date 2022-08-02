@@ -1,0 +1,82 @@
+name: GitHub Actions ACD Python SDK
+
+on:
+  push:
+    branches: [ '**' ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build_test:
+    name: Build on python ${{ matrix.python-version }} using ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        python-version: ['3.7', '3.8', '3.9', '3.10']
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        pip install -U pip
+        pip install tox
+
+    - name: Test with tox 
+      run: tox -v -e py
+
+  check_git:
+    name: Echo github vars
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Echo GitHub Ref
+      run: echo "The GitHub Ref is ${{ github.ref }}."
+    - name: Echo Commit Message
+      run: echo "The Commit Message is ${{ github.event.head_commit.message }}."
+    - name: Echo GitHub Event Name
+      run: echo "The GitHub Event name is ${{ github.event_name }}."
+
+  release:
+    name: Deploy and publish
+    runs-on: ubuntu-latest
+    needs: build_test
+    if: "github.event_name == 'push' && github.ref == 'refs/heads/master' && !startsWith(github.event.head_commit.message, 'chore')"
+    steps:
+    - name: Setup Extensions
+      uses: actions/checkout@v2
+      with:
+        persist-credentials: false
+
+    - name: Setup Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.9'
+
+    - name: Setup Node
+      uses: actions/setup-node@v1
+      with:
+        node-version: '14'
+
+    - name: Install Semantic Release dependencies
+      run: |
+        pip3 install --user bump2version
+        npm install -g semantic-release
+        npm install -g @semantic-release/changelog
+        npm install -g @semantic-release/exec
+        npm install -g @semantic-release/git
+        npm install -g @semantic-release/github
+
+    - name: Publish to git releases and tags
+      env:
+        GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        npx semantic-release --dry-run
+        echo "Ran semantic-release dry-run"
