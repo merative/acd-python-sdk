@@ -46,7 +46,7 @@ jobs:
   release:
     name: Deploy and publish
     runs-on: ubuntu-latest
-    needs: build-test
+    needs: build_test
     if: "github.event_name == 'push' && github.ref == 'refs/heads/master' && !startsWith(github.event.head_commit.message, 'chore')"
     steps:
     - name: Setup Extensions
