@@ -21,10 +21,12 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+        cache: 'pip'
 
-    - name: Install dependencies (ubuntu)
-      if: matrix.os == 'ubuntu-latest'
-      run: pip install tox
+    - name: Install dependencies
+      run: |
+        pip install -U pip
+        pip install tox
 
     - name: Test with tox 
       run: tox -v -e py
