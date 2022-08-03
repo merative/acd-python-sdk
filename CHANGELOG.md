@@ -1,3 +1,10 @@
+## [1.11.4](https://github.com/merative/whcs-python-sdk/compare/v1.11.3...v1.11.4) (2022-08-03)
+
+
+### Bug Fixes
+
+* pypi publish ([92efaaf](https://github.com/merative/whcs-python-sdk/commit/92efaaf1d60d4911c1483f33259415d3f15305cb))
+
 ## [1.11.3](https://github.com/merative/whcs-python-sdk/compare/v1.11.2...v1.11.3) (2022-08-02)
 
 
