@@ -851,9 +851,10 @@ class AnnotatorForClinicalDataV1(BaseService):
         params = {
             'version': self.version
         }
+
         if 'debug' in kwargs:
             params['debug'] = kwargs.get('debug')
-
+        
         data = {
             'unstructured': unstructured,
             'annotatorFlows': annotator_flows
@@ -1007,6 +1008,7 @@ class AnnotatorForClinicalDataV1(BaseService):
         params = {
             'version': self.version
         }
+
         if 'debug' in kwargs:
             params['debug'] = kwargs.get('debug')
 
