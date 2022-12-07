@@ -1,3 +1,10 @@
+## [1.11.5](https://github.com/merative/whcs-python-sdk/compare/v1.11.4...v1.11.5) (2022-12-07)
+
+
+### Bug Fixes
+
+* bump version ([2bcfb56](https://github.com/merative/whcs-python-sdk/commit/2bcfb56b944d762672c526fbb3a0c44b9d1b25a0))
+
 ## [1.11.4](https://github.com/merative/whcs-python-sdk/compare/v1.11.3...v1.11.4) (2022-08-03)
 
 
