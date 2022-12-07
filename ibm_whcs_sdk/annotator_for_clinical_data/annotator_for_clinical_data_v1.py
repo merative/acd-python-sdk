@@ -851,6 +851,9 @@ class AnnotatorForClinicalDataV1(BaseService):
         params = {
             'version': self.version
         }
+        if 'debug' in kwargs:
+            params['debug'] = kwargs.get('debug')
+
         data = {
             'unstructured': unstructured,
             'annotatorFlows': annotator_flows
@@ -1004,6 +1007,9 @@ class AnnotatorForClinicalDataV1(BaseService):
         params = {
             'version': self.version
         }
+        if 'debug' in kwargs:
+            params['debug'] = kwargs.get('debug')
+
         if content_type == 'application/json' and isinstance(request, dict):
             data = json.dumps(request)
         else:
@@ -1037,7 +1043,7 @@ class AnnotatorForClinicalDataV1(BaseService):
             result = ContainerGroup._from_dict(result.get_result()).unstructured[0].data
         else:
 
-            result = self.analyze_with_flow_org(flow_id, text)
+            result = self.analyze_with_flow_org(flow_id, text, **kwargs)
             result = ContainerGroup._from_dict(result.get_result()).unstructured[0].data
 
         return result
