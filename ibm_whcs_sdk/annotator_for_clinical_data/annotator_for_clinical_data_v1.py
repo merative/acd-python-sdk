@@ -23,6 +23,7 @@ may be invoked from a single request.
 from enum import Enum
 from typing import BinaryIO, Dict, List, TextIO, Union
 import json
+from warnings import warn
 
 from ibm_cloud_sdk_core import BaseService, DetailedResponse, ApiException
 from ibm_cloud_sdk_core.authenticators.authenticator import Authenticator
@@ -665,6 +666,7 @@ class AnnotatorForClinicalDataV1(BaseService):
     #########################
 
 
+    # Method is deprecated and could be removed in the future.  Use 'analyze' method instead.
     def run_pipeline(self, *, unstructured: List['UnstructuredContainer'] = None, annotator_flows: List['AnnotatorFlow'] = None, debug_text_restore: bool = None, return_analyzed_text: bool = None, **kwargs) -> DetailedResponse:
         """
         Detect entities & relations from unstructured data.
@@ -744,6 +746,8 @@ class AnnotatorForClinicalDataV1(BaseService):
         :rtype: DetailedResponse
         """
 
+        warn("The 'run_pipeline' method is deprecated.  Use 'analyze' method instead.", DeprecationWarning, stacklevel=2) 
+
         if unstructured is not None:
             unstructured = [ convert_model(x) for x in unstructured ]
         if annotator_flows is not None:
@@ -763,7 +767,7 @@ class AnnotatorForClinicalDataV1(BaseService):
             'annotatorFlows': annotator_flows
         }
         data = {k: v for (k, v) in data.items() if v is not None}
-        data = json.dumps(data)
+        data = json.dumps(data, cls=AnnotatorEncoder)
         headers['content-type'] = 'application/json'
 
         if 'headers' in kwargs:
@@ -895,6 +899,7 @@ class AnnotatorForClinicalDataV1(BaseService):
         return result
 
 
+    # Method is deprecated and could be removed in the future. Use 'analyze_with_flow' instead.
     def run_pipeline_with_flow(self, flow_id: str, return_analyzed_text: bool, analytic_flow_bean_input: Union['AnalyticFlowBeanInput', str, TextIO], *, content_type: str = None, debug_text_restore: bool = None, **kwargs) -> DetailedResponse:
         """
         analyze with a pre-specified flow.
@@ -931,6 +936,9 @@ class AnnotatorForClinicalDataV1(BaseService):
         :return: A `DetailedResponse` containing the result, headers and HTTP status code.
         :rtype: DetailedResponse
         """
+
+        # Method is deprecated and could be removed in the future.
+        warn("The 'run_pipeline_with_flow' method is deprecated.  Use 'analyze_with_flow' method instead.", DeprecationWarning, stacklevel=2)
 
         if flow_id is None:
             raise ValueError('flow_id must be provided')
