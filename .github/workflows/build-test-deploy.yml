@@ -47,7 +47,7 @@ jobs:
     name: Deploy and publish
     runs-on: ubuntu-latest
     needs: build_test
-    if: "github.event_name == 'push' && github.ref == 'refs/heads/master' && !startsWith(github.event.head_commit.message, 'chore')"
+    if: "github.event_name == 'push'"
     steps:
     - name: Setup Extensions
       uses: actions/checkout@v2
@@ -67,7 +67,7 @@ jobs:
     - name: Install Semantic Release dependencies
       run: |
         pip3 install --user bump2version
-        npm install -g semantic-release
+        npm install -g semantic-release@19.0.5
         npm install -g @semantic-release/changelog
         npm install -g @semantic-release/exec
         npm install -g @semantic-release/git
@@ -85,21 +85,4 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.GH_TOKEN }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        echo "The next release is ${{ steps.next_release.outputs.NEXT_RELEASE }}"
-        npx semantic-release
-
-    - name: Build project
-      if: ${{ steps.next_release.outputs.NEXT_RELEASE != null }}
-      run: |
-        pip install -U pip
-        pip install build 
-        python -m build
-
-    - name: Publish to pypi
-      if: ${{ steps.next_release.outputs.NEXT_RELEASE != null }}
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        user: ${{ secrets.PYPI_USER }}
-        password: ${{ secrets.PYPI_PASSWORD }}
-        repository_url: https://upload.pypi.org/legacy/
+      run: echo "The next release is ${{ steps.next_release.outputs.NEXT_RELEASE }}"
