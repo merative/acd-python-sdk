@@ -62,12 +62,12 @@ jobs:
     - name: Setup Node
       uses: actions/setup-node@v1
       with:
-        node-version: '14'
+        node-version: '18'
 
     - name: Install Semantic Release dependencies
       run: |
         pip3 install --user bump2version
-        npm install -g semantic-release@19.0.5
+        npm install -g semantic-release
         npm install -g @semantic-release/changelog
         npm install -g @semantic-release/exec
         npm install -g @semantic-release/git
@@ -78,11 +78,7 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.GH_TOKEN }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: echo ::set-output name=NEXT_RELEASE::$(npx semantic-release --dry-run | grep -oP "Published release \K[0-9]+\.[0-9]+\.[0-9]+") #null if no published release
+      run: echo "NEXT_RELEASE=$(npx semantic-release --dry-run | grep -oP "Published release \K[0-9]+\.[0-9]+\.[0-9]+")"  >> $GITHUB_OUTPUT
 
     - name: Publish to git releases and tags
-      if: ${{ steps.next_release.outputs.NEXT_RELEASE != null }}
-      env:
-        GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: echo "The next release is ${{ steps.next_release.outputs.NEXT_RELEASE }}"
