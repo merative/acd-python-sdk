@@ -1,4 +1,3 @@
-#!/bin/bash
 # ***************************************************************** 
 #                                                                   
 # (C) Copyright Merative US L.P. and others 2018, 2023               
@@ -7,6 +6,9 @@
 #                                                                   
 # ***************************************************************** 
 
+import ibm_whcs_sdk.annotator_for_clinical_data as wh
 
-python -m pylint ibm_whcs_sdk/annotator_for_clinical_data ibm_whcs_sdk/annotator_for_clinical_data/tests/unit ibm_whcs_sdk/annotator_for_clinical_data/tests/integration
-python -m pylint ibm_whcs_sdk/insights_for_medical_literature ibm_whcs_sdk/insights_for_medical_literature/tests/unit ibm_whcs_sdk/insights_for_medical_literature/tests/integration
+def test_Suggestion_model():
+    semtypes_data = []
+    model = wh.Suggestion(text="come back", confidence=1.0, applied=True, semtypes=semtypes_data, extra="more")
+    assert model.__str__() is not None

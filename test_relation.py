@@ -1,4 +1,3 @@
-#!/bin/bash
 # ***************************************************************** 
 #                                                                   
 # (C) Copyright Merative US L.P. and others 2018, 2023               
@@ -7,6 +6,15 @@
 #                                                                   
 # ***************************************************************** 
 
+class TestRelationAnnotation(object):
 
-python -m pylint ibm_whcs_sdk/annotator_for_clinical_data ibm_whcs_sdk/annotator_for_clinical_data/tests/unit ibm_whcs_sdk/annotator_for_clinical_data/tests/integration
-python -m pylint ibm_whcs_sdk/insights_for_medical_literature ibm_whcs_sdk/insights_for_medical_literature/tests/unit ibm_whcs_sdk/insights_for_medical_literature/tests/integration
+    @staticmethod
+    def test_relation_annotation(annotation_list=None):
+        if annotation_list is not None:
+            for annotation in annotation_list:
+                assert annotation.source is not None
+                assert annotation.score > 0
+                assert annotation.type is not None
+                nodes = annotation.nodes
+                for node in nodes:
+                    assert node.entity.uid > 0

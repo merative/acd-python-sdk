@@ -1,4 +1,3 @@
-#!/bin/bash
 # ***************************************************************** 
 #                                                                   
 # (C) Copyright Merative US L.P. and others 2018, 2023               
@@ -7,6 +6,13 @@
 #                                                                   
 # ***************************************************************** 
 
+class TestSuggestion(object):
 
-python -m pylint ibm_whcs_sdk/annotator_for_clinical_data ibm_whcs_sdk/annotator_for_clinical_data/tests/unit ibm_whcs_sdk/annotator_for_clinical_data/tests/integration
-python -m pylint ibm_whcs_sdk/insights_for_medical_literature ibm_whcs_sdk/insights_for_medical_literature/tests/unit ibm_whcs_sdk/insights_for_medical_literature/tests/integration
+    @staticmethod
+    def test_spelling_suggestions(suggestion=None):
+        if suggestion is not None:
+            assert suggestion.text is not None
+            assert suggestion.confidence > 0
+            if suggestion.semtypes is not None:
+                for semtype in suggestion.semtypes:
+                    assert semtype is not None

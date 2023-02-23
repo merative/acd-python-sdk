@@ -1,4 +1,3 @@
-#!/bin/bash
 # ***************************************************************** 
 #                                                                   
 # (C) Copyright Merative US L.P. and others 2018, 2023               
@@ -7,6 +6,9 @@
 #                                                                   
 # ***************************************************************** 
 
+import ibm_whcs_sdk.annotator_for_clinical_data as wh
 
-python -m pylint ibm_whcs_sdk/annotator_for_clinical_data ibm_whcs_sdk/annotator_for_clinical_data/tests/unit ibm_whcs_sdk/annotator_for_clinical_data/tests/integration
-python -m pylint ibm_whcs_sdk/insights_for_medical_literature ibm_whcs_sdk/insights_for_medical_literature/tests/unit ibm_whcs_sdk/insights_for_medical_literature/tests/integration
+def test_SectionTrigger_model():
+    model = wh.SectionTrigger(begin=1, end=2, covered_text="We got you covered",
+                              section_normalized_name="snn", source="source", type="type", extra="more")
+    assert model.__str__() is not None

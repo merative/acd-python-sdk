@@ -1,4 +1,3 @@
-#!/bin/bash
 # ***************************************************************** 
 #                                                                   
 # (C) Copyright Merative US L.P. and others 2018, 2023               
@@ -7,6 +6,12 @@
 #                                                                   
 # ***************************************************************** 
 
+class TestSpellCorrectedText(object):
 
-python -m pylint ibm_whcs_sdk/annotator_for_clinical_data ibm_whcs_sdk/annotator_for_clinical_data/tests/unit ibm_whcs_sdk/annotator_for_clinical_data/tests/integration
-python -m pylint ibm_whcs_sdk/insights_for_medical_literature ibm_whcs_sdk/insights_for_medical_literature/tests/unit ibm_whcs_sdk/insights_for_medical_literature/tests/integration
+    @staticmethod
+    def test_spell_corrected_text(annotation_list=None):
+        if annotation_list is not None:
+            for annotation in annotation_list:
+                assert annotation.corrected_text is not None
+                if annotation.debug_text is not None:
+                    assert len(annotation.debug_text) > 0

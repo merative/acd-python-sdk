@@ -1,4 +1,3 @@
-#!/bin/bash
 # ***************************************************************** 
 #                                                                   
 # (C) Copyright Merative US L.P. and others 2018, 2023               
@@ -7,6 +6,10 @@
 #                                                                   
 # ***************************************************************** 
 
+import ibm_whcs_sdk.annotator_for_clinical_data as wh
 
-python -m pylint ibm_whcs_sdk/annotator_for_clinical_data ibm_whcs_sdk/annotator_for_clinical_data/tests/unit ibm_whcs_sdk/annotator_for_clinical_data/tests/integration
-python -m pylint ibm_whcs_sdk/insights_for_medical_literature ibm_whcs_sdk/insights_for_medical_literature/tests/unit ibm_whcs_sdk/insights_for_medical_literature/tests/integration
+def test_TemporalSpan_model():
+    temporal_type_dict = {}
+    model = wh.Temporal(begin=1, end=2, covered_text="We got you covered",
+                           temporal_type=temporal_type_dict, extra="more")
+    assert model.__str__() is not None
