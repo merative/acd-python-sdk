@@ -1,4 +1,5 @@
-#!/bin/bash
+# coding: utf-8
+
 # ***************************************************************** 
 #                                                                   
 # (C) Copyright Merative US L.P. and others 2018, 2023               
@@ -7,5 +8,12 @@
 #                                                                   
 # ***************************************************************** 
 
+import acd_sdk.annotator_for_clinical_data as acd
 
-python -m pylint acd_sdk/annotator_for_clinical_data acd_sdk/annotator_for_clinical_data/tests/unit acd_sdk/annotator_for_clinical_data/tests/integration
+def test_Annotator_model():
+    annotator_data = acd.Annotator(name='concept_value')
+    flow_data = acd.Flow()
+    parameter_data = []
+    configurations_data = []
+    model = acd.Annotator(name='concept_value', parameters=parameter_data, configurations=configurations_data)
+    assert model.__str__() is not None

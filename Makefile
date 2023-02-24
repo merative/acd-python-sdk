@@ -23,10 +23,10 @@ install_project:
 test: test-unit test-int
 
 test-unit:
-	python -m pytest ibm-whcs-sdk/annotator-for-clinical-data/tests/unit
+	python -m pytest acd_sdk/annotator_for_clinical_data/tests/unit
 
 test-int:
-	python -m pytest ibm-whcs-sdk/annotator-for-clinical-data/tests/integration
+	python -m pytest acd_sdk/annotator_for_clinical_data/tests/integration
 
 lint:
 	./pylint.sh

@@ -7,7 +7,7 @@ This Python SDK allows developers to programmatically interact with the followin
 
 | Service Name | Imported Class Name |
 |--------------|-------------|
-| [Annotator for Clinical data](https://merative.github.io/acd-containers/) | AnnotatorForClinicalDataV1 |
+| [Annotator for Clinical Data](https://merative.github.io/acd-containers/) | AnnotatorForClinicalDataV1 |
 
 ## Prerequisites
 
