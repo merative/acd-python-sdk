@@ -14,7 +14,7 @@ import os
 import sys
 import pkg_resources
 
-__version__ = '1.11.6'
+__version__ = '2.0.0'
 PACKAGE_NAME = 'acd_sdk'
 PACKAGE_DESC = 'This is the Annotator for Clinical Data Python SDK',
 
