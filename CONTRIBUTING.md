@@ -4,7 +4,7 @@ If you are having problems using the SDK or have a question about the Annotator 
 refer here:
 * [README](README.md)
 * [Annotator for Clinical Data documentation](https://merative.github.io/acd-containers/)
-* [Annotator for Clinical Data product site](https://www.ibm.com/cloud/watson-annotator-for-clinical-data)
+* [Annotator for Clinical Data Support page](https://merative.github.io/acd-containers/support/support/)
 
 # Issues
 
@@ -62,8 +62,9 @@ Here are some examples of acceptable commit messages, along with the release typ
 
 | Commit message                                                                                                                                                              | Release type               |
 |-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------|
-| `fix(<optional scope>): <fix message details>`                                                                                                 | Patch Release              |
+| `fix(<optional scope>): <fix message details>`                                                                                                 | ~~Patch~~ Fix Release      |
 | `feat(<optional scope>): <feature message details>`                                                                                            | ~~Minor~~ Feature Release  |
+| `feat(<optional scope>): <feature message details>`<br><br>`BREAKING CHANGE: <message details>`                                                | ~~Major~~ Breaking Release <br/> (Note that the `BREAKING CHANGE: ` token must be in the footer of the commit) |
 
 ## Pull requests
 

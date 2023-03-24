@@ -26,7 +26,7 @@ pip install --upgrade acd-sdk
 
 ## Migrating from version 1.x.x
 
-The 2.0 release of the Annotator for Clinical Data SDK introduces a Python package name change from `ibm_whcs_sdk` to 'acd_sdk`.  For the migration from 1.x.x:
+The 2.0 release of the Annotator for Clinical Data SDK introduces a Python package name change from `ibm_whcs_sdk` to `acd_sdk`.  For the migration from 1.x.x:
 
 1. After running `pip install --upgrade acd-sdk`, confirm that you have version 2.0 installed by running `pip show acd-sdk`.
 2. In your application files that have a dependency on `acd-sdk`, update any import declarations from `ibm_whcs_sdk` to `acd_sdk`.  
@@ -37,8 +37,8 @@ For general SDK usage information, please see [this link](https://github.com/IBM
 ## Questions
 
 For questions, refer to:
-  * [Annotator for Clinical Data product site](https://www.ibm.com/cloud/watson-annotator-for-clinical-data)
   * [Annotator for Clinical Data documentation](https://merative.github.io/acd-containers/)
+  * [Annotator for Clinical Data Support page](https://merative.github.io/acd-containers/support/support/)
 
 ## Issues
 If you encounter an issue with the project, you are welcome to submit a
