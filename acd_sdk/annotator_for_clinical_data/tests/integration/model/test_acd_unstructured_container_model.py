@@ -1,4 +1,5 @@
-#!/bin/bash
+# coding: utf-8
+
 # ***************************************************************** 
 #                                                                   
 # (C) Copyright Merative US L.P. and others 2018, 2023               
@@ -7,5 +8,11 @@
 #                                                                   
 # ***************************************************************** 
 
+import acd_sdk.annotator_for_clinical_data as acd
 
-python -m pylint acd_sdk/annotator_for_clinical_data acd_sdk/annotator_for_clinical_data/tests/unit acd_sdk/annotator_for_clinical_data/tests/integration
+def test_UnstructuredContainer_model():
+    container_annotation = acd.ContainerAnnotation()
+    metadata_dict = {}
+    model = acd.UnstructuredContainer(text="text", id="id", type="type", data=container_annotation,
+                                     metadata=metadata_dict, uid=1)
+    assert model.__str__() is not None

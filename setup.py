@@ -16,7 +16,7 @@ import pkg_resources
 
 __version__ = '1.11.6'
 PACKAGE_NAME = 'acd_sdk'
-PACKAGE_DESC = 'This is the Annotator for Clincial Data Python SDK',
+PACKAGE_DESC = 'This is the Annotator for Clinical Data Python SDK',
 
 with open('requirements.txt') as f:
     install_requires = [str(req) for req in pkg_resources.parse_requirements(f)]
@@ -44,7 +44,7 @@ setup(name=PACKAGE_NAME.replace('_', '-'),
       install_requires=install_requires,
       tests_require=tests_require,
       author='Merative',
-      author_email='dlangst@merative.com',
+      author_email='acddev@merative.com',
       long_description=readme,
       long_description_content_type='text/markdown',
       url='https://github.com/Merative/whcs-python-sdk',
