@@ -1,3 +1,15 @@
+# [2.0.0](https://github.com/merative/whcs-python-sdk/compare/v1.11.6...v2.0.0) (2023-03-24)
+
+
+### Features
+
+* Rebrand ACD SDK ([17d0e58](https://github.com/merative/whcs-python-sdk/commit/17d0e58219b6b9580b6253bec03d7a0d9e40c0e6))
+
+
+### BREAKING CHANGES
+
+* Packaging name change to acd_sdk
+
 ## [1.11.6](https://github.com/merative/whcs-python-sdk/compare/v1.11.5...v1.11.6) (2023-02-10)
 
 
