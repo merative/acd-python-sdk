@@ -893,437 +893,58 @@ class TestDeleteFlows():
 # region
 
 #-----------------------------------------------------------------------------
-# Test Class for run_pipeline
+# Test Class for analyze_with_flow
 #-----------------------------------------------------------------------------
-class TestRunPipeline():
+class TestAnalyzeWithFlow():
 
     #--------------------------------------------------------
-    # run_pipeline()
-    #--------------------------------------------------------
-    @responses.activate
-    def test_run_pipeline_all_params(self):
-        # Set up mock
-        url = BASE_URL + '/v1/analyze'
-        responses.add(responses.POST,
-                      url,
-                      status=200)
-
-        # Construct a dict representation of a UnstructuredContainer model
-        unstructured_container_model = {}
-        unstructured_container_model['text'] = 'testString'
-        unstructured_container_model['id'] = 'testString'
-        unstructured_container_model['type'] = 'testString'
-        unstructured_container_model['data'] = {}
-        unstructured_container_model['metadata'] = {}
-        unstructured_container_model['uid'] = 26
-
-        # Construct a dict representation of a FlowEntry model
-        flow_entry_model = {}
-
-        # Construct a dict representation of a ConfigurationEntity model
-        configuration_entity_model = {}
-        configuration_entity_model['id'] = 'testString'
-        configuration_entity_model['type'] = 'testString'
-        configuration_entity_model['uid'] = 26
-        configuration_entity_model['mergeid'] = 26
-
-        # Construct a dict representation of a Flow model
-        flow_model = {}
-        flow_model['elements'] = [flow_entry_model]
-        flow_model['async'] = True
-
-        # Construct a dict representation of a AnnotatorFlow model
-        annotator_flow_model = {}
-        annotator_flow_model['profile'] = 'testString'
-        annotator_flow_model['flow'] = flow_model
-        annotator_flow_model['id'] = 'testString'
-        annotator_flow_model['type'] = 'testString'
-        annotator_flow_model['data'] = {}
-        annotator_flow_model['metadata'] = {}
-        annotator_flow_model['globalConfigurations'] = [configuration_entity_model]
-        annotator_flow_model['uid'] = 26
-
-        # Set up parameter values
-        unstructured = [unstructured_container_model]
-        annotator_flows = [annotator_flow_model]
-        debug_text_restore = True
-        return_analyzed_text = True
-
-        # Invoke method
-        response = SERVICE.run_pipeline(
-            unstructured=unstructured,
-            annotator_flows=annotator_flows,
-            debug_text_restore=debug_text_restore,
-            return_analyzed_text=return_analyzed_text,
-            headers={}
-        )
-
-        # Check for correct operation
-        assert len(responses.calls) == 1
-        assert response.status_code == 200
-        # Validate query params
-        query_string = responses.calls[0].request.url.split('?',1)[1]
-        query_string = requests.utils.unquote(query_string)
-        assert 'debug_text_restore={}'.format('true' if debug_text_restore else 'false') in query_string
-        assert 'return_analyzed_text={}'.format('true' if return_analyzed_text else 'false') in query_string
-        # Validate body params
-        req_body = json.loads(str(responses.calls[0].request.body, 'utf-8'))
-        assert req_body['unstructured'] == [unstructured_container_model]
-        assert req_body['annotatorFlows'] == [annotator_flow_model]
-
-
-    #--------------------------------------------------------
-    # test_run_pipeline_required_params()
+    # analyze_with_flow()
     #--------------------------------------------------------
     @responses.activate
-    def test_run_pipeline_required_params(self):
-        # Set up mock
-        url = BASE_URL + '/v1/analyze'
-        responses.add(responses.POST,
-                      url,
-                      status=200)
-
-        # Construct a dict representation of a UnstructuredContainer model
-        unstructured_container_model = {}
-        unstructured_container_model['text'] = 'testString'
-        unstructured_container_model['id'] = 'testString'
-        unstructured_container_model['type'] = 'testString'
-        unstructured_container_model['data'] = {}
-        unstructured_container_model['metadata'] = {}
-        unstructured_container_model['uid'] = 26
-
-        # Construct a dict representation of a FlowEntry model
-        flow_entry_model = {}
-
-        # Construct a dict representation of a ConfigurationEntity model
-        configuration_entity_model = {}
-        configuration_entity_model['id'] = 'testString'
-        configuration_entity_model['type'] = 'testString'
-        configuration_entity_model['uid'] = 26
-        configuration_entity_model['mergeid'] = 26
-
-        # Construct a dict representation of a Flow model
-        flow_model = {}
-        flow_model['elements'] = [flow_entry_model]
-        flow_model['async'] = True
-
-        # Construct a dict representation of a AnnotatorFlow model
-        annotator_flow_model = {}
-        annotator_flow_model['profile'] = 'testString'
-        annotator_flow_model['flow'] = flow_model
-        annotator_flow_model['id'] = 'testString'
-        annotator_flow_model['type'] = 'testString'
-        annotator_flow_model['data'] = {}
-        annotator_flow_model['metadata'] = {}
-        annotator_flow_model['globalConfigurations'] = [configuration_entity_model]
-        annotator_flow_model['uid'] = 26
-
-        # Set up parameter values
-        unstructured = [unstructured_container_model]
-        annotator_flows = [annotator_flow_model]
-
-        # Invoke method
-        response = SERVICE.run_pipeline(
-            unstructured=unstructured,
-            annotator_flows=annotator_flows,
-            headers={}
-        )
-
-        # Check for correct operation
-        assert len(responses.calls) == 1
-        assert response.status_code == 200
-        # Validate body params
-        req_body = json.loads(str(responses.calls[0].request.body, 'utf-8'))
-        assert req_body['unstructured'] == [unstructured_container_model]
-        assert req_body['annotatorFlows'] == [annotator_flow_model]
-
-
-    #--------------------------------------------------------
-    # test_run_pipeline_value_error()
-    #--------------------------------------------------------
-    @responses.activate
-    def test_run_pipeline_value_error(self):
-        # Set up mock
-        url = BASE_URL + '/v1/analyze'
-        responses.add(responses.POST,
-                      url,
-                      status=200)
-
-        # Construct a dict representation of a UnstructuredContainer model
-        unstructured_container_model = {}
-        unstructured_container_model['text'] = 'testString'
-        unstructured_container_model['id'] = 'testString'
-        unstructured_container_model['type'] = 'testString'
-        unstructured_container_model['data'] = {}
-        unstructured_container_model['metadata'] = {}
-        unstructured_container_model['uid'] = 26
-
-        # Construct a dict representation of a FlowEntry model
-        flow_entry_model = {}
-
-        # Construct a dict representation of a ConfigurationEntity model
-        configuration_entity_model = {}
-        configuration_entity_model['id'] = 'testString'
-        configuration_entity_model['type'] = 'testString'
-        configuration_entity_model['uid'] = 26
-        configuration_entity_model['mergeid'] = 26
-
-        # Construct a dict representation of a Flow model
-        flow_model = {}
-        flow_model['elements'] = [flow_entry_model]
-        flow_model['async'] = True
-
-        # Construct a dict representation of a AnnotatorFlow model
-        annotator_flow_model = {}
-        annotator_flow_model['profile'] = 'testString'
-        annotator_flow_model['flow'] = flow_model
-        annotator_flow_model['id'] = 'testString'
-        annotator_flow_model['type'] = 'testString'
-        annotator_flow_model['data'] = {}
-        annotator_flow_model['metadata'] = {}
-        annotator_flow_model['globalConfigurations'] = [configuration_entity_model]
-        annotator_flow_model['uid'] = 26
-
-        # Set up parameter values
-        unstructured = [unstructured_container_model]
-        annotator_flows = [annotator_flow_model]
-
-        # Pass in all but one required param and check for a ValueError
-        req_param_dict = {
-        }
-        for param in req_param_dict.keys():
-            req_copy = {key:val if key is not param else None for (key,val) in req_param_dict.items()}
-            with pytest.raises(ValueError):
-                SERVICE.run_pipeline(**req_copy)
-
-
-
-#-----------------------------------------------------------------------------
-# Test Class for run_pipeline_with_flow
-#-----------------------------------------------------------------------------
-class TestRunPipelineWithFlow():
-
-    #--------------------------------------------------------
-    # run_pipeline_with_flow()
-    #--------------------------------------------------------
-    @responses.activate
-    def test_run_pipeline_with_flow_all_params(self):
+    def test_analyze_with_flow(self):
         # Set up mock
         url = BASE_URL + '/v1/analyze/testString'
-        responses.add(responses.POST,
-                      url,
-                      status=200)
+        # Construct a dict representation of a Concept model
+        concept_model = {}
+        concept_model["begin"] = "0"
+        concept_model["end"] = "4"
+        concept_model["coveredText"] = "test"
 
-        # Construct a dict representation of a FlowEntry model
-        flow_entry_model = {}
-
-        # Construct a dict representation of a ConfigurationEntity model
-        configuration_entity_model = {}
-        configuration_entity_model['id'] = 'testString'
-        configuration_entity_model['type'] = 'testString'
-        configuration_entity_model['uid'] = 26
-        configuration_entity_model['mergeid'] = 26
-
-        # Construct a dict representation of a Flow model
-        flow_model = {}
-        flow_model['elements'] = [flow_entry_model]
-        flow_model['async'] = True
-
-        # Construct a dict representation of a AnnotatorFlow model
-        annotator_flow_model = {}
-        annotator_flow_model['profile'] = 'testString'
-        annotator_flow_model['flow'] = flow_model
-        annotator_flow_model['id'] = 'testString'
-        annotator_flow_model['type'] = 'testString'
-        annotator_flow_model['data'] = {}
-        annotator_flow_model['metadata'] = {}
-        annotator_flow_model['globalConfigurations'] = [configuration_entity_model]
-        annotator_flow_model['uid'] = 26
+        # Construct a dict representation of a ContainerAnnotation model
+        container_anno_model = {}
+        container_anno_model["concepts"] = [concept_model]
 
         # Construct a dict representation of a UnstructuredContainer model
         unstructured_container_model = {}
-        unstructured_container_model['text'] = 'testString'
-        unstructured_container_model['id'] = 'testString'
-        unstructured_container_model['type'] = 'testString'
-        unstructured_container_model['data'] = {}
-        unstructured_container_model['metadata'] = {}
-        unstructured_container_model['uid'] = 26
+        unstructured_container_model["data"] = container_anno_model
 
-        # Construct a dict representation of a AnalyticFlowBeanInput model
-        analytic_flow_bean_input_model = {}
-        analytic_flow_bean_input_model['unstructured'] = [unstructured_container_model]
-        analytic_flow_bean_input_model['annotatorFlows'] = [annotator_flow_model]
+        # Construct a dict representation of a ContainerGroup model
+        container_group_model = {}
+        container_group_model["unstructured"] = [unstructured_container_model]
+
+        mock_response = '{ "unstructured": [{ "data": { "concepts": [{ "type": "umls.LaboratoryOrTestResult", "begin": "0", "end": "4", "coveredText": "test", "negated": false, "cui": "C0456984", "preferredName": "Test Result", "semanticType": "lbtr", "source": "umls", "sourceVersion": "2020AA"}]}}]}'
+        responses.add(responses.POST,
+                      url,
+                      body=mock_response,
+                      content_type='application/json',
+                      status=200)
 
         # Set up parameter values
-        flow_id = 'testString'
-        return_analyzed_text = True
-        analytic_flow_bean_input = analytic_flow_bean_input_model
-        content_type = 'application/json'
-        debug_text_restore = True
+        id = 'testString'
+        test_text = 'testString'
 
         # Invoke method
-        response = SERVICE.run_pipeline_with_flow(
-            flow_id,
-            return_analyzed_text,
-            analytic_flow_bean_input,
-            content_type=content_type,
-            debug_text_restore=debug_text_restore,
+        response = SERVICE.analyze_with_flow(
+            flow_id=id,
+            text=test_text,
             headers={}
         )
 
         # Check for correct operation
         assert len(responses.calls) == 1
-        assert response.status_code == 200
-        # Validate query params
-        query_string = responses.calls[0].request.url.split('?',1)[1]
-        query_string = requests.utils.unquote(query_string)
-        assert 'return_analyzed_text={}'.format('true' if return_analyzed_text else 'false') in query_string
-        assert 'debug_text_restore={}'.format('true' if debug_text_restore else 'false') in query_string
         # Validate body params
-
-
-    #--------------------------------------------------------
-    # test_run_pipeline_with_flow_required_params()
-    #--------------------------------------------------------
-    @responses.activate
-    def test_run_pipeline_with_flow_required_params(self):
-        # Set up mock
-        url = BASE_URL + '/v1/analyze/testString'
-        responses.add(responses.POST,
-                      url,
-                      status=200)
-
-        # Construct a dict representation of a FlowEntry model
-        flow_entry_model = {}
-
-        # Construct a dict representation of a ConfigurationEntity model
-        configuration_entity_model = {}
-        configuration_entity_model['id'] = 'testString'
-        configuration_entity_model['type'] = 'testString'
-        configuration_entity_model['uid'] = 26
-        configuration_entity_model['mergeid'] = 26
-
-        # Construct a dict representation of a Flow model
-        flow_model = {}
-        flow_model['elements'] = [flow_entry_model]
-        flow_model['async'] = True
-
-        # Construct a dict representation of a AnnotatorFlow model
-        annotator_flow_model = {}
-        annotator_flow_model['profile'] = 'testString'
-        annotator_flow_model['flow'] = flow_model
-        annotator_flow_model['id'] = 'testString'
-        annotator_flow_model['type'] = 'testString'
-        annotator_flow_model['data'] = {}
-        annotator_flow_model['metadata'] = {}
-        annotator_flow_model['globalConfigurations'] = [configuration_entity_model]
-        annotator_flow_model['uid'] = 26
-
-        # Construct a dict representation of a UnstructuredContainer model
-        unstructured_container_model = {}
-        unstructured_container_model['text'] = 'testString'
-        unstructured_container_model['id'] = 'testString'
-        unstructured_container_model['type'] = 'testString'
-        unstructured_container_model['data'] = {}
-        unstructured_container_model['metadata'] = {}
-        unstructured_container_model['uid'] = 26
-
-        # Construct a dict representation of a AnalyticFlowBeanInput model
-        analytic_flow_bean_input_model = {}
-        analytic_flow_bean_input_model['unstructured'] = [unstructured_container_model]
-        analytic_flow_bean_input_model['annotatorFlows'] = [annotator_flow_model]
-
-        # Set up parameter values
-        flow_id = 'testString'
-        return_analyzed_text = True
-        analytic_flow_bean_input = analytic_flow_bean_input_model
-
-        # Invoke method
-        response = SERVICE.run_pipeline_with_flow(
-            flow_id,
-            return_analyzed_text,
-            analytic_flow_bean_input,
-            headers={}
-        )
-
-        # Check for correct operation
-        assert len(responses.calls) == 1
-        assert response.status_code == 200
-        # Validate query params
-        query_string = responses.calls[0].request.url.split('?',1)[1]
-        query_string = requests.utils.unquote(query_string)
-        assert 'return_analyzed_text={}'.format('true' if return_analyzed_text else 'false') in query_string
-        # Validate body params
-
-
-    #--------------------------------------------------------
-    # test_run_pipeline_with_flow_value_error()
-    #--------------------------------------------------------
-    @responses.activate
-    def test_run_pipeline_with_flow_value_error(self):
-        # Set up mock
-        url = BASE_URL + '/v1/analyze/testString'
-        responses.add(responses.POST,
-                      url,
-                      status=200)
-
-        # Construct a dict representation of a FlowEntry model
-        flow_entry_model = {}
-
-        # Construct a dict representation of a ConfigurationEntity model
-        configuration_entity_model = {}
-        configuration_entity_model['id'] = 'testString'
-        configuration_entity_model['type'] = 'testString'
-        configuration_entity_model['uid'] = 26
-        configuration_entity_model['mergeid'] = 26
-
-        # Construct a dict representation of a Flow model
-        flow_model = {}
-        flow_model['elements'] = [flow_entry_model]
-        flow_model['async'] = True
-
-        # Construct a dict representation of a AnnotatorFlow model
-        annotator_flow_model = {}
-        annotator_flow_model['profile'] = 'testString'
-        annotator_flow_model['flow'] = flow_model
-        annotator_flow_model['id'] = 'testString'
-        annotator_flow_model['type'] = 'testString'
-        annotator_flow_model['data'] = {}
-        annotator_flow_model['metadata'] = {}
-        annotator_flow_model['globalConfigurations'] = [configuration_entity_model]
-        annotator_flow_model['uid'] = 26
-
-        # Construct a dict representation of a UnstructuredContainer model
-        unstructured_container_model = {}
-        unstructured_container_model['text'] = 'testString'
-        unstructured_container_model['id'] = 'testString'
-        unstructured_container_model['type'] = 'testString'
-        unstructured_container_model['data'] = {}
-        unstructured_container_model['metadata'] = {}
-        unstructured_container_model['uid'] = 26
-
-        # Construct a dict representation of a AnalyticFlowBeanInput model
-        analytic_flow_bean_input_model = {}
-        analytic_flow_bean_input_model['unstructured'] = [unstructured_container_model]
-        analytic_flow_bean_input_model['annotatorFlows'] = [annotator_flow_model]
-
-        # Set up parameter values
-        flow_id = 'testString'
-        return_analyzed_text = True
-        analytic_flow_bean_input = analytic_flow_bean_input_model
-
-        # Pass in all but one required param and check for a ValueError
-        req_param_dict = {
-            "flow_id": flow_id,
-            "return_analyzed_text": return_analyzed_text,
-            "analytic_flow_bean_input": analytic_flow_bean_input,
-        }
-        for param in req_param_dict.keys():
-            req_copy = {key:val if key is not param else None for (key,val) in req_param_dict.items()}
-            with pytest.raises(ValueError):
-                SERVICE.run_pipeline_with_flow(**req_copy)
-
-
+        req_body = str(responses.calls[0].request.body, 'utf-8')
+        assert req_body == 'testString'
 
 #-----------------------------------------------------------------------------
 # Test Class for get_annotators
@@ -2089,68 +1710,6 @@ class TestAcdProfile():
         # Convert model instance back to dict and verify no loss of data
         acd_profile_model_json2 = acd_profile_model.to_dict()
         assert acd_profile_model_json2 == acd_profile_model_json
-
-#-----------------------------------------------------------------------------
-# Test Class for AnalyticFlowBeanInput
-#-----------------------------------------------------------------------------
-class TestAnalyticFlowBeanInput():
-
-    #--------------------------------------------------------
-    # Test serialization/deserialization for AnalyticFlowBeanInput
-    #--------------------------------------------------------
-    def test_analytic_flow_bean_input_serialization(self):
-
-        # Construct dict forms of any model objects needed in order to build this model.
-
-        flow_entry_model = {} # FlowEntry
-
-        configuration_entity_model = {} # ConfigurationEntity
-        configuration_entity_model['id'] = 'testString'
-        configuration_entity_model['type'] = 'testString'
-        configuration_entity_model['uid'] = 26
-        configuration_entity_model['mergeid'] = 26
-
-        flow_model = {} # Flow
-        flow_model['elements'] = [flow_entry_model]
-        flow_model['async'] = True
-
-        annotator_flow_model = {} # AnnotatorFlow
-        annotator_flow_model['profile'] = 'testString'
-        annotator_flow_model['flow'] = flow_model
-        annotator_flow_model['id'] = 'testString'
-        annotator_flow_model['type'] = 'testString'
-        annotator_flow_model['data'] = {}
-        annotator_flow_model['metadata'] = {}
-#        annotator_flow_model['globalConfigurations'] = [configuration_entity_model]
-        annotator_flow_model['uid'] = 26
-
-        unstructured_container_model = {} # UnstructuredContainer
-        unstructured_container_model['text'] = 'testString'
-        unstructured_container_model['id'] = 'testString'
-        unstructured_container_model['type'] = 'testString'
-        unstructured_container_model['data'] = {}
-        unstructured_container_model['metadata'] = {}
-        unstructured_container_model['uid'] = 26
-
-        # Construct a json representation of a AnalyticFlowBeanInput model
-        analytic_flow_bean_input_model_json = {}
-        analytic_flow_bean_input_model_json['unstructured'] = [unstructured_container_model]
-        analytic_flow_bean_input_model_json['annotatorFlows'] = [annotator_flow_model]
-
-        # Construct a model instance of AnalyticFlowBeanInput by calling from_dict on the json representation
-        analytic_flow_bean_input_model = AnalyticFlowBeanInput.from_dict(analytic_flow_bean_input_model_json)
-        assert analytic_flow_bean_input_model != False
-
-        # Construct a model instance of AnalyticFlowBeanInput by calling from_dict on the json representation
-        analytic_flow_bean_input_model_dict = AnalyticFlowBeanInput.from_dict(analytic_flow_bean_input_model_json).__dict__
-        analytic_flow_bean_input_model2 = AnalyticFlowBeanInput(**analytic_flow_bean_input_model_dict)
-
-        # Verify the model instances are equivalent
-#        assert analytic_flow_bean_input_model == analytic_flow_bean_input_model2
-
-        # Convert model instance back to dict and verify no loss of data
-        analytic_flow_bean_input_model_json2 = analytic_flow_bean_input_model.to_dict()
-        assert analytic_flow_bean_input_model_json2 == analytic_flow_bean_input_model_json
 
 #-----------------------------------------------------------------------------
 # Test Class for Annotator

@@ -660,124 +660,6 @@ class AnnotatorForClinicalDataV1(BaseService):
     #########################
 
 
-    # Method is deprecated and could be removed in the future.  Use 'analyze' method instead.
-    def run_pipeline(self, *, unstructured: List['UnstructuredContainer'] = None, annotator_flows: List['AnnotatorFlow'] = None, debug_text_restore: bool = None, return_analyzed_text: bool = None, **kwargs) -> DetailedResponse:
-        """
-        Detect entities & relations from unstructured data.
-
-        <p>This API accepts a JSON request model featuring both the unstructured data to
-        be analyzed as well as the desired annotator flow.<p/><p><b>Annotator
-        Chaining</b><br/>Sample request invoking both the concept_detection and
-        symptom_disease annotators asynchronously. This sample request references
-        configurations via a profile id. Profiles define configurations that can be
-        referenced within a request. Profile is optional. A default profile is used if no
-        profile id is available in the annotator flow. The default profile contains the
-        parameters for the concept detection and the attribute detection. An empty profile
-        can be used if absolutely no parameters are attached to any annotators. See <a
-        href=".." target="_blank">documentation</a> for more information. </p><pre>{<br/>
-        "annotatorFlows": [<br/>    {<br/>      "profile" : "default_profile_v1.0", <br/>
-            "flow": {<br/>        "elements": [<br/>          {<br/>
-        "annotator": {<br/>              "name": "concept_detection"<br/>
-        }<br/>          },<br/>          {<br/>            "annotator": {<br/>
-         "name": "symptom_disease"<br/>             }<br/>          }<br/>        ],<br/>
-              "async": false<br/>      }<br/>    }<br/>  ],<br/>  "unstructured": [<br/>
-         {<br/>      "text": "Patient has lung cancer, but did not smoke. She may consider
-        chemotherapy as part of a treatment plan."<br/>    }<br/>
-        ]<br/>}<br/></pre><p><b>Annotation Filtering</b><br/>Sample request invoking
-        concept_detection with a filter defined to exclude any annotations detected from
-        concept_detection where the semanticType field does not equal
-        "neop".</p><pre>{<br/>  "annotatorFlows": [<br/>    {<br/>      "flow": {<br/>
-           "elements": [<br/>          {<br/>            "annotator": {<br/>
-        "name": "concept_detection",<br/>              "configurations": [<br/>
-            {<br/>                  "filter": {<br/>                     "target":
-        "unstructured.data.concepts",<br/>                     "condition": {<br/>
-                       "type": "match",<br/>                        "field":
-        "semanticType",<br/>                        "values": [<br/>
-            "neop"<br/>                         ],<br/>                        "not":
-        false,<br/>                        "caseInsensitive": false,<br/>
-              "operator": "equals"<br/>                     }<br/>                  }<br/>
-                       }<br/>              ]<br/>            }<br/>          }<br/>
-        ],<br/>       "async": false<br/>      }<br/>    }<br/>  ],<br/>  "unstructured":
-        [<br/>    {<br/>      "text": "Patient has lung cancer, but did not smoke. She may
-        consider chemotherapy as part of a treatment plan."<br/>    }<br/>
-        ]<br/>}<br/></pre><p><b>Annotators that support annotation filtering:</b> allergy,
-        bathing_assistance, cancer, concept_detection, dressing_assistance,
-        eating_assistance, ejection_fraction, lab_value, medication, named_entities,
-        procedure, seeing_assistance, smoking, symptom_disease, toileting_assistance,
-        walking_assistance.</p><hr/><p><b>Annotation Augmentation</b><br/>Sample request
-        invoking the cancer annotator and providing a whitelist entry for a new custom
-        surface form: "lungcancer".</p><pre>{<br/> "annotatorFlows": [<br/>    {<br/>
-        "flow": {<br/>       "elements": [<br/>          {<br/>           "annotator":
-        {<br/>             "name": "cancer",<br/>             "configurations": [<br/>
-                   {<br/>                 "whitelist": {<br/>                   "name":
-        "cancer",<br/>                   "entries": [<br/>                      {<br/>
-                     "surfaceForms": [<br/>                   "lungcancer"<br/>
-            ],<br/>               "features": {<br/>                   "normalizedName":
-        "lung cancer",<br/>                   "hccCode": "9",<br/>
-        "icd10Code": "C34.9",<br/>                   "ccsCode": "19",<br/>
-          "icd9Code": "162.9",<br/>                   "conceptId": "93880001"<br/>
-               }<br/>                      }<br/>                    ]<br/>
-          }<br/>                }<br/>              ]<br/>            }<br/>
-        }<br/>        ],<br/>       "async": false<br/>      }<br/>    }<br/>  ],<br/>
-        "unstructured": [<br/>    {<br/>     "text": "The patient was diagnosed with
-        lungcancer, on Dec 23, 2011."<br/>    }<br/>  ]<br/>}<br/></pre><b>Annotators that
-        support annotation augmentation:</b> allergy, bathing_assistance, cancer,
-        dressing_assistance, eating_assistance, ejection_fraction, lab_value, medication,
-        named_entities, procedure, seeing_assistance, smoking, symptom_disease,
-        toileting_assistance, walking_assistance.<br/>.
-
-        :param List[UnstructuredContainer] unstructured: (optional)
-        :param List[AnnotatorFlow] annotator_flows: (optional)
-        :param bool debug_text_restore: (optional) If true, any ReplaceTextChange
-               annotations will be left in the container and the modified text before
-               restoring to original form will stored in the metadata that is returned.
-               Otherwise, these annotations and modified text will be removed from the
-               container.
-        :param bool return_analyzed_text: (optional) Set this to true to show the
-               analyzed text in the response.
-        :param dict headers: A `dict` containing the request headers
-        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
-        :rtype: DetailedResponse
-        """
-
-        warn("The 'run_pipeline' method is deprecated.  Use 'analyze' method instead.", DeprecationWarning, stacklevel=2) 
-
-        if unstructured is not None:
-            unstructured = [ convert_model(x) for x in unstructured ]
-        if annotator_flows is not None:
-            annotator_flows = [ convert_model(x) for x in annotator_flows ]
-        headers = {}
-        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='run_pipeline')
-        headers.update(sdk_headers)
-
-        params = {
-            'version': self.version,
-            'debug_text_restore': debug_text_restore,
-            'return_analyzed_text': return_analyzed_text
-        }
-
-        data = {
-            'unstructured': unstructured,
-            'annotatorFlows': annotator_flows
-        }
-        data = {k: v for (k, v) in data.items() if v is not None}
-        data = json.dumps(data, cls=AnnotatorEncoder)
-        headers['content-type'] = 'application/json'
-
-        if 'headers' in kwargs:
-            headers.update(kwargs.get('headers'))
-
-        url = '/v1/analyze'
-        request = self.prepare_request(method='POST',
-                                       url=url,
-                                       headers=headers,
-                                       params=params,
-                                       data=data)
-
-        response = self.request_acd(request)
-        return response
-
-
     def analyze_org(self, unstructured=None, annotator_flows=None, **kwargs):
         """
         Detect entities & relations from unstructured data and return as 'dict'.
@@ -891,89 +773,6 @@ class AnnotatorForClinicalDataV1(BaseService):
                                                                  list_annotator_flow, **kwargs).get_result()).unstructured[0].data)
 
         return result
-
-
-    # Method is deprecated and could be removed in the future. Use 'analyze_with_flow' instead.
-    def run_pipeline_with_flow(self, flow_id: str, return_analyzed_text: bool, analytic_flow_bean_input: Union['AnalyticFlowBeanInput', str, TextIO], *, content_type: str = None, debug_text_restore: bool = None, **kwargs) -> DetailedResponse:
-        """
-        analyze with a pre-specified flow.
-
-        <p>This API accepts a flow identifier as well as a <emph>TEXT</emph> or a
-        <emph>JSON</emph> request model featuring the unstructured text to be analyzed.
-        <p/><p><b>JSON request model with unstructured text </b></p><pre>{<br/>
-        "unstructured": [<br/>    {<br/>      "text": "Patient has lung cancer, but did
-        not smoke. She may consider chemotherapy as part of a treatment plan."<br/>
-        }<br/>  ]<br/>}<br/></pre><p><b>JSON request model with existing annotations
-        </b><br/></p><pre>{<br> "unstructured": [<br>    {<br>      "text": "Patient will
-        not start on cisplatin 80mg on 1/1/2018. Patient is also diabetic.",<br>
-        "data": {<br>        "concepts": [<br>          {<br>            "cui":
-        "C0030705",<br>            "preferredName": "Patients",<br>
-        "semanticType": "podg",<br>            "source": "umls",<br>
-        "sourceVersion": "2017AA",<br>            "type":
-        "umls.PatientOrDisabledGroup",<br>            "begin": 0,<br>            "end":
-        7,<br>            "coveredText": "Patient"<br>          }<br> ]<br>      }  <br>
-         } <br> ]<br>}<br></pre>.
-
-        :param str flow_id: flow identifier .
-        :param bool return_analyzed_text: Set this to true to show the analyzed
-               text in the response.
-        :param AnalyticFlowBeanInput analytic_flow_bean_input: Input request data
-               in TEXT or JSON format .
-        :param str content_type: (optional) The type of the input. A character
-               encoding can be specified by including a `charset` parameter. For example,
-               'text/plain;charset=utf-8'.
-        :param bool debug_text_restore: (optional) If true, any ReplaceTextChange
-               annotations will be left in the container and the modified text before
-               restoring to original form will be returned in the metadata.  Otherwise,
-               these annotations and modified text will be removed from the container.
-        :param dict headers: A `dict` containing the request headers
-        :return: A `DetailedResponse` containing the result, headers and HTTP status code.
-        :rtype: DetailedResponse
-        """
-
-        # Method is deprecated and could be removed in the future.
-        warn("The 'run_pipeline_with_flow' method is deprecated.  Use 'analyze_with_flow' method instead.", DeprecationWarning, stacklevel=2)
-
-        if flow_id is None:
-            raise ValueError('flow_id must be provided')
-        if return_analyzed_text is None:
-            raise ValueError('return_analyzed_text must be provided')
-        if analytic_flow_bean_input is None:
-            raise ValueError('analytic_flow_bean_input must be provided')
-        if isinstance(analytic_flow_bean_input, AnalyticFlowBeanInput):
-            analytic_flow_bean_input = convert_model(analytic_flow_bean_input)
-            content_type = content_type or 'application/json'
-        headers = {
-            'Content-Type': content_type
-        }
-        sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='run_pipeline_with_flow')
-        headers.update(sdk_headers)
-
-        params = {
-            'version': self.version,
-            'return_analyzed_text': return_analyzed_text,
-            'debug_text_restore': debug_text_restore
-        }
-
-        if isinstance(analytic_flow_bean_input, dict):
-            data = json.dumps(analytic_flow_bean_input)
-            if content_type is None:
-                headers['content-type'] = 'application/json'
-        else:
-            data = analytic_flow_bean_input
-
-        if 'headers' in kwargs:
-            headers.update(kwargs.get('headers'))
-
-        url = '/v1/analyze/{0}'.format(*self.encode_path_vars(flow_id))
-        request = self.prepare_request(method='POST',
-                                       url=url,
-                                       headers=headers,
-                                       params=params,
-                                       data=data)
-
-        response = self.request_acd(request)
-        return response
 
 
     def analyze_with_flow_org(self, flow_id, request, content_type='text/plain', **kwargs):
@@ -1306,6 +1105,7 @@ class AnnotatorForClinicalDataV1(BaseService):
         return response
 
 
+    # Method is deprecated and could be removed in the future.  Use 'cartridges_post_multipart' method instead.
     def deploy_cartridge(self, *, archive_file: BinaryIO = None, archive_file_content_type: str = None, update: bool = None, **kwargs) -> DetailedResponse:
         """
         Deploy a cartridge.
@@ -1320,6 +1120,8 @@ class AnnotatorForClinicalDataV1(BaseService):
         :return: A `DetailedResponse` containing the result, headers and HTTP status code.
         :rtype: DetailedResponse with `dict` result representing a `DeployCartridgeResponse` object
         """
+
+        warn("The 'deploy_cartridge' method is deprecated.  Use 'cartridges_post_multipart' method instead.", DeprecationWarning, stacklevel=2) 
 
         headers = {}
         sdk_headers = get_sdk_headers(service_name=self.DEFAULT_SERVICE_NAME, service_version='V1', operation_id='deploy_cartridge')
@@ -1389,20 +1191,6 @@ class AnnotatorForClinicalDataV1(BaseService):
 
         response = self.request_acd(request)
         return response
-
-
-class RunPipelineWithFlowEnums:
-    """
-    Enums for run_pipeline_with_flow parameters.
-    """
-
-    class ContentType(Enum):
-        """
-        The type of the input. A character encoding can be specified by including a
-        `charset` parameter. For example, 'text/plain;charset=utf-8'.
-        """
-        APPLICATION_JSON = 'application/json'
-        TEXT_PLAIN = 'text/plain'
 
 
 class GetServiceStatusEnums:
@@ -2060,66 +1848,6 @@ class Annotation(object):
     def __str__(self):
         """Return a `str` version of this Annotation object."""
         return json.dumps(self._to_dict(), indent=2)
-
-class AnalyticFlowBeanInput():
-    """
-    AnalyticFlowBeanInput.
-
-    :attr List[UnstructuredContainer] unstructured: (optional)
-    :attr List[AnnotatorFlow] annotator_flows: (optional)
-    """
-
-    def __init__(self, *, unstructured: List['UnstructuredContainer'] = None, annotator_flows: List['AnnotatorFlow'] = None) -> None:
-        """
-        Initialize a AnalyticFlowBeanInput object.
-
-        :param List[UnstructuredContainer] unstructured: (optional)
-        :param List[AnnotatorFlow] annotator_flows: (optional)
-        """
-        self.unstructured = unstructured
-        self.annotator_flows = annotator_flows
-
-    @classmethod
-    def from_dict(cls, _dict: Dict) -> 'AnalyticFlowBeanInput':
-        """Initialize a AnalyticFlowBeanInput object from a json dictionary."""
-        args = {}
-        if 'unstructured' in _dict:
-            args['unstructured'] = [UnstructuredContainer.from_dict(x) for x in _dict.get('unstructured')]
-        if 'annotatorFlows' in _dict:
-            args['annotator_flows'] = [AnnotatorFlow.from_dict(x) for x in _dict.get('annotatorFlows')]
-        return cls(**args)
-
-    @classmethod
-    def _from_dict(cls, _dict):
-        """Initialize a AnalyticFlowBeanInput object from a json dictionary."""
-        return cls.from_dict(_dict)
-
-    def to_dict(self) -> Dict:
-        """Return a json dictionary representing this model."""
-        _dict = {}
-        if hasattr(self, 'unstructured') and self.unstructured is not None:
-            _dict['unstructured'] = [x.to_dict() for x in self.unstructured]
-        if hasattr(self, 'annotator_flows') and self.annotator_flows is not None:
-            _dict['annotatorFlows'] = [x.to_dict() for x in self.annotator_flows]
-        return _dict
-
-    def _to_dict(self):
-        """Return a json dictionary representing this model."""
-        return self.to_dict()
-
-    def __str__(self) -> str:
-        """Return a `str` version of this AnalyticFlowBeanInput object."""
-        return json.dumps(self.to_dict(), indent=2)
-
-    def __eq__(self, other: 'AnalyticFlowBeanInput') -> bool:
-        """Return `true` when self and other are equal, false otherwise."""
-        if not isinstance(other, self.__class__):
-            return False
-        return self.__dict__ == other.__dict__
-
-    def __ne__(self, other: 'AnalyticFlowBeanInput') -> bool:
-        """Return `true` when self and other are not equal, false otherwise."""
-        return not self == other
 
 
 class Annotator():
