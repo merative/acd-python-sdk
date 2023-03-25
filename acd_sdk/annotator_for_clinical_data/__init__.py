@@ -11,7 +11,6 @@ from .annotator_for_clinical_data_v1 import AcdCartridges
 from .annotator_for_clinical_data_v1 import AcdFlow
 from .annotator_for_clinical_data_v1 import AcdProfile
 from .annotator_for_clinical_data_v1 import AllergyMedication
-from .annotator_for_clinical_data_v1 import AnalyticFlowBeanInput
 from .annotator_for_clinical_data_v1 import Annotation
 from .annotator_for_clinical_data_v1 import Annotator
 from .annotator_for_clinical_data_v1 import AnnotatorFlow
