@@ -1,3 +1,10 @@
+## [2.0.1](https://github.com/merative/whcs-python-sdk/compare/v2.0.0...v2.0.1) (2023-03-25)
+
+
+### Bug Fixes
+
+* Remove deprecated run pipeline methods ([9b33dbd](https://github.com/merative/whcs-python-sdk/commit/9b33dbd690384eb51f343e9f75aba2a22f207294))
+
 # [2.0.0](https://github.com/merative/whcs-python-sdk/compare/v1.11.6...v2.0.0) (2023-03-24)
 
 
