@@ -1,3 +1,10 @@
+## [2.0.2](https://github.com/merative/acd-python-sdk/compare/v2.0.1...v2.0.2) (2023-04-20)
+
+
+### Bug Fixes
+
+* Renamed URL Updates ([c98067d](https://github.com/merative/acd-python-sdk/commit/c98067d8f8dc5f44d8ebdb22ee08b2afaefd5e47))
+
 ## [2.0.1](https://github.com/merative/whcs-python-sdk/compare/v2.0.0...v2.0.1) (2023-03-25)
 
 
