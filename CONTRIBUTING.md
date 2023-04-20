@@ -9,7 +9,7 @@ refer here:
 # Issues
 
 If you encounter an issue with the project, you are welcome to submit a 
-[bug report](https://github.com/merative/whcs-python-sdk/issues).
+[bug report](https://github.com/merative/acd-python-sdk/issues).
 
 # Contributing in General
 
